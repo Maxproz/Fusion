@@ -89,5 +89,31 @@ public:
 	/** Returns FirstPersonCameraComponent subobject **/
 	FORCEINLINE class UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 
+
+private:
+	/**
+	* TakeDamage Server version. Call this instead of TakeDamage when you're a client
+	* You don't have to generate an implementation. It will automatically call the ServerTakeDamage_Implementation function
+	*/
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerTakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser);
+	void ServerTakeDamage_Implementation(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser);
+	bool ServerTakeDamage_Validate(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerOnFire();
+	void ServerOnFire_Implementation();
+	bool ServerOnFire_Validate();
+	
+	UFUNCTION()
+	void AttemptToFire();
+
+	float Ammo = 500;
+
+public:
+	/** Applies damage to the character */
+	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+
+
 };
 

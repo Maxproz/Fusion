@@ -88,7 +88,7 @@ void AFusionCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
-	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AFusionCharacter::OnFire);
+	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AFusionCharacter::AttemptToFire);
 
 }
 
@@ -161,3 +161,66 @@ void AFusionCharacter::LookUpAtRate(float Rate)
 	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 }
+
+float AFusionCharacter::TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
+
+	//Decrease the character's hp 
+
+	//Health -= Damage;
+	//if (Health <= 0) InitHealth();
+
+	//Call the update text on the local client
+	//OnRep_Health will be called in every other client so the character's text
+	//will contain a text with the right values
+	//UpdateCharText();
+
+	return 1.f;
+}
+
+void AFusionCharacter::ServerTakeDamage_Implementation(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
+}
+
+bool AFusionCharacter::ServerTakeDamage_Validate(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	return true;
+}
+
+void AFusionCharacter::AttemptToFire()
+{
+	if (Ammo > 1)
+	{
+		//If we don't have authority, meaning that we're not the server
+		//tell the server to spawn the bomb.
+		//If we're the server, just spawn the bomb - we trust ourselves.
+		if (Role < ROLE_Authority)
+		{
+			ServerOnFire();
+		}
+		else OnFire();
+
+		//todo: this code will be removed in the next part
+		FDamageEvent DmgEvent;
+
+		if (Role < ROLE_Authority)
+		{
+			ServerTakeDamage(25.f, DmgEvent, GetController(), this);
+		}
+		else TakeDamage(25.f, DmgEvent, GetController(), this);
+	}
+}
+
+void AFusionCharacter::ServerOnFire_Implementation()
+{
+	OnFire();
+}
+
+bool AFusionCharacter::ServerOnFire_Validate()
+{
+	return true;
+}
+
+

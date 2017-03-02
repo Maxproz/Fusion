@@ -27,5 +27,14 @@ public:
 	FORCEINLINE class USphereComponent* GetCollisionComp() const { return CollisionComp; }
 	/** Returns ProjectileMovement subobject **/
 	FORCEINLINE class UProjectileMovementComponent* GetProjectileMovement() const { return ProjectileMovement; }
+
+
+private:
+	
+	UFUNCTION(Reliable, NetMulticast)
+	void SimulateHit(UPrimitiveComponent* OtherComp);
+	void SimulateHit_Implementation(UPrimitiveComponent* OtherComp);
+	
+
 };
 

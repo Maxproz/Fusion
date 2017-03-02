@@ -29,6 +29,8 @@ AFusionProjectile::AFusionProjectile()
 
 	// Die after 3 seconds by default
 	InitialLifeSpan = 3.0f;
+
+	SetReplicates(true);
 }
 
 void AFusionProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -36,8 +38,13 @@ void AFusionProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
 	// Only add impulse and destroy projectile if we hit a physics
 	if ((OtherActor != NULL) && (OtherActor != this) && (OtherComp != NULL) && OtherComp->IsSimulatingPhysics())
 	{
-		OtherComp->AddImpulseAtLocation(GetVelocity() * 100.0f, GetActorLocation());
-
-		Destroy();
+		SimulateHit(OtherComp);
 	}
 }
+
+void AFusionProjectile::SimulateHit_Implementation(UPrimitiveComponent* OtherComp)
+{
+	OtherComp->AddImpulseAtLocation(GetVelocity() * 100.0f, GetActorLocation());
+	Destroy();
+}
+
