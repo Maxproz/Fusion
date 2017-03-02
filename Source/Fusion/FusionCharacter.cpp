@@ -11,7 +11,8 @@ DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
 //////////////////////////////////////////////////////////////////////////
 // AFusionCharacter
 
-AFusionCharacter::AFusionCharacter()
+AFusionCharacter::AFusionCharacter(const class FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
@@ -49,6 +50,11 @@ AFusionCharacter::AFusionCharacter()
 
 	// Default offset from the character location for projectiles to spawn
 	GunOffset = FVector(100.0f, 0.0f, 10.0f);
+
+
+	/* Ignore this channel or it will absorb the trace impacts instead of the skeletal mesh */
+	GetCapsuleComponent()->SetCollisionResponseToChannel(COLLISION_WEAPON, ECR_Ignore);
+
 
 	// Note: The ProjectileClass and the skeletal mesh/anim blueprints for Mesh1P, FP_Gun, and VR_Gun 
 	// are set in the derived blueprint asset named MyCharacter to avoid direct content references in C++.
@@ -164,7 +170,7 @@ void AFusionCharacter::LookUpAtRate(float Rate)
 
 float AFusionCharacter::TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
+	float ActualDamage = Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
 
 	//Decrease the character's hp 
 
@@ -176,7 +182,7 @@ float AFusionCharacter::TakeDamage(float Damage, struct FDamageEvent const& Dama
 	//will contain a text with the right values
 	//UpdateCharText();
 
-	return 1.f;
+	return ActualDamage;
 }
 
 void AFusionCharacter::ServerTakeDamage_Implementation(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -202,7 +208,8 @@ void AFusionCharacter::AttemptToFire()
 		}
 		else OnFire();
 
-		//todo: this code will be removed in the next part
+		
+		//todo: this code will be removed in the next part // I NEED TO SET UP SOME OTHER FUNCTIONALITY HERE
 		FDamageEvent DmgEvent;
 
 		if (Role < ROLE_Authority)

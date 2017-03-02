@@ -32,3 +32,13 @@ void AFusionHUD::DrawHUD()
 	Canvas->DrawItem( TileItem );
 }
 
+void AFusionHUD::OnStateChanged_Implementation(EHUDState NewState)
+{
+	CurrentState = NewState;
+}
+
+
+EHUDState AFusionHUD::GetCurrentState()
+{
+	return CurrentState;
+}

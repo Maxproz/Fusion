@@ -1,12 +1,12 @@
 // Copyright 1998-2016 Epic Games, Inc. All Rights Reserved.
 #pragma once
-#include "GameFramework/Character.h"
+#include "FusionBaseCharacter.h"
 #include "FusionCharacter.generated.h"
 
 class UInputComponent;
 
 UCLASS(config=Game)
-class AFusionCharacter : public ACharacter
+class AFusionCharacter : public AFusionBaseCharacter
 {
 	GENERATED_BODY()
 
@@ -27,7 +27,7 @@ class AFusionCharacter : public ACharacter
 	class UCameraComponent* FirstPersonCameraComponent;
 
 public:
-	AFusionCharacter();
+	AFusionCharacter(const class FObjectInitializer& ObjectInitializer);
 
 	virtual void BeginPlay();
 
@@ -93,22 +93,27 @@ public:
 private:
 	/**
 	* TakeDamage Server version. Call this instead of TakeDamage when you're a client
-	* You don't have to generate an implementation. It will automatically call the ServerTakeDamage_Implementation function
 	*/
 	UFUNCTION(Server, Reliable, WithValidation)
 	void ServerTakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser);
 	void ServerTakeDamage_Implementation(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser);
 	bool ServerTakeDamage_Validate(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser);
 
+	/**
+	* OnFire Server version. Call this instead of OnFire when you're a client
+	*/
 	UFUNCTION(Server, Reliable, WithValidation)
 	void ServerOnFire();
 	void ServerOnFire_Implementation();
 	bool ServerOnFire_Validate();
 	
+
 	UFUNCTION()
 	void AttemptToFire();
 
+
 	float Ammo = 500;
+
 
 public:
 	/** Applies damage to the character */
