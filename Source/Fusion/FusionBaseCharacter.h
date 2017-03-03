@@ -13,12 +13,11 @@ class FUSION_API AFusionBaseCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
-
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
 public:
 	// Sets default values for this character's properties
 	AFusionBaseCharacter(const class FObjectInitializer& ObjectInitializer);
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Sound")
 	USoundCue* SoundTakeHit = nullptr;
@@ -27,7 +26,7 @@ public:
 	USoundCue* SoundDeath = nullptr;
 
 	/************************************************************************/
-	/* Health                                                               */
+	/* Health / Shields                                                     */
 	/************************************************************************/
 	UFUNCTION(BlueprintCallable, Category = "Health")
 	float GetMaxHealth() const;
@@ -35,8 +34,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Health")
 	float GetHealth() const;
 
+	UFUNCTION(BlueprintCallable, Category = "Shields")
+	FORCEINLINE float GetMaxShields() const { return GetClass()->GetDefaultObject<AFusionBaseCharacter>()->Shields; }
+
+	UFUNCTION(BlueprintCallable, Category = "Shields")
+	FORCEINLINE float GetShields() const { return Shields; }
+
 	UFUNCTION(BlueprintCallable, Category = "PlayerState")
 	bool IsAlive() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Shields")
+	FORCEINLINE float GetLastTakeDamageTime() const { return LastTakeDamageTime; }
+
 
 	/************************************************************************/
 	/* Sprinting ~~ Maybe Remove Later                                      */
@@ -75,10 +84,21 @@ protected:
 	/* Damage & Death                                                       */
 	/************************************************************************/
 
+	/**
+	* TakeDamage Server version. Call this instead of TakeDamage when you're a client
+	*/
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerTakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser);
+	void ServerTakeDamage_Implementation(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser);
+	bool ServerTakeDamage_Validate(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser);
+
 protected:
 
 	UPROPERTY(EditDefaultsOnly, Replicated, Category = "Health")
 	float Health = 100.f;
+
+	UPROPERTY(EditDefaultsOnly, Replicated, Category = "Shields")
+	float Shields = 100.f;
 
 	/* Take damage & handle death */
 	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser) override;
@@ -106,6 +126,26 @@ protected:
 
 	bool bIsDying = false;
 
+	// TODO: implement a timer way to detect..
+	// "If the player has taken shields damage and has not been damaged in the last 6 seconds, start recharging the shields.
 
+	const float ShieldRechargeTimer = 6.f;
+
+	float LastTakeDamageTime = 0.f;
+
+	// The player's Shield Recharge Rate
+	float ShieldsRechargeRate = 3.33f;
+
+	uint32 Recharge = 0;
+
+	const uint32 StartRecharging = 6;
+
+	void ForceShieldsCap();
+
+	void RechargeShields();
+
+	void ForceHealthCap();
+
+	void RestoreHealth(float HealthRestored);
 };
 

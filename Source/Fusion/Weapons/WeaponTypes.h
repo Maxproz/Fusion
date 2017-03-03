@@ -17,4 +17,5 @@ enum class EWeaponTypes : uint8
 	SMG,
 	ShotGun,
 	Sword,
+	None,
 };

@@ -8,6 +8,8 @@
 
 #include "Weapons/FusionBaseDamageType.h"
 
+#include "FusionPlayerController.h"
+
 #include "FusionBaseCharacter.h"
 
 
@@ -51,35 +53,52 @@ float AFusionBaseCharacter::TakeDamage(float Damage, struct FDamageEvent const& 
 	Damage = MyGameMode ? MyGameMode->ModifyDamage(Damage, this, DamageEvent, EventInstigator, DamageCauser) : Damage;
 
 	const float ActualDamage = Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
+	
+	// TODO: Make it so the player cannot have health and shields subtracted at the same time... small bug.
+
 	if (ActualDamage > 0.f)
 	{
-		Health -= ActualDamage;
-		if (Health <= 0)
+		if (Shields > 0)
 		{
-			bool bCanDie = true;
+			Shields -= ActualDamage;
+			Recharge = 0;
+			GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, FString::Printf(TEXT("Shields after damage: Shields: %f"), Shields));
+		}
+		
+		if (Shields <= 0)
+		{
 
-			/* Check the damagetype, always allow dying if the cast fails, otherwise check the property if player can die from damagetype */
-			if (DamageEvent.DamageTypeClass)
-			{
-				UFusionBaseDamageType* DmgType = Cast<UFusionBaseDamageType>(DamageEvent.DamageTypeClass->GetDefaultObject());
-				bCanDie = (DmgType == nullptr || (DmgType && DmgType->GetCanDieFrom()));
-			}
+			Health -= ActualDamage;
+			Recharge = 0;
+			GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, FString::Printf(TEXT("Health after damage: Health: %f"), Health));
 
-			if (bCanDie)
+			if (Health <= 0)
 			{
-				Die(ActualDamage, DamageEvent, EventInstigator, DamageCauser);
+				bool bCanDie = true;
+
+				/* Check the damagetype, always allow dying if the cast fails, otherwise check the property if player can die from damagetype */
+				if (DamageEvent.DamageTypeClass)
+				{
+					UFusionBaseDamageType* DmgType = Cast<UFusionBaseDamageType>(DamageEvent.DamageTypeClass->GetDefaultObject());
+					bCanDie = (DmgType == nullptr || (DmgType && DmgType->GetCanDieFrom()));
+				}
+
+				if (bCanDie)
+				{
+					Die(ActualDamage, DamageEvent, EventInstigator, DamageCauser);
+				}
+				else
+				{
+					/* Player cannot die from this damage type, set hitpoints to 1.0 */
+					Health = 1.0f;
+				}
 			}
 			else
 			{
-				/* Player cannot die from this damage type, set hitpoints to 1.0 */
-				Health = 1.0f;
+				/* Shorthand for - if x != null pick1 else pick2 */
+				APawn* Pawn = EventInstigator ? EventInstigator->GetPawn() : nullptr;
+				PlayHit(ActualDamage, DamageEvent, Pawn, DamageCauser, false);
 			}
-		}
-		else
-		{
-			/* Shorthand for - if x != null pick1 else pick2 */
-			APawn* Pawn = EventInstigator ? EventInstigator->GetPawn() : nullptr;
-			PlayHit(ActualDamage, DamageEvent, Pawn, DamageCauser, false);
 		}
 	}
 
@@ -129,7 +148,7 @@ bool AFusionBaseCharacter::Die(float KillingDamage, FDamageEvent const& DamageEv
 	return true;
 }
 
-
+// TODO: need to sync this functionality with my FPS template. Need mesh etc...
 void AFusionBaseCharacter::OnDeath(float KillingDamage, FDamageEvent const& DamageEvent, APawn* PawnInstigator, AActor* DamageCauser)
 {
 	if (bIsDying)
@@ -339,6 +358,7 @@ void AFusionBaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 
 	// Replicate to every client, no special condition required
 	DOREPLIFETIME(AFusionBaseCharacter, Health);
+	DOREPLIFETIME(AFusionBaseCharacter, Shields);
 	DOREPLIFETIME(AFusionBaseCharacter, LastTakeHitInfo);
 }
 
@@ -346,4 +366,82 @@ void AFusionBaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 float AFusionBaseCharacter::GetCrouchingSpeedModifier() const
 {
 	return CrouchingSpeedModifier;
+}
+
+void AFusionBaseCharacter::ServerTakeDamage_Implementation(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
+}
+
+bool AFusionBaseCharacter::ServerTakeDamage_Validate(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	return true;
+}
+
+
+// Recharge shields Tick
+void AFusionBaseCharacter::RechargeShields()
+{
+	// Not bad... sorta works, need to clean this up into two different timers later
+	// - so the shield recharge will look clean in the UI. Maybe filter out the other half of this function into a 0.2 - 0.4 second timer that will refill to 100
+
+	Recharge++;
+	//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, FString::Printf(TEXT("RechargeTime: %u"), Recharge));
+	
+
+	// TODO: Hopefully this works.
+	if (Recharge > StartRecharging)
+	{
+		if (IsAlive() && Shields < 100) // do not tick if Player is dead
+		{
+			Shields = Shields + ShieldsRechargeRate;
+			ForceShieldsCap();
+		}
+	}
+
+	// Call Regen again after 1 second
+	FTimerHandle CastTimer;
+	GetWorldTimerManager().SetTimer(CastTimer, this, &AFusionBaseCharacter::RechargeShields, 1.f, false);
+}
+
+// Force HP Caps
+void AFusionBaseCharacter::ForceHealthCap()
+{
+	// If HP is greater than Max, set HP to Max
+	if (Health > GetMaxHealth())
+	{
+		Health = GetMaxHealth();
+	}
+	// If HP is less than Zero, set HP to Zero
+	if (Health < 0)
+	{
+		Health = 0;
+	}
+}
+
+// Force HP Caps
+void AFusionBaseCharacter::ForceShieldsCap()
+{
+	// If Shields is greater than Max, set Shields to Max
+	if (Shields > GetMaxShields())
+	{
+		AFusionPlayerController* PC = Cast<AFusionPlayerController>(Controller);
+		if (PC)
+		{
+			PC->ClientHUDMessage(EHUDMessage::Character_Shields_Recharged);
+		}
+		Shields = GetMaxShields();
+	}
+	// If Shields is less than Zero, set Shields to Zero
+	if (Shields < 0)
+	{
+		Shields = 0;
+	}
+}
+
+// HealthPickup etc..
+void AFusionBaseCharacter::RestoreHealth(float HealthRestored)
+{
+	// Restore Hitpoints
+	Health = FMath::Clamp(Health + HealthRestored, 0.0f, GetMaxHealth());
 }
