@@ -32,7 +32,6 @@ class FUSION_API AMasterWeapon : public AActor
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	float GetEquipStartedTime() const;
 
@@ -52,14 +51,13 @@ class FUSION_API AMasterWeapon : public AActor
 
 	FTimerHandle EquipFinishedTimerHandle;
 
-	//UPROPERTY(EditDefaultsOnly, Category = "Weapon")
-	//float ShotsPerMinute;
-
 
 
 protected:
 
 	AMasterWeapon(const FObjectInitializer& ObjectInitializer);
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	/* The character socket to store this item at. (primary/seconday) */
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
@@ -75,7 +73,6 @@ protected:
 	/** weapon mesh: 3rd person view */
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
 	USkeletalMeshComponent* Mesh;
-
 
 	UFUNCTION()
 	void OnRep_MyPawn();
@@ -116,8 +113,8 @@ public:
 	FORCEINLINE EEquippedWeaponTypes GetWeaponSlot() { return WeaponSlot; }
 
 	/* The class to spawn in the level when dropped */
-	//UPROPERTY(EditDefaultsOnly, Category = "Weapon")
-	//TSubclassOf<class ASWeaponPickup> WeaponPickupClass;
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+	TSubclassOf<class AWeaponPickupActor> WeaponPickupClass;
 
 
 public:
@@ -148,7 +145,7 @@ protected:
 	FHitResult WeaponTrace(const FVector& TraceFrom, const FVector& TraceTo) const;
 
 	/* With PURE_VIRTUAL we skip implementing the function in SWeapon.cpp and can do this in SWeaponInstant.cpp / SFlashlight.cpp instead */
-	virtual void FireWeapon() PURE_VIRTUAL(ASWeapon::FireWeapon, );
+	virtual void FireWeapon() PURE_VIRTUAL(AMasterWeapon::FireWeapon, );
 
 private:
 

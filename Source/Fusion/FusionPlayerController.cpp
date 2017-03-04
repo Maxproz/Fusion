@@ -80,8 +80,7 @@ void AFusionPlayerController::ServerSuicide_Implementation()
 	AFusionCharacter* MyPawn = Cast<AFusionCharacter>(GetPawn());
 	if (MyPawn && ((GetWorld()->TimeSeconds - MyPawn->CreationTime > 1) || (GetNetMode() == NM_Standalone)))
 	{
-		// TODO: Needs implemented
-		//MyPawn->Suicide();
+		MyPawn->Suicide();
 	}
 
 }

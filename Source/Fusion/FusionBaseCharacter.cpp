@@ -21,8 +21,8 @@ AFusionBaseCharacter::AFusionBaseCharacter(const class FObjectInitializer& Objec
 	SprintingSpeedModifier = 2.0f;
 
 	/* Don't collide with camera checks to keep 3rd person camera at position when zombies or other players are standing behind us */ // TODO: Is setting this causing anything bad?
-	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
-	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	//GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	//GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 }
 
 float AFusionBaseCharacter::GetHealth() const

@@ -9,6 +9,9 @@
 
 #include "Weapons/MasterWeapon.h"
 
+#include "Player/Pickups/MasterPickupActor.h"
+#include "Player/Pickups/WeaponPickupActor.h"
+
 #include "GameFramework/InputSettings.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
@@ -41,6 +44,7 @@ AFusionCharacter::AFusionCharacter(const class FObjectInitializer& ObjectInitial
 	Mesh1P->RelativeRotation = FRotator(1.9f, -19.19f, 5.2f);
 	Mesh1P->RelativeLocation = FVector(-0.5f, -4.4f, -155.7f);
 
+	/*
 	// Create a gun mesh component
 	FP_Gun = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FP_Gun"));
 	FP_Gun->SetOnlyOwnerSee(true);			// only the owning player will see this mesh
@@ -52,6 +56,7 @@ AFusionCharacter::AFusionCharacter(const class FObjectInitializer& ObjectInitial
 	FP_MuzzleLocation = CreateDefaultSubobject<USceneComponent>(TEXT("MuzzleLocation"));
 	FP_MuzzleLocation->SetupAttachment(FP_Gun);
 	FP_MuzzleLocation->SetRelativeLocation(FVector(0.2f, 48.4f, -10.6f));
+	*/
 
 	// Default offset from the character location for projectiles to spawn
 	GunOffset = FVector(100.0f, 0.0f, 10.0f);
@@ -71,7 +76,9 @@ AFusionCharacter::AFusionCharacter(const class FObjectInitializer& ObjectInitial
 
 	/* Ignore this channel or it will absorb the trace impacts instead of the skeletal mesh */
 	GetCapsuleComponent()->SetCollisionResponseToChannel(COLLISION_WEAPON, ECR_Ignore);
-
+	
+	
+	DropWeaponMaxDistance = 100;
 
 	/* Names as specified in the character skeleton */
 	WeaponAttachPoint = TEXT("WeaponAttachPoint");
@@ -87,7 +94,7 @@ void AFusionCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	//Attach gun mesh component to Skeleton, doing it here because the skeleton is not yet created in the constructor
-	FP_Gun->AttachToComponent(Mesh1P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
+	//FP_Gun->AttachToComponent(Mesh1P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
 	Mesh1P->SetHiddenInGame(false, true);
 
 	// Initatite our OnTick Function for shield recharging behaviour
@@ -103,14 +110,41 @@ void AFusionCharacter::Tick(float DeltaTime)
 		SetSprinting(true);
 	}
 
-	
+	if (Controller && Controller->IsLocalController())
+	{
+		AMasterPickupActor* Usable = GetPickupInView();
+
+		// End Focus
+		if (FocusedPickupActor != Usable)
+		{
+			if (FocusedPickupActor)
+			{
+				FocusedPickupActor->OnEndFocus();
+			}
+
+			bHasNewFocus = true;
+		}
+
+		// Assign new Focus
+		FocusedPickupActor = Usable;
+
+		// Start Focus.
+		if (Usable)
+		{
+			if (bHasNewFocus)
+			{
+				Usable->OnBeginFocus();
+				bHasNewFocus = false;
+			}
+		}
+	}
 
 }
 
 void AFusionCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
-	//DestroyInventory();
+	DestroyInventory();
 }
 
 void AFusionCharacter::PawnClientRestart()
@@ -118,7 +152,7 @@ void AFusionCharacter::PawnClientRestart()
 	Super::PawnClientRestart();
 
 	/* Equip the weapon on the client side. */
-	//SetCurrentWeapon(CurrentWeapon);
+	SetCurrentWeapon(CurrentWeapon);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -144,10 +178,14 @@ void AFusionCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
-	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AFusionCharacter::AttemptToFire);
+	//PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AFusionCharacter::AttemptToFire);
 	
-	// TODO: ill probably need a binding like this for automatic weapons.
-	//PlayerInputComponent->BindAction("Fire", IE_Released, this, &AFusionCharacter::OnStopFire);
+	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AFusionCharacter::OnStartFire);
+	PlayerInputComponent->BindAction("Fire", IE_Released, this, &AFusionCharacter::OnStopFire);
+
+	PlayerInputComponent->BindAction("Use", IE_Pressed, this, &AFusionCharacter::Use);
+	PlayerInputComponent->BindAction("DropWeapon", IE_Pressed, this, &AFusionCharacter::DropWeapon);
+
 
 
 	PlayerInputComponent->BindAction("SprintHold", IE_Pressed, this, &AFusionCharacter::OnStartSprinting);
@@ -155,8 +193,17 @@ void AFusionCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 
 	PlayerInputComponent->BindAction("CrouchToggle", IE_Released, this, &AFusionCharacter::OnCrouchToggle);
 
-	// use this for "SwapWeapon"
-	//PlayerInputComponent->BindAction("SwapWeapon", IE_Pressed, this, &AFusionCharacter::OnSwapWeapon);
+
+	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &AFusionCharacter::OnReload);
+
+	PlayerInputComponent->BindAction("NextWeapon", IE_Pressed, this, &AFusionCharacter::OnNextWeapon);
+	PlayerInputComponent->BindAction("PrevWeapon", IE_Pressed, this, &AFusionCharacter::OnPrevWeapon);
+
+	PlayerInputComponent->BindAction("SwapWeapon", IE_Pressed, this, &AFusionCharacter::OnSwapWeapon);
+
+	PlayerInputComponent->BindAction("EquipPrimaryWeapon", IE_Pressed, this, &AFusionCharacter::OnEquipPrimaryWeapon);
+	PlayerInputComponent->BindAction("EquipSecondaryWeapon", IE_Pressed, this, &AFusionCharacter::OnEquipSecondaryWeapon);
+
 
 	/* Input binding for the carry object component */
 	// Use this for the pickup flag/powerup/weapon binding
@@ -164,6 +211,7 @@ void AFusionCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 
 }
 
+/*
 void AFusionCharacter::OnFire()
 {
 	// try and fire a projectile
@@ -203,6 +251,7 @@ void AFusionCharacter::OnFire()
 		}
 	}
 }
+*/
 
 void AFusionCharacter::MoveForward(float Value)
 {
@@ -247,6 +296,76 @@ void AFusionCharacter::MoveRight(float Value)
 
 	}
 }
+
+
+/*
+Performs ray-trace to find closest looked-at UsableActor.
+*/
+AMasterPickupActor* AFusionCharacter::GetPickupInView()
+{
+	FVector CamLoc;
+	FRotator CamRot;
+
+	if (Controller == nullptr)
+		return nullptr;
+
+	Controller->GetPlayerViewPoint(CamLoc, CamRot);
+	const FVector TraceStart = CamLoc;
+	const FVector Direction = CamRot.Vector();
+	const FVector TraceEnd = TraceStart + (Direction * MaxUseDistance);
+
+	FCollisionQueryParams TraceParams(TEXT("TraceUsableActor"), true, this);
+	TraceParams.bTraceAsyncScene = true;
+	TraceParams.bReturnPhysicalMaterial = false;
+
+	/* Not tracing complex uses the rough collision instead making tiny objects easier to select. */
+	TraceParams.bTraceComplex = false;
+
+	FHitResult Hit(ForceInit);
+	GetWorld()->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_Visibility, TraceParams);
+
+	DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Red, false, 1.0f);
+	
+	if (Hit.Actor != nullptr)
+	{
+		//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, FString::Printf(TEXT("RechargeTime: %s"), *Hit.GetActor()->GetName()));
+
+	}
+
+	return Cast<AMasterPickupActor>(Hit.GetActor());
+}
+
+void AFusionCharacter::Use()
+{
+	// Only allow on server. If called on client push this request to the server
+	if (Role == ROLE_Authority)
+	{
+		AMasterPickupActor* Usable = GetPickupInView();
+		if (Usable)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, FString::Printf(TEXT("UseableActor: %s"), *Usable->GetName()));
+			Usable->OnUsed(this);
+		}
+	}
+	else
+	{
+		ServerUse();
+	}
+}
+
+
+void AFusionCharacter::ServerUse_Implementation()
+{
+	Use();
+}
+
+
+bool AFusionCharacter::ServerUse_Validate()
+{
+	return true;
+}
+
+
 
 void AFusionCharacter::OnJump()
 {
@@ -336,10 +455,9 @@ void AFusionCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	// Replicate to every client, no special condition required
 	DOREPLIFETIME(AFusionCharacter, LastTakeHitInfo);
 
+	DOREPLIFETIME(AFusionCharacter, CurrentWeapon);
+	DOREPLIFETIME(AFusionCharacter, Inventory);
 
-
-	//DOREPLIFETIME(ASCharacter, CurrentWeapon);
-	//DOREPLIFETIME(ASCharacter, Inventory);
 	/* If we did not display the current inventory on the player mesh we could optimize replication by using this replication condition. */
 	/* DOREPLIFETIME_CONDITION(ASCharacter, Inventory, COND_OwnerOnly);*/
 }
@@ -370,9 +488,28 @@ void AFusionCharacter::OnDeath(float KillingDamage, FDamageEvent const& DamageEv
 	}
 
 	StopAllAnimMontages();
+	DestroyInventory(); // TODO: Find out a way to have this players weapons (and grenades later on) drop to the ground for other players to pickup instead of just destroying here.
 
 	Super::OnDeath(KillingDamage, DamageEvent, PawnInstigator, DamageCauser);
 }
+
+void AFusionCharacter::DestroyInventory()
+{
+	if (Role < ROLE_Authority)
+	{
+		return;
+	}
+
+	for (int32 i = Inventory.Num() - 1; i >= 0; i--)
+	{
+		AMasterWeapon* Weapon = Inventory[i];
+		if (Weapon)
+		{
+			RemoveWeapon(Weapon, true);
+		}
+	}
+}
+
 
 void AFusionCharacter::StopAllAnimMontages()
 {
@@ -467,22 +604,11 @@ void AFusionCharacter::SetCurrentWeapon(class AMasterWeapon* NewWeapon, class AM
 	}
 
 	// NOTE: If you don't have an equip animation w/ animnotify to swap the meshes halfway through, then uncomment this to immediately swap instead 
-	//SwapToNewWeaponMesh();
+	SwapToNewWeaponMesh();
 
 }
 
-
-/*
-
-
-
-
-
-
-
-
-
-void ASCharacter::EquipWeapon(ASWeapon* Weapon)
+void AFusionCharacter::EquipWeapon(AMasterWeapon* Weapon)
 {
 	if (Weapon)
 	{
@@ -493,28 +619,28 @@ void ASCharacter::EquipWeapon(ASWeapon* Weapon)
 		if (Role == ROLE_Authority)
 		{
 			SetCurrentWeapon(Weapon, CurrentWeapon);
+			
+			CurrentWeapon->AttachToComponent(Mesh1P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
 		}
 		else
 		{
 			ServerEquipWeapon(Weapon);
 		}
+
 	}
 }
 
-
-bool ASCharacter::ServerEquipWeapon_Validate(ASWeapon* Weapon)
+bool AFusionCharacter::ServerEquipWeapon_Validate(AMasterWeapon* Weapon)
 {
 	return true;
 }
 
-
-void ASCharacter::ServerEquipWeapon_Implementation(ASWeapon* Weapon)
+void AFusionCharacter::ServerEquipWeapon_Implementation(AMasterWeapon* Weapon)
 {
 	EquipWeapon(Weapon);
 }
 
-
-void ASCharacter::AddWeapon(class ASWeapon* Weapon)
+void AFusionCharacter::AddWeapon(class AMasterWeapon* Weapon)
 {
 	if (Weapon && Role == ROLE_Authority)
 	{
@@ -529,8 +655,7 @@ void ASCharacter::AddWeapon(class ASWeapon* Weapon)
 	}
 }
 
-
-void ASCharacter::RemoveWeapon(class ASWeapon* Weapon, bool bDestroy)
+void AFusionCharacter::RemoveWeapon(class AMasterWeapon* Weapon, bool bDestroy)
 {
 	if (Weapon && Role == ROLE_Authority)
 	{
@@ -561,7 +686,7 @@ void ASCharacter::RemoveWeapon(class ASWeapon* Weapon, bool bDestroy)
 	}
 }
 
-void ASCharacter::OnReload()
+void AFusionCharacter::OnReload()
 {
 	if (CurrentWeapon)
 	{
@@ -569,14 +694,16 @@ void ASCharacter::OnReload()
 	}
 }
 
-
-void ASCharacter::OnStartFire()
+void AFusionCharacter::OnStartFire()
 {
 	if (IsSprinting())
 	{
 		SetSprinting(false);
 	}
 
+
+	// TODO: Change this code to code that will throw the objective if holding one later.
+	/*
 	if (CarriedObjectComp->GetIsCarryingActor())
 	{
 		StopWeaponFire();
@@ -584,18 +711,18 @@ void ASCharacter::OnStartFire()
 		CarriedObjectComp->Throw();
 		return;
 	}
+	*/
+
 
 	StartWeaponFire();
 }
 
-
-void ASCharacter::OnStopFire()
+void AFusionCharacter::OnStopFire()
 {
 	StopWeaponFire();
 }
 
-
-void ASCharacter::StartWeaponFire()
+void AFusionCharacter::StartWeaponFire()
 {
 	if (!bWantsToFire)
 	{
@@ -607,8 +734,7 @@ void ASCharacter::StartWeaponFire()
 	}
 }
 
-
-void ASCharacter::StopWeaponFire()
+void AFusionCharacter::StopWeaponFire()
 {
 	if (bWantsToFire)
 	{
@@ -620,42 +746,46 @@ void ASCharacter::StopWeaponFire()
 	}
 }
 
-
-void ASCharacter::OnSwapWeapon()
+void AFusionCharacter::OnSwapWeapon()
 {
+	// TODO: Set a bool check to go from next weapon to previous weapon so you can swap with q
+}
+
+void AFusionCharacter::OnNextWeapon()
+{
+	/*
 	if (CarriedObjectComp->GetIsCarryingActor())
 	{
-		CarriedObjectComp->Rotate(0.0f, 1.0f);
-		return;
-	}
-
+	CarriedObjectComp->Rotate(0.0f, 1.0f);
+	return;
+	}*/
+	
 	if (Inventory.Num() >= 2) // TODO: Check for weaponstate.
 	{
 		const int32 CurrentWeaponIndex = Inventory.IndexOfByKey(CurrentWeapon);
-		ASWeapon* NextWeapon = Inventory[(CurrentWeaponIndex + 1) % Inventory.Num()];
+		AMasterWeapon* NextWeapon = Inventory[(CurrentWeaponIndex + 1) % Inventory.Num()];
 		EquipWeapon(NextWeapon);
 	}
 }
 
-
-void ASCharacter::OnPrevWeapon()
+void AFusionCharacter::OnPrevWeapon()
 {
+	/*
 	if (CarriedObjectComp->GetIsCarryingActor())
 	{
 		CarriedObjectComp->Rotate(0.0f, -1.0f);
 		return;
-	}
+	}*/
 
 	if (Inventory.Num() >= 2) // TODO: Check for weaponstate.
 	{
 		const int32 CurrentWeaponIndex = Inventory.IndexOfByKey(CurrentWeapon);
-		ASWeapon* PrevWeapon = Inventory[(CurrentWeaponIndex - 1 + Inventory.Num()) % Inventory.Num()];
+		AMasterWeapon* PrevWeapon = Inventory[(CurrentWeaponIndex - 1 + Inventory.Num()) % Inventory.Num()];
 		EquipWeapon(PrevWeapon);
 	}
 }
 
-
-void ASCharacter::DropWeapon()
+void AFusionCharacter::DropWeapon()
 {
 	if (Role < ROLE_Authority)
 	{
@@ -671,8 +801,8 @@ void ASCharacter::DropWeapon()
 		if (Controller == nullptr)
 		{
 			return;
-		}		
-		
+		}
+
 		// Find a location to drop the item, slightly in front of the player.
 		// Perform ray trace to check for blocking objects or walls and to make sure we don't drop any item through the level mesh 
 		Controller->GetPlayerViewPoint(CamLoc, CamRot);
@@ -706,7 +836,8 @@ void ASCharacter::DropWeapon()
 		// Spawn the "dropped" weapon 
 		FActorSpawnParameters SpawnInfo;
 		SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		ASWeaponPickup* NewWeaponPickup = GetWorld()->SpawnActor<ASWeaponPickup>(CurrentWeapon->WeaponPickupClass, SpawnLocation, FRotator::ZeroRotator, SpawnInfo);
+		
+		AWeaponPickupActor* NewWeaponPickup = GetWorld()->SpawnActor<AWeaponPickupActor>(CurrentWeapon->WeaponPickupClass, SpawnLocation, FRotator::ZeroRotator, SpawnInfo);
 
 		if (NewWeaponPickup)
 		{
@@ -719,38 +850,38 @@ void ASCharacter::DropWeapon()
 			}
 		}
 
+		
 		RemoveWeapon(CurrentWeapon, true);
 	}
 }
 
-
-void ASCharacter::ServerDropWeapon_Implementation()
+void AFusionCharacter::ServerDropWeapon_Implementation()
 {
 	DropWeapon();
 }
 
 
-bool ASCharacter::ServerDropWeapon_Validate()
+bool AFusionCharacter::ServerDropWeapon_Validate()
 {
 	return true;
 }
 
-
-void ASCharacter::OnEquipPrimaryWeapon()
+void AFusionCharacter::OnEquipPrimaryWeapon()
 {
+	/*
 	if (CarriedObjectComp->GetIsCarryingActor())
 	{
 		CarriedObjectComp->Rotate(1.0f, 0.0f);
 		return;
-	}
+	}*/
 
 	if (Inventory.Num() >= 1)
 	{
 		// Find first weapon that uses primary slot. 
 		for (int32 i = 0; i < Inventory.Num(); i++)
 		{
-			ASWeapon* Weapon = Inventory[i];
-			if (Weapon->GetStorageSlot() == EInventorySlot::Primary)
+			AMasterWeapon* Weapon = Inventory[i];
+			if (Weapon->GetWeaponSlot() == EEquippedWeaponTypes::EWT_Primary)
 			{
 				EquipWeapon(Weapon);
 			}
@@ -758,22 +889,22 @@ void ASCharacter::OnEquipPrimaryWeapon()
 	}
 }
 
-
-void ASCharacter::OnEquipSecondaryWeapon()
+void AFusionCharacter::OnEquipSecondaryWeapon()
 {
+	/*
 	if (CarriedObjectComp->GetIsCarryingActor())
 	{
-		CarriedObjectComp->Rotate(-1.0f, 0.0f);
-		return;
-	}
+	CarriedObjectComp->Rotate(-1.0f, 0.0f);
+	return;
+	}*/
 
 	if (Inventory.Num() >= 2)
 	{
 		// Find first weapon that uses secondary slot. 
 		for (int32 i = 0; i < Inventory.Num(); i++)
 		{
-			ASWeapon* Weapon = Inventory[i];
-			if (Weapon->GetStorageSlot() == EInventorySlot::Secondary)
+			AMasterWeapon* Weapon = Inventory[i];
+			if (Weapon->GetWeaponSlot() == EEquippedWeaponTypes::EWT_Secondary)
 			{
 				EquipWeapon(Weapon);
 			}
@@ -781,15 +912,15 @@ void ASCharacter::OnEquipSecondaryWeapon()
 	}
 }
 
-bool ASCharacter::WeaponSlotAvailable(EInventorySlot CheckSlot)
+bool AFusionCharacter::WeaponSlotAvailable(EEquippedWeaponTypes CheckSlot)
 {
 	// Iterate all weapons to see if requested slot is occupied 
 	for (int32 i = 0; i < Inventory.Num(); i++)
 	{
-		ASWeapon* Weapon = Inventory[i];
+		AMasterWeapon* Weapon = Inventory[i];
 		if (Weapon)
 		{
-			if (Weapon->GetStorageSlot() == CheckSlot)
+			if (Weapon->GetWeaponSlot() == CheckSlot)
 				return false;
 		}
 	}
@@ -798,11 +929,8 @@ bool ASCharacter::WeaponSlotAvailable(EInventorySlot CheckSlot)
 
 	// Special find function as alternative to looping the array and performing if statements 
 	// the [=] prefix means "capture by value", other options include [] "capture nothing" and [&] "capture by reference"
-	//return nullptr == Inventory.FindByPredicate([=](ASWeapon* W){ return W->GetStorageSlot() == CheckSlot; });
+	//return nullptr == Inventory.FindByPredicate([=](AMasterWeapon* W){ return W->GetStorageSlot() == CheckSlot; });
 }
-
-
-*/
 
 void AFusionCharacter::Suicide()
 {
@@ -825,27 +953,25 @@ void AFusionCharacter::KilledBy(class APawn* EventInstigator)
 	}
 }
 
-/*
 void AFusionCharacter::SwapToNewWeaponMesh()
 {
 	if (PreviousWeapon)
 	{
-		PreviousWeapon->AttachMeshToPawn(PreviousWeapon->GetStorageSlot());
+		PreviousWeapon->AttachMeshToPawn(PreviousWeapon->GetWeaponSlot());
 	}
 
 	if (CurrentWeapon)
 	{
-		CurrentWeapon->AttachMeshToPawn(EEquippedWeaponTypes::WeaponAttachPoint);
+		CurrentWeapon->AttachMeshToPawn(EEquippedWeaponTypes::EWT_Primary);
 	}
 }
-*/
 
 
 void AFusionCharacter::SetSprinting(bool NewSprinting)
 {
 	if (bWantsToSprint)
 	{
-		//StopWeaponFire();
+		StopWeaponFire();
 	}
 
 	Super::SetSprinting(NewSprinting);
@@ -879,6 +1005,8 @@ float AFusionCharacter::TakeDamage(float Damage, struct FDamageEvent const& Dama
 
 	return ActualDamage;
 }
+
+/*
 
 void AFusionCharacter::AttemptToFire()
 {
@@ -915,4 +1043,4 @@ bool AFusionCharacter::ServerOnFire_Validate()
 	return true;
 }
 
-
+*/

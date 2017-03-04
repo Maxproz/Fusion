@@ -6,6 +6,15 @@
 
 #include "FusionCharacter.generated.h"
 
+
+namespace InventoryTypes
+{
+	
+#define MAX_INVENTORY_SIZE = 2;
+
+}
+
+
 class UInputComponent;
 
 UCLASS(config=Game)
@@ -18,17 +27,18 @@ class AFusionCharacter : public AFusionBaseCharacter
 	class USkeletalMeshComponent* Mesh1P;
 
 	/** Gun mesh: 1st person view (seen only by self) */
-	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-	class USkeletalMeshComponent* FP_Gun;
+	//UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
+	//class USkeletalMeshComponent* FP_Gun;
 
 	/** Location on gun mesh where projectiles should spawn. */
-	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-	class USceneComponent* FP_MuzzleLocation;
+	//UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
+	//class USceneComponent* FP_MuzzleLocation;
 
 	/** First person camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FirstPersonCameraComponent;
 
+	void StopAllAnimMontages();
 
 public:
 	AFusionCharacter(const class FObjectInitializer& ObjectInitializer);
@@ -57,18 +67,19 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Gameplay)
 	FVector GunOffset;
 
-	/** Projectile class to spawn */
+	/*
+	// Projectile class to spawn 
 	UPROPERTY(EditDefaultsOnly, Category=Projectile)
 	TSubclassOf<class AFusionProjectile> ProjectileClass;
 
-	/** Sound to play each time we fire */
+	// Sound to play each time we fire 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Gameplay)
 	class USoundBase* FireSound;
 
-	/** AnimMontage to play each time we fire */
+	// AnimMontage to play each time we fire 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	class UAnimMontage* FireAnimation;
-
+	*/
 
 	/************************************************************************/
 	/* MOVEMENT                                                       */
@@ -132,6 +143,34 @@ public:
 	/* Client mapped to Input */
 	void OnCrouchToggle();
 
+
+	/************************************************************************/
+	/* Object Interaction                                                   */
+	/************************************************************************/
+
+
+	/* Use the usable actor currently in focus, if any */
+	UFUNCTION()
+	virtual void Use();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerUse();
+	void ServerUse_Implementation();
+	bool ServerUse_Validate();
+
+	class AMasterPickupActor* GetPickupInView();
+
+	/*Max distance to use/focus on actors. */
+	UPROPERTY(EditDefaultsOnly, Category = "ObjectInteraction")
+	float MaxUseDistance = 1000; 
+
+	/* True only in first frame when focused on a new usable actor. */
+	bool bHasNewFocus = true;
+
+	class AMasterPickupActor* FocusedPickupActor = nullptr;
+
+
+
 	/************************************************************************/
 	/* Damage & Death                                                       */
 	/************************************************************************/
@@ -144,17 +183,10 @@ public:
 
 
 	/************************************************************************/
-	/* Weapons                                                              */
+	/* Weapons & Inventory                                                  */
 	/************************************************************************/
-	
-	// Check if pawn is allowed to fire weapon 
-	bool CanFire() const;
 
-	bool CanReload() const;
-	
-
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
-	bool IsFiring() const;
+private:
 
 	/* Attachpoint for Primary active weapon in hands */
 	UPROPERTY(EditDefaultsOnly, Category = "Sockets")
@@ -163,6 +195,62 @@ public:
 	/* Attachpoint for primary weapons */
 	UPROPERTY(EditDefaultsOnly, Category = "Sockets")
 	FName BackAttachPoint;
+
+	bool bWantsToFire;
+
+	/* Distance away from character when dropping inventory items. */
+	UPROPERTY(EditDefaultsOnly, Category = "Inventory")
+	float DropWeaponMaxDistance;
+
+	void OnReload();
+
+	/* Mapped to input */
+	void OnStartFire();
+
+	/* Mapped to input */
+	void OnStopFire();
+
+	/* Mapped to input */
+	void OnNextWeapon();
+
+	/* Mapped to input */
+	void OnPrevWeapon();
+
+	/* Mapped to input */ // TODO: Needs implemented
+	void OnSwapWeapon();
+
+	/* Mapped to input */
+	void OnEquipPrimaryWeapon();
+
+	/* Mapped to input */
+	void OnEquipSecondaryWeapon();
+
+	void StartWeaponFire();
+
+	void StopWeaponFire();
+
+	void DestroyInventory();
+
+	/* Mapped to input. Drops current weapon */
+	void DropWeapon();
+
+	UFUNCTION(Reliable, Server, WithValidation)
+	void ServerDropWeapon();
+	void ServerDropWeapon_Implementation();
+	bool ServerDropWeapon_Validate();
+	
+public:
+
+	// Check if pawn is allowed to fire weapon 
+	bool CanFire() const;
+
+	bool CanReload() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	bool IsFiring() const;
+
+	/* Check if the specified slot is available, limited to one item per type (primary, secondary) */
+	bool WeaponSlotAvailable(EEquippedWeaponTypes CheckSlot);
 
 	/* Return socket name for attachments (to match the socket in the character skeleton) */
 	FName GetInventoryAttachPoint(EEquippedWeaponTypes WeaponSlot) const;
@@ -181,11 +269,30 @@ public:
 	// uses optional second parameter
 	void SetCurrentWeapon(class AMasterWeapon* NewWeapon, class AMasterWeapon* LastWeapon = nullptr);
 
+	/* It will just be 2 slots for the primary and secondary weapons for now. */
+	UPROPERTY(Transient, Replicated)
+	TArray<class AMasterWeapon*> Inventory;
+
+	void EquipWeapon(class AMasterWeapon* Weapon);
+
+	UFUNCTION(Reliable, Server, WithValidation)
+	void ServerEquipWeapon(class AMasterWeapon* Weapon);
+	void ServerEquipWeapon_Implementation(class AMasterWeapon* Weapon);
+	bool ServerEquipWeapon_Validate(class AMasterWeapon* Weapon);
+
+	void AddWeapon(class AMasterWeapon* Weapon);
+
+	void RemoveWeapon(class AMasterWeapon* Weapon, bool bDestroy);
+
+	/* Update the weapon mesh to the newly equipped weapon, this is triggered during an anim montage.
+	NOTE: Requires an AnimNotify created in the Equip animation to tell us when to swap the meshes. */
+	UFUNCTION(BlueprintCallable, Category = "Animation")
+	void SwapToNewWeaponMesh();
 
 protected:
 	
 	/** Fires a projectile. */
-	void OnFire();
+	//void OnFire();
 
 public:
 	/** Returns Mesh1P subobject **/
@@ -197,7 +304,7 @@ public:
 private:
 	/**
 	* OnFire Server version. Call this instead of OnFire when you're a client
-	*/
+	
 	UFUNCTION(Server, Reliable, WithValidation)
 	void ServerOnFire();
 	void ServerOnFire_Implementation();
@@ -205,10 +312,8 @@ private:
 	
 	UFUNCTION()
 	void AttemptToFire();
-
-	void StopAllAnimMontages();
-
-	float Ammo = 500;
+	*/
+	
 
 	//float TimeSinceLastHit = 0.f;
 	//MyPlayerState->ManaRegen();  // start the refresh tick
