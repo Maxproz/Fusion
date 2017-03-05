@@ -6,6 +6,11 @@
 
 #include "FusionPlayerController.h"
 
+#include "Player/Animation/FusionArms.h"
+
+#include "Runtime/Engine/Classes/Animation/AnimMontage.h"
+#include "Runtime/Engine/Classes/Animation/AnimInstance.h"
+
 #include "MasterWeapon.h"
 
 
@@ -16,7 +21,8 @@ AMasterWeapon::AMasterWeapon(const FObjectInitializer& ObjectInitializer)
 	Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh3P"));
 	Mesh->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered;
 	Mesh->bReceivesDecals = true;
-	Mesh->CastShadow = true;
+	//Mesh->CastShadow = true;
+	Mesh->CastShadow = false;
 	Mesh->SetCollisionObjectType(ECC_WorldDynamic);
 	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	Mesh->SetCollisionResponseToAllChannels(ECR_Ignore);
@@ -119,7 +125,7 @@ void AMasterWeapon::AttachMeshToPawn(EEquippedWeaponTypes Slot)
 		// Remove and hide
 		DetachMeshFromPawn();
 
-		USkeletalMeshComponent* PawnMesh = MyPawn->GetMesh();
+		USkeletalMeshComponent* PawnMesh = MyPawn->GetMesh1P(); // here I changed to the first person mesh
 		FName AttachPoint = MyPawn->GetInventoryAttachPoint(Slot);
 		Mesh->SetHiddenInGame(false);
 		Mesh->AttachToComponent(PawnMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, AttachPoint);
@@ -404,6 +410,20 @@ void AMasterWeapon::SimulateWeaponFire()
 
 	if (!bPlayingFireAnim)
 	{
+		UFusionArms* Arms = Cast<UFusionArms>(MyPawn->GetMesh1P()->GetAnimInstance());
+
+		if (Arms)
+		{
+			if (MyPawn->bIsZooming)
+			{
+				float AnimDurationArmMesh = Arms->Montage_Play(Arms->ZoomFireMontage);
+			}
+			else
+			{
+				float AnimDurationArmMesh = Arms->Montage_Play(Arms->FireMontage);
+			}
+		}
+
 		PlayWeaponAnimation(FireAnim);
 		bPlayingFireAnim = true;
 	}
@@ -672,6 +692,9 @@ void AMasterWeapon::SetAmmoCount(int32 NewTotalAmount)
 
 void AMasterWeapon::StartReload(bool bFromReplication)
 {
+	MyPawn->bIsReloading = true;
+
+
 	/* Push the request to server */
 	if (!bFromReplication && Role < ROLE_Authority)
 	{
@@ -684,7 +707,15 @@ void AMasterWeapon::StartReload(bool bFromReplication)
 		bPendingReload = true;
 		DetermineWeaponState();
 
+		UFusionArms* Arms = Cast<UFusionArms>(MyPawn->GetMesh1P()->GetAnimInstance());
+		
+		if (Arms)
+		{
+			float AnimDurationArmMesh = Arms->Montage_Play(Arms->ReloadMontage);
+		}
+		
 		float AnimDuration = PlayWeaponAnimation(ReloadAnim);
+
 		if (AnimDuration <= 0.0f)
 		{
 			AnimDuration = NoAnimReloadDuration;
@@ -722,6 +753,8 @@ void AMasterWeapon::ReloadWeapon()
 	{
 		CurrentAmmoInClip += ClipDelta;
 	}
+
+	MyPawn->bIsReloading = false;
 }
 
 

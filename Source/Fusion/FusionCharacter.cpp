@@ -25,9 +25,11 @@ AFusionCharacter::AFusionCharacter(const class FObjectInitializer& ObjectInitial
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
 
-	// set our turn rates for input
-	BaseTurnRate = 45.f;
-	BaseLookUpRate = 45.f;
+	/* Ignore this channel or it will absorb the trace impacts instead of the skeletal mesh */
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(COLLISION_PROJECTILE, ECR_Block);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(COLLISION_WEAPON, ECR_Ignore);
+
 
 	// Create a CameraComponent	
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
@@ -36,27 +38,36 @@ AFusionCharacter::AFusionCharacter(const class FObjectInitializer& ObjectInitial
 	FirstPersonCameraComponent->bUsePawnControlRotation = true;
 
 	// Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
-	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh1P"));
-	Mesh1P->SetOnlyOwnerSee(true);
+	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("MeshFirstPerson"));
+	//Mesh1P->SetupAttachment(GetCapsuleComponent());
 	Mesh1P->SetupAttachment(FirstPersonCameraComponent);
+	Mesh1P->bOnlyOwnerSee = true;
+	Mesh1P->bOwnerNoSee = false;
 	Mesh1P->bCastDynamicShadow = false;
 	Mesh1P->CastShadow = false;
+	Mesh1P->bReceivesDecals = false;
+	Mesh1P->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered;
+	Mesh1P->PrimaryComponentTick.TickGroup = TG_PrePhysics;
+	Mesh1P->SetCollisionObjectType(ECC_Pawn);
+	Mesh1P->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Mesh1P->SetCollisionResponseToAllChannels(ECR_Ignore);
+	
 	Mesh1P->RelativeRotation = FRotator(1.9f, -19.19f, 5.2f);
 	Mesh1P->RelativeLocation = FVector(-0.5f, -4.4f, -155.7f);
+	
+	GetMesh()->bOnlyOwnerSee = false;
+	GetMesh()->bOwnerNoSee = true;
+	GetMesh()->bReceivesDecals = false;
+	GetMesh()->SetCollisionObjectType(ECC_Pawn);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	GetMesh()->SetCollisionResponseToChannel(COLLISION_WEAPON, ECR_Block);
+	GetMesh()->SetCollisionResponseToChannel(COLLISION_PROJECTILE, ECR_Block);
+	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 
-	/*
-	// Create a gun mesh component
-	FP_Gun = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FP_Gun"));
-	FP_Gun->SetOnlyOwnerSee(true);			// only the owning player will see this mesh
-	FP_Gun->bCastDynamicShadow = false;
-	FP_Gun->CastShadow = false;
-	// FP_Gun->SetupAttachment(Mesh1P, TEXT("GripPoint")); // done in beginplay
-	FP_Gun->SetupAttachment(RootComponent);
 
-	FP_MuzzleLocation = CreateDefaultSubobject<USceneComponent>(TEXT("MuzzleLocation"));
-	FP_MuzzleLocation->SetupAttachment(FP_Gun);
-	FP_MuzzleLocation->SetRelativeLocation(FVector(0.2f, 48.4f, -10.6f));
-	*/
+	// set our turn rates for input
+	BaseTurnRate = 45.f;
+	BaseLookUpRate = 45.f;
 
 	// Default offset from the character location for projectiles to spawn
 	GunOffset = FVector(100.0f, 0.0f, 10.0f);
@@ -73,15 +84,11 @@ AFusionCharacter::AFusionCharacter(const class FObjectInitializer& ObjectInitial
 	MoveComp->MaxWalkSpeedCrouched = 200;
 	// Enable crouching
 	MoveComp->GetNavAgentPropertiesRef().bCanCrouch = true;
-
-	/* Ignore this channel or it will absorb the trace impacts instead of the skeletal mesh */
-	GetCapsuleComponent()->SetCollisionResponseToChannel(COLLISION_WEAPON, ECR_Ignore);
 	
-	
-	DropWeaponMaxDistance = 100;
+	DropWeaponMaxDistance = 140;
 
 	/* Names as specified in the character skeleton */
-	WeaponAttachPoint = TEXT("WeaponAttachPoint");
+	WeaponAttachPoint = TEXT("WeaponSocket");
 	BackAttachPoint = TEXT("BackAttachPoint");
 
 	// Note: The ProjectileClass and the skeletal mesh/anim blueprints for Mesh1P, FP_Gun, and VR_Gun 
@@ -620,7 +627,6 @@ void AFusionCharacter::EquipWeapon(AMasterWeapon* Weapon)
 		{
 			SetCurrentWeapon(Weapon, CurrentWeapon);
 			
-			CurrentWeapon->AttachToComponent(Mesh1P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
 		}
 		else
 		{
@@ -691,6 +697,7 @@ void AFusionCharacter::OnReload()
 	if (CurrentWeapon)
 	{
 		CurrentWeapon->StartReload();
+
 	}
 }
 
@@ -831,6 +838,7 @@ void AFusionCharacter::DropWeapon()
 		else
 		{
 			SpawnLocation = TraceEnd;
+			SpawnLocation.Z += SpawnLocation.Z * 0.2;
 		}
 
 		// Spawn the "dropped" weapon 

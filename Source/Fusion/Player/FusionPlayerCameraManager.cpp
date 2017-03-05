@@ -67,6 +67,7 @@ void AFusionPlayerCameraManager::UpdateCamera(float DeltaTime)
 		}
 
 		bWasCrouched = MyPawn->bIsCrouched;
+		
 		/* Clamp the lerp to 0-1.0 range and interpolate to our new crouch offset */
 		CurrentCrouchOffset = FMath::Lerp(CurrentCrouchOffset, 0.0f, FMath::Clamp(CrouchLerpVelocity * DeltaTime, 0.0f, 1.0f));
 

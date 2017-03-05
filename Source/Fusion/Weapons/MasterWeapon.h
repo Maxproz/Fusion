@@ -70,7 +70,7 @@ protected:
 	UPROPERTY(Transient, ReplicatedUsing = OnRep_MyPawn)
 	class AFusionCharacter* MyPawn;
 
-	/** weapon mesh: 3rd person view */
+	/** weapon mesh: */
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
 	USkeletalMeshComponent* Mesh;
 

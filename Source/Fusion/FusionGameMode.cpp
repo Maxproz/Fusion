@@ -125,24 +125,24 @@ ETeamColors AFusionGameMode::AutoAssignTeamColor()
 {
 	// TODO: Figure out how I am going to do the rules for max players and associate it with this functionality below.
 
-	if (RedTeamPlayers == BlueTeamPlayers)
+	//if (RedTeamPlayers == BlueTeamPlayers)
+	//{
+		//RedTeamPlayers++;
+		//return ETeamColors::ETC_RED;
+	//}
+
+
+	if (RedTeamPlayers > BlueTeamPlayers)
+	{
+		BlueTeamPlayers++;
+		return ETeamColors::ETC_BLUE;
+	}
+	else
 	{
 		RedTeamPlayers++;
 		return ETeamColors::ETC_RED;
 	}
-	else
-	{
-		if (RedTeamPlayers > BlueTeamPlayers)
-		{
-			BlueTeamPlayers++;
-			return ETeamColors::ETC_BLUE;
-		}
-		else
-		{
-			RedTeamPlayers++;
-			return ETeamColors::ETC_RED;
-		}
-	}
+
 }
 
 float AFusionGameMode::ModifyDamage(float Damage, AActor* DamagedActor, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) const

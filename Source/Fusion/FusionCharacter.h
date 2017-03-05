@@ -23,7 +23,7 @@ class AFusionCharacter : public AFusionBaseCharacter
 	GENERATED_BODY()
 
 	/** Pawn mesh: 1st person view (arms; seen only by self) */
-	UPROPERTY(VisibleDefaultsOnly, Category=Mesh)
+	UPROPERTY(VisibleAnywhere)
 	class USkeletalMeshComponent* Mesh1P;
 
 	/** Gun mesh: 1st person view (seen only by self) */
@@ -58,6 +58,8 @@ public:
 
 protected:
 
+
+
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 
 public:
@@ -67,19 +69,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Gameplay)
 	FVector GunOffset;
 
-	/*
-	// Projectile class to spawn 
-	UPROPERTY(EditDefaultsOnly, Category=Projectile)
-	TSubclassOf<class AFusionProjectile> ProjectileClass;
-
-	// Sound to play each time we fire 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Gameplay)
-	class USoundBase* FireSound;
-
-	// AnimMontage to play each time we fire 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
-	class UAnimMontage* FireAnimation;
-	*/
 
 	/************************************************************************/
 	/* MOVEMENT                                                       */
@@ -240,6 +229,12 @@ private:
 	bool ServerDropWeapon_Validate();
 	
 public:
+	// TODO: Should this be replicated?
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Debug)
+	bool bIsZooming = false;
+
+	bool bIsReloading = false;
 
 	// Check if pawn is allowed to fire weapon 
 	bool CanFire() const;

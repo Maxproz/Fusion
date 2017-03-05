@@ -36,7 +36,7 @@ protected:
 
 	/* Can we deal damage to players in the same team */
 	UPROPERTY(EditDefaultsOnly, Category = "Rules")
-	bool bAllowFriendlyFireDamage;
+	bool bAllowFriendlyFireDamage = true;
 
 	/* Called once on every new player that enters the gamemode */
 	virtual FString InitNewPlayer(class APlayerController* NewPlayerController, const FUniqueNetIdRepl& UniqueId, const FString& Options, const FString& Portal = TEXT("")) override;

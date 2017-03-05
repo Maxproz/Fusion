@@ -18,7 +18,9 @@ AFusionPlayerController::AFusionPlayerController(const class FObjectInitializer&
 	: Super(ObjectInitializer)
 {
 	/* Assign the class types we wish to use */
-	PlayerCameraManagerClass = AFusionPlayerCameraManager::StaticClass();
+	//PlayerCameraManagerClass = AFusionPlayerCameraManager::StaticClass();
+	
+	
 	/* Example - Can be set to true for debugging, generally a value like this would exist in the GameMode instead */
 	bRespawnImmediately = false;
 

@@ -6,7 +6,7 @@
 #include "FusionPlayerCameraManager.generated.h"
 
 /**
- * 
+ * Not using anymore, this was setup for third person games and didnt work correctly for first person
  */
 UCLASS()
 class FUSION_API AFusionPlayerCameraManager : public APlayerCameraManager
