@@ -11,7 +11,6 @@
 UENUM()
 enum class ETeamColors : uint8
 {
-	/* Weapons */
 	ETC_RED,
 	ETC_BLUE,
 	ETC_NONE,

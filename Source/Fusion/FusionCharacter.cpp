@@ -12,6 +12,8 @@
 #include "Player/Pickups/MasterPickupActor.h"
 #include "Player/Pickups/WeaponPickupActor.h"
 
+#include "FusionPlayerState.h"
+
 #include "GameFramework/InputSettings.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
@@ -106,11 +108,80 @@ void AFusionCharacter::BeginPlay()
 
 	// Initatite our OnTick Function for shield recharging behaviour
 	RechargeShields();
+	
+	
+	
+
 }
+
+void AFusionCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	if (Role == ROLE_Authority)
+	{
+		//SpawnDefaultInventory();
+	}
+
+	// set initial mesh visibility (3rd person view)
+	UpdatePawnMeshes();
+
+	// create material instance for setting team colors (3rd person view)
+	for (int32 iMat = 0; iMat < GetMesh()->GetNumMaterials(); iMat++)
+	{
+		MeshMIDs.Add(GetMesh()->CreateAndSetMaterialInstanceDynamic(iMat));
+	}
+
+
+	Mesh3rdPMID = GetMesh()->CreateAndSetMaterialInstanceDynamic(0);
+	Mesh1PMID = Mesh1P->CreateAndSetMaterialInstanceDynamic(0);
+	
+
+	/*
+	// play respawn effects
+	if (GetNetMode() != NM_DedicatedServer)
+	{
+		if (RespawnFX)
+		{
+			UGameplayStatics::SpawnEmitterAtLocation(this, RespawnFX, GetActorLocation(), GetActorRotation());
+		}
+
+		if (RespawnSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, RespawnSound, GetActorLocation());
+		}
+	}*/
+}
+
+void AFusionCharacter::Update3rdPersonMeshColor()
+{
+	UpdateTeamColors(Mesh3rdPMID);
+}
+
 
 void AFusionCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+
+	// Run a lambda function that will update the team colors client side for the 3rd person and first person meshes. (It wasnt working setting them once with the current setup).
+	// - Can tidy this up later to improve performance.
+	FTimerHandle TimerHandle;
+	FTimerDelegate TimerDelegate;
+
+	TimerDelegate.BindLambda([&]()
+	{
+
+		if (Mesh1PMID && Mesh3rdPMID)
+		{
+			UpdateTeamColors(Mesh1PMID);
+			Update3rdPersonMeshColor();
+		}
+
+	});
+
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, 4.f, false);
+
 
 	if (bWantsToSprint && !IsSprinting())
 	{
@@ -148,6 +219,16 @@ void AFusionCharacter::Tick(float DeltaTime)
 
 }
 
+void AFusionCharacter::PossessedBy(class AController* InController)
+{
+	Super::PossessedBy(InController);
+
+	// [server] as soon as PlayerState is assigned, set team colors of this pawn for local player
+	//UpdateTeamColorsAllMIDs();
+	Update3rdPersonMeshColor();
+}
+
+
 void AFusionCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
@@ -158,8 +239,22 @@ void AFusionCharacter::PawnClientRestart()
 {
 	Super::PawnClientRestart();
 
-	/* Equip the weapon on the client side. */
+	// switch mesh to 1st person view
+	UpdatePawnMeshes();
+
+	// reattach weapon if needed
 	SetCurrentWeapon(CurrentWeapon);
+
+	// set team colors for 1st person view
+	//UMaterialInstanceDynamic* Mesh1PMID = Mesh1P->CreateAndSetMaterialInstanceDynamic(0);
+
+	Mesh3rdPMID = GetMesh()->CreateAndSetMaterialInstanceDynamic(0);
+	Mesh1PMID = Mesh1P->CreateAndSetMaterialInstanceDynamic(0);
+	
+	UpdateTeamColors(Mesh1PMID);
+	Update3rdPersonMeshColor();
+
+
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -452,6 +547,15 @@ void AFusionCharacter::OnStopSprinting()
 	SetSprinting(false);
 }
 
+void AFusionCharacter::PreReplication(IRepChangedPropertyTracker & ChangedPropertyTracker)
+{
+	Super::PreReplication(ChangedPropertyTracker);
+
+	// Only replicate this property for a short duration after it changes so join in progress players don't get spammed with fx when joining late
+	DOREPLIFETIME_ACTIVE_OVERRIDE(AFusionCharacter, LastTakeHitInfo, GetWorld() && GetWorld()->GetTimeSeconds() < LastTakeHitTimeTimeout);
+}
+
+
 void AFusionCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -467,6 +571,13 @@ void AFusionCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 	/* If we did not display the current inventory on the player mesh we could optimize replication by using this replication condition. */
 	/* DOREPLIFETIME_CONDITION(ASCharacter, Inventory, COND_OwnerOnly);*/
+}
+
+void AFusionCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+	//AFusionPlayerState* MyPlayerState = Cast<AFusionPlayerState>(PlayerState);
+	//MyPlayerState->UpdateTeamColors();
 }
 
 void AFusionCharacter::OnCrouchToggle()
@@ -1012,6 +1123,63 @@ float AFusionCharacter::TakeDamage(float Damage, struct FDamageEvent const& Dama
 	//UpdateCharText();
 
 	return ActualDamage;
+}
+
+//////////////////////////////////////////////////////////////////////////
+// Meshes
+
+void AFusionCharacter::UpdatePawnMeshes()
+{
+	bool const bFirstPerson = IsFirstPerson();
+
+	Mesh1P->MeshComponentUpdateFlag = !bFirstPerson ? EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered : EMeshComponentUpdateFlag::AlwaysTickPoseAndRefreshBones;
+	Mesh1P->SetOwnerNoSee(!bFirstPerson);
+
+	GetMesh()->MeshComponentUpdateFlag = bFirstPerson ? EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered : EMeshComponentUpdateFlag::AlwaysTickPoseAndRefreshBones;
+	GetMesh()->SetOwnerNoSee(bFirstPerson);
+}
+
+void AFusionCharacter::UpdateTeamColors(UMaterialInstanceDynamic* UseMID)
+{
+	if (UseMID)
+	{
+		AFusionPlayerState* MyPlayerState = Cast<AFusionPlayerState>(PlayerState);
+		if (MyPlayerState != NULL)
+		{
+			//int32 MaterialParam = (int32)MyPlayerState->GetTeamColor();
+			
+			
+			ETeamColors MaterialParam = MyPlayerState->GetTeamColor();
+
+			switch (MaterialParam)
+			{
+				case ETeamColors::ETC_RED:
+				{
+					UseMID->SetVectorParameterValue(TEXT("Team Color Index"), FLinearColor(FColor::Red));
+					break;
+				}
+				case ETeamColors::ETC_BLUE:
+				{
+					UseMID->SetVectorParameterValue(TEXT("Team Color Index"), FLinearColor(FColor::Blue));
+					break;
+				}
+			}
+
+			//UseMID->SetScalarParameterValue(TEXT("Team Color Index"), MaterialParam);
+		}
+	}
+}
+
+void AFusionCharacter::UpdateTeamColorsAllMIDs()
+{
+	for (int32 i = 0; i < MeshMIDs.Num(); ++i)
+	{
+		//if (MeshMIDs.IsValidIndex(i))
+		{
+			UpdateTeamColors(MeshMIDs[i]);
+		}
+		
+	}
 }
 
 /*

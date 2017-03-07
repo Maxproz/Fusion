@@ -19,27 +19,22 @@ class FUSION_API AFusionPlayerState : public APlayerState
 
 	AFusionPlayerState(const FObjectInitializer& ObjectInitializer);
 
-	UPROPERTY(Transient, Replicated)
-	int32 NumKills;
 
-	UPROPERTY(Transient, Replicated)
-	int32 NumDeaths;
-
-	/* Team color/number assigned to player */
-	UPROPERTY(Transient, Replicated)
-	ETeamColors TeamColor;
-
-
-	/*
-	UPROPERTY(Transient, Replicated) // TODO: implement later if kills/deaths is working.
-	int32 NumAssists;
-	*/
 
 	virtual void Reset() override;
 
 	virtual void GetLifetimeReplicatedProps(TArray< class FLifetimeProperty > & OutLifetimeProps) const override;
 
+	virtual void ClientInitialize(AController* InController) override;
+
+	
+
+	UFUNCTION()
+	void OnRep_TeamColor();
+
 public:
+
+	virtual void CopyProperties(class APlayerState* PlayerState) override;
 
 	void AddKill();
 
@@ -61,8 +56,28 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Score")
 	float GetScore() const;
 
+	void UpdateTeamColors();
+
+protected:
 
 	
+	
+	UPROPERTY(VisibleInstanceOnly, Transient, Replicated)
+	int32 NumKills;
+
+	UPROPERTY(VisibleInstanceOnly, Transient, Replicated)
+	int32 NumDeaths;
+
+	/* Team color/number assigned to player */
+	UPROPERTY(VisibleInstanceOnly, Transient, ReplicatedUsing=OnRep_TeamColor)
+	ETeamColors TeamColor;
+
+
+
+	/*
+	UPROPERTY(Transient, Replicated) // TODO: implement later if kills/deaths is working.
+	int32 NumAssists;
+	*/
 
 	/*
 	UFUNCTION(BlueprintCallable, Category = "Score")

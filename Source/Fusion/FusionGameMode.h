@@ -19,6 +19,8 @@ protected:
 
 	virtual void InitGameState();
 
+	virtual void PostLogin(APlayerController* NewPlayer);
+
 	virtual void DefaultTimer();
 
 	virtual void StartMatch();
@@ -48,13 +50,18 @@ protected:
 
 	int32 NumberOfTeams = 2;
 
+	UPROPERTY(VisibleInstanceOnly)
 	int32 RedTeamPlayers = 0;
 
+	UPROPERTY(VisibleInstanceOnly)
 	int32 BlueTeamPlayers = 0;
 
+	UPROPERTY(VisibleInstanceOnly)
 	float MatchLength = 12.00f;
 
 	ETeamColors AutoAssignTeamColor();
+
+
 
 	/************************************************************************/
 	/* Player Spawning                                                      */

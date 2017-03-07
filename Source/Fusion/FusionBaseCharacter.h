@@ -117,6 +117,10 @@ protected:
 
 	void ReplicateHit(float DamageTaken, struct FDamageEvent const& DamageEvent, APawn* PawnInstigator, AActor* DamageCauser, bool bKilled);
 
+
+	/** Time at which point the last take hit info for the actor times out and won't be replicated; Used to stop join-in-progress effects all over the screen */
+	float LastTakeHitTimeTimeout;
+
 	/* Holds hit data to replicate hits and death to clients */
 	UPROPERTY(Transient, ReplicatedUsing = OnRep_LastTakeHitInfo)
 	FTakeHitInfo LastTakeHitInfo;

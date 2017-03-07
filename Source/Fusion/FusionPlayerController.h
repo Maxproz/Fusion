@@ -37,7 +37,7 @@ class FUSION_API AFusionPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 	
-		AFusionPlayerController(const FObjectInitializer& ObjectInitializer);
+	AFusionPlayerController(const FObjectInitializer& ObjectInitializer);
 	
 	/* Flag to respawn or start spectating upon death */
 	UPROPERTY(EditDefaultsOnly, Category = "Spawning")

@@ -52,9 +52,17 @@ public:
 
 	virtual void PawnClientRestart() override;
 
+	virtual void PreReplication(IRepChangedPropertyTracker & ChangedPropertyTracker) override;
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	virtual void OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode = 0) override;
+
+	virtual void PossessedBy(class AController* InController) override;
+
+	virtual void PostInitializeComponents() override;
+
+	virtual void OnRep_PlayerState() override;
 
 protected:
 
@@ -93,7 +101,33 @@ protected:
 	*/
 	void LookUpAtRate(float Rate);
 
+
+	/** material instances for setting team color in mesh (3rd person view) */
+	UPROPERTY(VisibleInstanceOnly, Transient)
+	TArray<UMaterialInstanceDynamic*> MeshMIDs;
+
+	UPROPERTY(VisibleInstanceOnly)
+	UMaterialInstanceDynamic* Mesh1PMID;
+
+	UPROPERTY(VisibleInstanceOnly, Transient)
+	UMaterialInstanceDynamic* Mesh3rdPMID;
+
+	
+
+	/** handle mesh visibility and updates */
+	void UpdatePawnMeshes();
+
+	/** handle mesh colors on specified material instance */
+	void UpdateTeamColors(UMaterialInstanceDynamic* UseMID);
+	
+
+
 public:
+
+	/** Update the team color of all player meshes. */
+	void UpdateTeamColorsAllMIDs();
+
+	void Update3rdPersonMeshColor();
 
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
@@ -317,8 +351,10 @@ public:
 	/** Applies damage to the character */
 	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
-
-
+	FORCEINLINE bool IsFirstPerson() const { return IsAlive() && Controller && Controller->IsLocalPlayerController(); }
+	
+		
+	
 
 };
 

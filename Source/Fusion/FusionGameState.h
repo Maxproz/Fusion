@@ -42,6 +42,9 @@ public:
 
 	void AddScore(int32 Score, ETeamColors TeamColor);
 
+	/** number of teams */
+	int32 NumTeams;
+
 	/* NetMulticast will send this event to all clients that know about this object, in the case of GameState that means every client. */
 	UFUNCTION(Reliable, NetMulticast)
 	void BroadcastGameMessage(EHUDMessage NewMessage);

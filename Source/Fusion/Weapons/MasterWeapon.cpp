@@ -424,7 +424,8 @@ void AMasterWeapon::SimulateWeaponFire()
 			}
 		}
 
-		PlayWeaponAnimation(FireAnim);
+		Mesh->GetAnimInstance()->Montage_Play(FireAnim);
+		//PlayWeaponAnimation(FireAnim);
 		bPlayingFireAnim = true;
 	}
 
@@ -714,7 +715,8 @@ void AMasterWeapon::StartReload(bool bFromReplication)
 			float AnimDurationArmMesh = Arms->Montage_Play(Arms->ReloadMontage);
 		}
 		
-		float AnimDuration = PlayWeaponAnimation(ReloadAnim);
+		float AnimDuration = Mesh->GetAnimInstance()->Montage_Play(ReloadAnim);
+		//float AnimDuration = PlayAWeaponAnimation(ReloadAnim);
 
 		if (AnimDuration <= 0.0f)
 		{

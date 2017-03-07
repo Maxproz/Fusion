@@ -36,6 +36,20 @@ AFusionGameMode::AFusionGameMode(const FObjectInitializer& ObjectInitializer)
 
 }
 
+void AFusionGameMode::PostLogin(APlayerController* NewPlayer)
+{
+
+	/*
+	// Place player on a team before Super (VoIP team based init, findplayerstart, etc)
+	AFusionPlayerState* NewPlayerState = CastChecked<AFusionPlayerState>(NewPlayer->PlayerState);
+	const ETeamColors TeamNum = AutoAssignTeamColor();
+	NewPlayerState->SetTeamColor(TeamNum);
+	*/
+
+	Super::PostLogin(NewPlayer);
+}
+
+
 
 void AFusionGameMode::InitGameState()
 {
@@ -45,6 +59,7 @@ void AFusionGameMode::InitGameState()
 	if (MyGameState)
 	{
 		MyGameState->ElapsedGameMinutes = MatchLength;
+		MyGameState->NumTeams = 2;
 	}
 }
 
@@ -56,6 +71,7 @@ void AFusionGameMode::PreInitializeComponents()
 	/* Set timer to run every second */
 	GetWorldTimerManager().SetTimer(TimerHandle_DefaultTimer, this, &AFusionGameMode::DefaultTimer, GetWorldSettings()->GetEffectiveTimeDilation(), true);
 }
+
 
 
 void AFusionGameMode::StartMatch()

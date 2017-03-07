@@ -4,6 +4,8 @@
 
 #include "FusionGameState.h"
 
+#include "FusionCharacter.h"
+
 #include "FusionPlayerState.h"
 
 
@@ -13,8 +15,36 @@ AFusionPlayerState::AFusionPlayerState(const FObjectInitializer& ObjectInitializ
 	/*  Players are updated to the correct team through the GameMode::InitNewPlayer */
 	TeamColor = ETeamColors::ETC_NONE;
 
+	NumKills = 0;
+	NumDeaths = 0;
+	Score = 0;
 }
 
+void AFusionPlayerState::ClientInitialize(AController* InController)
+{
+	Super::ClientInitialize(InController);
+
+	UpdateTeamColors();
+}
+
+void AFusionPlayerState::CopyProperties(APlayerState* PlayerState)
+{
+	Super::CopyProperties(PlayerState);
+
+	/*
+	AFusionPlayerState* FusionPlayer = Cast<AFusionPlayerState>(PlayerState);
+	if (FusionPlayer)
+	{
+		FusionPlayer->TeamColor = TeamColor;
+	}*/
+	
+}
+
+
+void AFusionPlayerState::OnRep_TeamColor()
+{
+	UpdateTeamColors();
+}
 
 void AFusionPlayerState::Reset()
 {
@@ -51,9 +81,26 @@ void AFusionPlayerState::AddScore(int32 Amount)
 	}
 }
 
+void AFusionPlayerState::UpdateTeamColors()
+{
+	AController* OwnerController = Cast<AController>(GetOwner());
+	if (OwnerController != NULL)
+	{
+		AFusionCharacter* FusionCharacter = Cast<AFusionCharacter>(OwnerController->GetCharacter());
+		if (FusionCharacter != NULL)
+		{
+			//FusionCharacter->UpdateTeamColorsAllMIDs();
+			FusionCharacter->Update3rdPersonMeshColor();
+		}
+	}
+}
+
+
 void AFusionPlayerState::SetTeamColor(ETeamColors NewTeamColor)
 {
 	TeamColor = NewTeamColor;
+
+	UpdateTeamColors();
 }
 
 
