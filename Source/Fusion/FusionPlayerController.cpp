@@ -4,6 +4,8 @@
 
 #include "FusionGameState.h"
 #include "FusionCharacter.h"
+#include "FusionPlayerState.h"
+#include "FusionGameInstance.h"
 
 #include "Player/FusionPlayerCameraManager.h"
 
@@ -22,7 +24,7 @@ AFusionPlayerController::AFusionPlayerController(const class FObjectInitializer&
 	
 	
 	/* Example - Can be set to true for debugging, generally a value like this would exist in the GameMode instead */
-	bRespawnImmediately = false;
+	bRespawnImmediately = true;
 
 }
 
@@ -30,16 +32,19 @@ AFusionPlayerController::AFusionPlayerController(const class FObjectInitializer&
 void AFusionPlayerController::UnFreeze()
 {
 	Super::UnFreeze();
-
+	
+	ServerRestartPlayer();
+	
+	/*
 	// Check if match is ending or has ended.
 	AFusionGameState* MyGameState = GetWorld()->GetGameState<AFusionGameState>();
 	if (MyGameState && MyGameState->HasMatchEnded())
 	{
-		/* Don't allow spectating or respawns */
+		// Don't allow spectating or respawns 
 		return;
 	}
 
-	/* Respawn or spectate */
+	// Respawn or spectate 
 	if (bRespawnImmediately)
 	{
 		ServerRestartPlayer();
@@ -48,6 +53,8 @@ void AFusionPlayerController::UnFreeze()
 	{
 		StartSpectating();
 	}
+
+	*/
 }
 
 
@@ -145,3 +152,91 @@ FText AFusionPlayerController::GetText(EHUDMessage MsgID)
 /* Remove the namespace definition so it doesn't exist in other files compiled after this one. */
 #undef LOCTEXT_NAMESPACE
 
+
+void AFusionPlayerController::ClientGameStarted_Implementation()
+{
+	//bAllowGameActions = true;
+
+	// Enable controls mode now the game has started
+	SetIgnoreMoveInput(false);
+
+	//AShooterHUD* ShooterHUD = GetShooterHUD();
+	//if (ShooterHUD)
+	//{
+	//	ShooterHUD->SetMatchState(EShooterMatchState::Playing);
+	//	ShooterHUD->ShowScoreboard(false);
+	//}
+	//bGameEndedFrame = false;
+
+	//QueryAchievements();
+
+	// Send round start event
+	const auto Events = Online::GetEventsInterface();
+	ULocalPlayer* LocalPlayer = Cast<ULocalPlayer>(Player);
+
+	if (LocalPlayer != nullptr && Events.IsValid())
+	{
+		auto UniqueId = LocalPlayer->GetPreferredUniqueNetId();
+
+		if (UniqueId.IsValid())
+		{
+			// Generate a new session id
+			Events->SetPlayerSessionId(*UniqueId, FGuid::NewGuid());
+
+			FString MapName = *FPackageName::GetShortName(GetWorld()->PersistentLevel->GetOutermost()->GetName());
+
+			// Fire session start event for all cases
+			FOnlineEventParms Params;
+			Params.Add(TEXT("GameplayModeId"), FVariantData((int32)1)); // @todo determine game mode (ffa v tdm)
+			Params.Add(TEXT("DifficultyLevelId"), FVariantData((int32)0)); // unused
+			Params.Add(TEXT("MapName"), FVariantData(MapName));
+
+			Events->TriggerEvent(*UniqueId, TEXT("PlayerSessionStart"), Params);
+
+			// Online matches require the MultiplayerRoundStart event as well
+			UFusionGameInstance* FGI = GetWorld() != NULL ? Cast<UFusionGameInstance>(GetWorld()->GetGameInstance()) : NULL;
+
+			if (FGI->GetIsOnline())
+			{
+				FOnlineEventParms MultiplayerParams;
+
+				// @todo: fill in with real values
+				MultiplayerParams.Add(TEXT("SectionId"), FVariantData((int32)0)); // unused
+				MultiplayerParams.Add(TEXT("GameplayModeId"), FVariantData((int32)1)); // @todo determine game mode (ffa v tdm)
+				MultiplayerParams.Add(TEXT("MatchTypeId"), FVariantData((int32)1)); // @todo abstract the specific meaning of this value across platforms
+				MultiplayerParams.Add(TEXT("DifficultyLevelId"), FVariantData((int32)0)); // unused
+
+				Events->TriggerEvent(*UniqueId, TEXT("MultiplayerRoundStart"), MultiplayerParams);
+			}
+
+			//bHasSentStartEvents = true;
+		}
+	}
+}
+
+/** Starts the online game using the session name in the PlayerState */
+void AFusionPlayerController::ClientStartOnlineGame_Implementation()
+{
+	if (!IsPrimaryPlayer())
+		return;
+
+	AFusionPlayerState* FusionPlayerState = Cast<AFusionPlayerState>(PlayerState);
+	if (FusionPlayerState)
+	{
+		IOnlineSubsystem* OnlineSub = IOnlineSubsystem::Get();
+		if (OnlineSub)
+		{
+			IOnlineSessionPtr Sessions = OnlineSub->GetSessionInterface();
+			if (Sessions.IsValid())
+			{
+				UE_LOG(LogOnline, Log, TEXT("Starting session %s on client"), *FusionPlayerState->SessionName.ToString());
+				Sessions->StartSession(FusionPlayerState->SessionName);
+			}
+		}
+	}
+	else
+	{
+		// Keep retrying until player state is replicated
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle_ClientStartOnlineGame, this, &AFusionPlayerController::ClientStartOnlineGame_Implementation, 0.2f, false);
+	}
+}

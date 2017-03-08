@@ -51,6 +51,9 @@ class FUSION_API AFusionPlayerController : public APlayerController
 	/* Respawn or start spectating after dying */
 	virtual void UnFreeze() override;
 
+	/** Handle for efficient management of ClientStartOnlineGame timer */
+	FTimerHandle TimerHandle_ClientStartOnlineGame;
+
 public:
 
 	UFUNCTION(Reliable, Client)
@@ -70,5 +73,14 @@ public:
 
 	/* Start spectating. Should be called only on server */
 	void StartSpectating();
+
+
+	/** notify player about started match */
+	UFUNCTION(reliable, client)
+	void ClientGameStarted();
+
+	/** Starts the online game using the session name in the PlayerState */
+	UFUNCTION(reliable, client)
+	void ClientStartOnlineGame();
 
 };

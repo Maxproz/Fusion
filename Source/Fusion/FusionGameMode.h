@@ -61,7 +61,16 @@ protected:
 
 	ETeamColors AutoAssignTeamColor();
 
+	/** best team */
+	int32 WinnerTeam;
 
+	/** pick team with least players in or random when it's equal */
+	int32 ChooseTeam(class AFusionPlayerState* ForPlayerState) const;
+
+
+	/** The bot pawn class */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = GameMode)
+	TSubclassOf<APawn> BotPawnClass;
 
 	/************************************************************************/
 	/* Player Spawning                                                      */
@@ -80,7 +89,7 @@ protected:
 	virtual bool IsSpawnpointPreferred(APlayerStart* SpawnPoint, AController* Controller);
 
 	/** returns default pawn class for given controller */
-	//virtual UClass* GetDefaultPawnClassForController_Implementation(AController* InController) override;
+	virtual UClass* GetDefaultPawnClassForController_Implementation(AController* InController) override;
 
 	/************************************************************************/
 	/* Damage & Killing                                                     */
@@ -95,6 +104,8 @@ public:
 
 	virtual float ModifyDamage(float Damage, AActor* DamagedActor, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) const;
 
+	/** starts new match */
+	virtual void HandleMatchHasStarted() override;
 
 public:
 

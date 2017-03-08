@@ -9,7 +9,7 @@
 AFusionGameState::AFusionGameState(const class FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	
+	NumTeams = 0;
 }
 
 void AFusionGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -19,6 +19,7 @@ void AFusionGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(AFusionGameState, ElapsedGameMinutes);
 	DOREPLIFETIME(AFusionGameState, RedTeamScore);
 	DOREPLIFETIME(AFusionGameState, BlueTeamScore);
+	DOREPLIFETIME(AFusionGameState, NumTeams);
 
 }
 

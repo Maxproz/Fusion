@@ -43,7 +43,15 @@ public:
 
 	TSharedPtr<class FOnlineSessionSettings> SessionSettings;
 
+	/** Returns true if the game is in online mode */
+	bool GetIsOnline() const { return bIsOnline; }
 
+private:
+
+	/** Whether the match is online or not */
+	bool bIsOnline;
+
+public:
 
 	/**
 	*	Function fired when a session create request has completed

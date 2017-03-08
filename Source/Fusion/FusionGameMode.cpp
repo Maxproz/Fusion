@@ -33,18 +33,47 @@ AFusionGameMode::AFusionGameMode(const FObjectInitializer& ObjectInitializer)
 	PlayerStateClass = AFusionPlayerState::StaticClass();
 	GameStateClass = AFusionGameState::StaticClass();
 	//SpectatorClass = ASSpectatorPawn::StaticClass();
+	
+	bUseSeamlessTravel = true;
+
+	NumberOfTeams = 2;
 
 }
 
 void AFusionGameMode::PostLogin(APlayerController* NewPlayer)
 {
-
-	/*
+	/**/
+	
 	// Place player on a team before Super (VoIP team based init, findplayerstart, etc)
 	AFusionPlayerState* NewPlayerState = CastChecked<AFusionPlayerState>(NewPlayer->PlayerState);
-	const ETeamColors TeamNum = AutoAssignTeamColor();
-	NewPlayerState->SetTeamColor(TeamNum);
-	*/
+	const int32 TeamNum = ChooseTeam(NewPlayerState);
+	NewPlayerState->SetTeamNum(TeamNum);
+
+	if (TeamNum == 0)
+	{
+		RedTeamPlayers++;
+	}
+	else
+	{
+		BlueTeamPlayers++;
+	}
+
+	// Supposed to be split functionality, with the team deathmatch implementation above
+
+
+	// update spectator location for client
+	AFusionPlayerController* NewPC = Cast<AFusionPlayerController>(NewPlayer);
+	if (NewPC && NewPC->GetPawn() == NULL)
+	{
+		//NewPC->ClientSetSpectatorCamera(NewPC->GetSpawnLocation(), NewPC->GetControlRotation());
+	}
+
+	// notify new player if match is already in progress
+	if (NewPC && IsMatchInProgress())
+	{
+		NewPC->ClientGameStarted();
+		NewPC->ClientStartOnlineGame();
+	}
 
 	Super::PostLogin(NewPlayer);
 }
@@ -59,9 +88,10 @@ void AFusionGameMode::InitGameState()
 	if (MyGameState)
 	{
 		MyGameState->ElapsedGameMinutes = MatchLength;
-		MyGameState->NumTeams = 2;
+		MyGameState->NumTeams = NumberOfTeams;
 	}
 }
+
 
 
 void AFusionGameMode::PreInitializeComponents()
@@ -72,6 +102,45 @@ void AFusionGameMode::PreInitializeComponents()
 	GetWorldTimerManager().SetTimer(TimerHandle_DefaultTimer, this, &AFusionGameMode::DefaultTimer, GetWorldSettings()->GetEffectiveTimeDilation(), true);
 }
 
+int32 AFusionGameMode::ChooseTeam(AFusionPlayerState* ForPlayerState) const
+{
+	TArray<int32> TeamBalance;
+	TeamBalance.AddZeroed(NumberOfTeams);
+
+	// get current team balance
+	for (int32 i = 0; i < GameState->PlayerArray.Num(); i++)
+	{
+		AFusionPlayerState const* const TestPlayerState = Cast<AFusionPlayerState>(GameState->PlayerArray[i]);
+		if (TestPlayerState && TestPlayerState != ForPlayerState && TeamBalance.IsValidIndex(TestPlayerState->GetTeamNum()))
+		{
+			TeamBalance[TestPlayerState->GetTeamNum()]++;
+		}
+	}
+
+	// find least populated one
+	int32 BestTeamScore = TeamBalance[0];
+	for (int32 i = 1; i < TeamBalance.Num(); i++)
+	{
+		if (BestTeamScore > TeamBalance[i])
+		{
+			BestTeamScore = TeamBalance[i];
+		}
+	}
+
+	// there could be more than one...
+	TArray<int32> BestTeams;
+	for (int32 i = 0; i < TeamBalance.Num(); i++)
+	{
+		if (TeamBalance[i] == BestTeamScore)
+		{
+			BestTeams.Add(i);
+		}
+	}
+
+	// get random from best list
+	const int32 RandomBestTeam = BestTeams[FMath::RandHelper(BestTeams.Num())];
+	return RandomBestTeam;
+}
 
 
 void AFusionGameMode::StartMatch()
@@ -84,7 +153,7 @@ void AFusionGameMode::StartMatch()
 void AFusionGameMode::DefaultTimer()
 {
 	/* Immediately start the match while playing in editor */
-	//if (GetWorld()->IsPlayInEditor())
+	if (GetWorld()->IsPlayInEditor())
 	{
 		if (GetMatchState() == MatchState::WaitingToStart)
 		{
@@ -128,14 +197,41 @@ FString AFusionGameMode::InitNewPlayer(class APlayerController* NewPlayerControl
 {
 	FString Result = Super::InitNewPlayer(NewPlayerController, UniqueId, Options, Portal);
 
+	// Done above inside of PostLogin()
+	/*
 	AFusionPlayerState* NewPlayerState = Cast<AFusionPlayerState>(NewPlayerController->PlayerState);
 	if (NewPlayerState)
 	{
-		NewPlayerState->SetTeamColor(AutoAssignTeamColor());
-	}
+		
+		NewPlayerState->UpdateTeamColors();
+	}*/
+	
 
 	return Result;
 }
+
+void AFusionGameMode::HandleMatchHasStarted()
+{
+	//bNeedsBotCreation = true;
+	Super::HandleMatchHasStarted();
+
+	AFusionGameState* const MyGameState = Cast<AFusionGameState>(GameState);
+	//MyGameState->RemainingTime = RoundTime;
+	//StartBots();
+
+	// notify players
+	for (FConstControllerIterator It = GetWorld()->GetControllerIterator(); It; ++It)
+	{
+		AFusionPlayerController* PC = Cast<AFusionPlayerController>(*It);
+		if (PC)
+		{
+			PC->ClientGameStarted();
+		}
+	}
+
+}
+
+
 
 ETeamColors AFusionGameMode::AutoAssignTeamColor()
 {
@@ -187,6 +283,8 @@ bool AFusionGameMode::ShouldSpawnAtStartSpot(AController* Player)
 	/* Always pick a random location */
 	return false;
 }
+
+
 
 
 AActor* AFusionGameMode::ChoosePlayerStart_Implementation(AController* Player)
@@ -285,18 +383,18 @@ bool AFusionGameMode::IsSpawnpointPreferred(APlayerStart* SpawnPoint, AControlle
 }
 
 
-/*
+
 // Used by RestartPlayer() to determine the pawn to create and possess when a bot or player spawns 
 UClass* AFusionGameMode::GetDefaultPawnClassForController_Implementation(AController* InController)
 {
-	if (Cast<ASZombieAIController>(InController))
+	if (Cast<AFusionPlayerController>(InController))
 	{
 		return BotPawnClass;
 	}
 
 	return Super::GetDefaultPawnClassForController_Implementation(InController);
 }
-*/
+
 
 bool AFusionGameMode::CanSpectate_Implementation(APlayerController* Viewer, APlayerState* ViewTarget)
 {

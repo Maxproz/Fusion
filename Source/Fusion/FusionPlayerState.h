@@ -27,14 +27,18 @@ class FUSION_API AFusionPlayerState : public APlayerState
 
 	virtual void ClientInitialize(AController* InController) override;
 
-	
+	virtual void CopyProperties(class APlayerState* PlayerState) override;
 
-	UFUNCTION()
-	void OnRep_TeamColor();
+
+
+
 
 public:
 
-	virtual void CopyProperties(class APlayerState* PlayerState) override;
+	/** get current team */
+	int32 GetTeamNum() const;
+
+	
 
 	void AddKill();
 
@@ -58,9 +62,17 @@ public:
 
 	void UpdateTeamColors();
 
-protected:
+public:
 
-	
+	UFUNCTION()
+	void OnRep_TeamColor();
+
+	void SetTeamNum(int32 NewTeamNumber);
+
+protected:
+	/** team number */
+	UPROPERTY(VisibleInstanceOnly, Transient, ReplicatedUsing = OnRep_TeamColor)
+	int32 TeamNumber;
 	
 	UPROPERTY(VisibleInstanceOnly, Transient, Replicated)
 	int32 NumKills;
@@ -69,9 +81,10 @@ protected:
 	int32 NumDeaths;
 
 	/* Team color/number assigned to player */
+	/*
 	UPROPERTY(VisibleInstanceOnly, Transient, ReplicatedUsing=OnRep_TeamColor)
 	ETeamColors TeamColor;
-
+	*/
 
 
 	/*

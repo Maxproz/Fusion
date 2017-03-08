@@ -108,9 +108,8 @@ void AFusionCharacter::BeginPlay()
 
 	// Initatite our OnTick Function for shield recharging behaviour
 	RechargeShields();
-	
-	
-	
+
+
 
 }
 
@@ -133,10 +132,6 @@ void AFusionCharacter::PostInitializeComponents()
 	}
 
 
-	Mesh3rdPMID = GetMesh()->CreateAndSetMaterialInstanceDynamic(0);
-	Mesh1PMID = Mesh1P->CreateAndSetMaterialInstanceDynamic(0);
-	
-
 	/*
 	// play respawn effects
 	if (GetNetMode() != NM_DedicatedServer)
@@ -153,34 +148,11 @@ void AFusionCharacter::PostInitializeComponents()
 	}*/
 }
 
-void AFusionCharacter::Update3rdPersonMeshColor()
-{
-	UpdateTeamColors(Mesh3rdPMID);
-}
 
 
 void AFusionCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-
-	// Run a lambda function that will update the team colors client side for the 3rd person and first person meshes. (It wasnt working setting them once with the current setup).
-	// - Can tidy this up later to improve performance.
-	FTimerHandle TimerHandle;
-	FTimerDelegate TimerDelegate;
-
-	TimerDelegate.BindLambda([&]()
-	{
-
-		if (Mesh1PMID && Mesh3rdPMID)
-		{
-			UpdateTeamColors(Mesh1PMID);
-			Update3rdPersonMeshColor();
-		}
-
-	});
-
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, 4.f, false);
 
 
 	if (bWantsToSprint && !IsSprinting())
@@ -224,8 +196,8 @@ void AFusionCharacter::PossessedBy(class AController* InController)
 	Super::PossessedBy(InController);
 
 	// [server] as soon as PlayerState is assigned, set team colors of this pawn for local player
-	//UpdateTeamColorsAllMIDs();
-	Update3rdPersonMeshColor();
+	UpdateTeamColorsAllMIDs();
+
 }
 
 
@@ -245,15 +217,9 @@ void AFusionCharacter::PawnClientRestart()
 	// reattach weapon if needed
 	SetCurrentWeapon(CurrentWeapon);
 
-	// set team colors for 1st person view
-	//UMaterialInstanceDynamic* Mesh1PMID = Mesh1P->CreateAndSetMaterialInstanceDynamic(0);
 
-	Mesh3rdPMID = GetMesh()->CreateAndSetMaterialInstanceDynamic(0);
-	Mesh1PMID = Mesh1P->CreateAndSetMaterialInstanceDynamic(0);
-	
+	UMaterialInstanceDynamic* Mesh1PMID = Mesh1P->CreateAndSetMaterialInstanceDynamic(0);
 	UpdateTeamColors(Mesh1PMID);
-	Update3rdPersonMeshColor();
-
 
 }
 
@@ -313,60 +279,9 @@ void AFusionCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 
 }
 
-/*
-void AFusionCharacter::OnFire()
-{
-	// try and fire a projectile
-	if (ProjectileClass != NULL)
-	{
-		UWorld* const World = GetWorld();
-		if (World != NULL)
-		{
-
-			const FRotator SpawnRotation = GetControlRotation();
-			// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
-			const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
-
-			//Set Spawn Collision Handling Override
-			FActorSpawnParameters ActorSpawnParams;
-			ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-
-			// spawn the projectile at the muzzle
-			World->SpawnActor<AFusionProjectile>(ProjectileClass, SpawnLocation, SpawnRotation, ActorSpawnParams);
-		}
-	}
-
-	// try and play the sound if specified
-	if (FireSound != NULL)
-	{
-		UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
-	}
-
-	// try and play a firing animation if specified
-	if (FireAnimation != NULL)
-	{
-		// Get the animation object for the arms mesh
-		UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
-		if (AnimInstance != NULL)
-		{
-			AnimInstance->Montage_Play(FireAnimation, 1.f);
-		}
-	}
-}
-*/
 
 void AFusionCharacter::MoveForward(float Value)
 {
-	// old
-	/*
-	if (Value != 0.0f)
-	{
-		// add movement in that direction
-		AddMovementInput(GetActorForwardVector(), Value);
-	}
-	*/ 
-
-	// new test version
 	if (Controller && Value != 0.f)
 	{
 		// Limit pitch when walking or falling
@@ -380,16 +295,6 @@ void AFusionCharacter::MoveForward(float Value)
 
 void AFusionCharacter::MoveRight(float Value)
 {
-	// old
-	/*
-	if (Value != 0.0f)
-	{
-		// add movement in that direction
-		AddMovementInput(GetActorRightVector(), Value);
-	}
-	*/
-
-	// new test version
 	if (Value != 0.f)
 	{
 		const FRotator Rotation = GetActorRotation();
@@ -398,7 +303,6 @@ void AFusionCharacter::MoveRight(float Value)
 
 	}
 }
-
 
 /*
 Performs ray-trace to find closest looked-at UsableActor.
@@ -426,7 +330,7 @@ AMasterPickupActor* AFusionCharacter::GetPickupInView()
 	FHitResult Hit(ForceInit);
 	GetWorld()->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_Visibility, TraceParams);
 
-	DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Red, false, 1.0f);
+	//DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Red, false, 1.0f);
 	
 	if (Hit.Actor != nullptr)
 	{
@@ -576,8 +480,13 @@ void AFusionCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 void AFusionCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
-	//AFusionPlayerState* MyPlayerState = Cast<AFusionPlayerState>(PlayerState);
-	//MyPlayerState->UpdateTeamColors();
+
+	// [client] as soon as PlayerState is assigned, set team colors of this pawn for local player
+	if (PlayerState != NULL)
+	{
+		UpdateTeamColorsAllMIDs();
+	}
+
 }
 
 void AFusionCharacter::OnCrouchToggle()
@@ -1112,16 +1021,6 @@ float AFusionCharacter::TakeDamage(float Damage, struct FDamageEvent const& Dama
 {
 	float ActualDamage = Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
 	
-	//Decrease the character's hp 
-
-	//Health -= Damage;
-	//if (Health <= 0) InitHealth();
-
-	//Call the update text on the local client
-	//OnRep_Health will be called in every other client so the character's text
-	//will contain a text with the right values
-	//UpdateCharText();
-
 	return ActualDamage;
 }
 
@@ -1146,11 +1045,33 @@ void AFusionCharacter::UpdateTeamColors(UMaterialInstanceDynamic* UseMID)
 		AFusionPlayerState* MyPlayerState = Cast<AFusionPlayerState>(PlayerState);
 		if (MyPlayerState != NULL)
 		{
-			//int32 MaterialParam = (int32)MyPlayerState->GetTeamColor();
+			float MaterialParam = (float)MyPlayerState->GetTeamNum();
+			UseMID->SetScalarParameterValue(TEXT("Team Color Index"), MaterialParam);
 			
-			
-			ETeamColors MaterialParam = MyPlayerState->GetTeamColor();
+			/*
+			int32 MaterialParam = MyPlayerState->GetTeamNum();
 
+			switch (MaterialParam)
+			{
+				case 0:
+				{
+					UseMID->SetVectorParameterValue(TEXT("Team Color Index"), FLinearColor(FColor::Red));
+					//MyPlayerState->BroadcastColorChange(MyPlayerState);
+					break;
+				}
+				case 1:
+				{
+					UseMID->SetVectorParameterValue(TEXT("Team Color Index"), FLinearColor(FColor::Blue));
+					
+					break;
+				}
+			}
+			*/
+
+			//ETeamColors MaterialParam = MyPlayerState->GetTeamColor();
+
+			//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, FString::Printf(TEXT("TeamColor: %i"), MaterialParam));
+			/*
 			switch (MaterialParam)
 			{
 				case ETeamColors::ETC_RED:
@@ -1164,6 +1085,7 @@ void AFusionCharacter::UpdateTeamColors(UMaterialInstanceDynamic* UseMID)
 					break;
 				}
 			}
+			*/
 
 			//UseMID->SetScalarParameterValue(TEXT("Team Color Index"), MaterialParam);
 		}
@@ -1174,10 +1096,11 @@ void AFusionCharacter::UpdateTeamColorsAllMIDs()
 {
 	for (int32 i = 0; i < MeshMIDs.Num(); ++i)
 	{
+		UpdateTeamColors(MeshMIDs[i]);
 		//if (MeshMIDs.IsValidIndex(i))
-		{
-			UpdateTeamColors(MeshMIDs[i]);
-		}
+		
+			
+			//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Orange, FString::Printf(TEXT("TeamColor: %s"), *MeshMIDs[i]->GetName()));
 		
 	}
 }

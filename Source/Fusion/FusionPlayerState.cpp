@@ -3,6 +3,7 @@
 #include "Fusion.h"
 
 #include "FusionGameState.h"
+#include "FusionPlayerController.h"
 
 #include "FusionCharacter.h"
 
@@ -13,33 +14,34 @@ AFusionPlayerState::AFusionPlayerState(const FObjectInitializer& ObjectInitializ
 	: Super(ObjectInitializer)
 {
 	/*  Players are updated to the correct team through the GameMode::InitNewPlayer */
-	TeamColor = ETeamColors::ETC_NONE;
+	//TeamColor = ETeamColors::ETC_NONE;
 
+
+	TeamNumber = 0;
 	NumKills = 0;
 	NumDeaths = 0;
 	Score = 0;
 }
+
 
 void AFusionPlayerState::ClientInitialize(AController* InController)
 {
 	Super::ClientInitialize(InController);
 
 	UpdateTeamColors();
+
 }
 
 void AFusionPlayerState::CopyProperties(APlayerState* PlayerState)
 {
 	Super::CopyProperties(PlayerState);
 
-	/*
 	AFusionPlayerState* FusionPlayer = Cast<AFusionPlayerState>(PlayerState);
 	if (FusionPlayer)
 	{
-		FusionPlayer->TeamColor = TeamColor;
-	}*/
-	
+		FusionPlayer->TeamNumber = TeamNumber;
+	}
 }
-
 
 void AFusionPlayerState::OnRep_TeamColor()
 {
@@ -77,7 +79,7 @@ void AFusionPlayerState::AddScore(int32 Amount)
 	AFusionGameState* GameState = GetWorld()->GetGameState<AFusionGameState>();
 	if (GameState)
 	{
-		GameState->AddScore(Amount, TeamColor);
+		//GameState->AddScore(Amount, TeamColor);
 	}
 }
 
@@ -89,8 +91,8 @@ void AFusionPlayerState::UpdateTeamColors()
 		AFusionCharacter* FusionCharacter = Cast<AFusionCharacter>(OwnerController->GetCharacter());
 		if (FusionCharacter != NULL)
 		{
-			//FusionCharacter->UpdateTeamColorsAllMIDs();
-			FusionCharacter->Update3rdPersonMeshColor();
+			FusionCharacter->UpdateTeamColorsAllMIDs();
+
 		}
 	}
 }
@@ -98,16 +100,31 @@ void AFusionPlayerState::UpdateTeamColors()
 
 void AFusionPlayerState::SetTeamColor(ETeamColors NewTeamColor)
 {
-	TeamColor = NewTeamColor;
+	//TeamColor = NewTeamColor;
 
 	UpdateTeamColors();
 }
 
 
+void AFusionPlayerState::SetTeamNum(int32 NewTeamNumber)
+{
+	TeamNumber = NewTeamNumber;
+
+	UpdateTeamColors();
+}
+
+int32 AFusionPlayerState::GetTeamNum() const
+{
+	return TeamNumber;
+}
+
+
 ETeamColors AFusionPlayerState::GetTeamColor() const
 {
-	return TeamColor;
+	//return TeamColor;
+	return ETeamColors::ETC_NONE;
 }
+
 
 int32 AFusionPlayerState::GetKills() const
 {
@@ -138,7 +155,9 @@ void AFusionPlayerState::GetLifetimeReplicatedProps(TArray< class FLifetimePrope
 
 	DOREPLIFETIME(AFusionPlayerState, NumKills);
 	DOREPLIFETIME(AFusionPlayerState, NumDeaths);
-	DOREPLIFETIME(AFusionPlayerState, TeamColor);
+	DOREPLIFETIME(AFusionPlayerState, TeamNumber);
+	//DOREPLIFETIME(AFusionPlayerState, TeamColor);
 	//DOREPLIFETIME(AFusionPlayerState, NumAssists);
+
 }
 

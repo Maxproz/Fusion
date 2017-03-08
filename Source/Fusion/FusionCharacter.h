@@ -106,13 +106,6 @@ protected:
 	UPROPERTY(VisibleInstanceOnly, Transient)
 	TArray<UMaterialInstanceDynamic*> MeshMIDs;
 
-	UPROPERTY(VisibleInstanceOnly)
-	UMaterialInstanceDynamic* Mesh1PMID;
-
-	UPROPERTY(VisibleInstanceOnly, Transient)
-	UMaterialInstanceDynamic* Mesh3rdPMID;
-
-	
 
 	/** handle mesh visibility and updates */
 	void UpdatePawnMeshes();
@@ -121,13 +114,11 @@ protected:
 	void UpdateTeamColors(UMaterialInstanceDynamic* UseMID);
 	
 
-
 public:
 
 	/** Update the team color of all player meshes. */
 	void UpdateTeamColorsAllMIDs();
 
-	void Update3rdPersonMeshColor();
 
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)

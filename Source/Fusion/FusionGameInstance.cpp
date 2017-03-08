@@ -258,6 +258,7 @@ void UFusionGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessio
 				// Finally call the ClienTravel. If you want, you could print the TravelURL to see
 				// how it really looks like
 				PlayerController->ClientTravel(TravelURL, ETravelType::TRAVEL_Absolute);
+			
 			}
 		}
 	}
