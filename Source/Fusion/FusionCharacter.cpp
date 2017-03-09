@@ -391,6 +391,7 @@ void AFusionCharacter::SetIsJumping(bool NewJumping)
 	if (bIsCrouched && NewJumping)
 	{
 		UnCrouch();
+		//SetIsCrouching(false);
 	}
 	else if (NewJumping != bIsJumping)
 	{
@@ -420,6 +421,7 @@ void AFusionCharacter::OnMovementModeChanged(EMovementMode PrevMovementMode, uin
 	{
 		SetIsJumping(false);
 	}
+
 }
 
 void AFusionCharacter::ServerSetIsJumping_Implementation(bool NewJumping)
@@ -489,23 +491,6 @@ void AFusionCharacter::OnRep_PlayerState()
 
 }
 
-void AFusionCharacter::OnCrouchToggle()
-{
-	if (IsSprinting())
-	{
-		SetSprinting(false);
-	}
-
-	// If we are crouching then CanCrouch will return false. If we cannot crouch then calling Crouch() wont do anything
-	if (CanCrouch())
-	{
-		Crouch();
-	}
-	else
-	{
-		UnCrouch();
-	}
-}
 
 void AFusionCharacter::OnDeath(float KillingDamage, FDamageEvent const& DamageEvent, APawn* PawnInstigator, AActor* DamageCauser)
 {
@@ -1092,6 +1077,8 @@ void AFusionCharacter::UpdateTeamColors(UMaterialInstanceDynamic* UseMID)
 	}
 }
 
+
+
 void AFusionCharacter::UpdateTeamColorsAllMIDs()
 {
 	for (int32 i = 0; i < MeshMIDs.Num(); ++i)
@@ -1104,6 +1091,102 @@ void AFusionCharacter::UpdateTeamColorsAllMIDs()
 		
 	}
 }
+
+
+void AFusionCharacter::OnCrouchToggle()
+{
+	if (IsSprinting())
+	{
+		SetSprinting(false);
+	}
+
+	if (CanCrouch())
+	{
+		Crouch();
+	}
+	else
+	{
+		UnCrouch();
+	}
+}
+
+/*
+void AFusionCharacter::SetIsCrouched(bool NewCrouched)
+{
+	if (Role < ROLE_Authority)
+	{
+		ServerSetIsCrouched(NewCrouched);
+	}
+	else
+	{
+		bIsCrouched = NewCrouched;
+
+		if (bIsCrouched)
+		{
+			Crouch();
+		}
+		else
+		{
+			UnCrouch();
+		}
+	}
+}
+
+void AFusionCharacter::ServerSetIsCrouched_Implementation(bool NewCrouched)
+{
+	SetIsCrouched(NewCrouched);
+}
+
+
+bool AFusionCharacter::ServerSetIsCrouched_Validate(bool NewCrouched)
+{
+	return true;
+}
+*/
+
+//If we don't have authority, meaning that we're not the server
+//tell the server to crouch
+//If we're the server, just crouch - we trust ourselves.
+
+/*
+void AFusionCharacter::ServerCrouch_Implementation()
+{
+	if (Role < ROLE_Authority)
+	{
+		ServerOnFire();
+	}
+	else OnFire();
+
+	// Go to standing pose if trying to jump while crouched
+	if (bIsCrouched && NewJumping)
+	{
+		UnCrouch();
+	}
+	else if (NewJumping != bIsJumping)
+	{
+		bIsJumping = NewJumping;
+
+		if (bIsJumping)
+		{
+			// Perform the built-in Jump on the character 
+			Jump();
+		}
+	}
+
+	if (Role < ROLE_Authority)
+	{
+		ServerSetIsJumping(NewJumping);
+	}
+}
+*/
+
+
+//bool AFusionCharacter::ServerCrouch_Validate()
+//{
+	//return true;
+//}
+
+
 
 /*
 

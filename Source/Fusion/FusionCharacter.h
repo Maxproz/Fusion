@@ -26,14 +26,6 @@ class AFusionCharacter : public AFusionBaseCharacter
 	UPROPERTY(VisibleAnywhere)
 	class USkeletalMeshComponent* Mesh1P;
 
-	/** Gun mesh: 1st person view (seen only by self) */
-	//UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-	//class USkeletalMeshComponent* FP_Gun;
-
-	/** Location on gun mesh where projectiles should spawn. */
-	//UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-	//class USceneComponent* FP_MuzzleLocation;
-
 	/** First person camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FirstPersonCameraComponent;
@@ -65,8 +57,6 @@ public:
 	virtual void OnRep_PlayerState() override;
 
 protected:
-
-
 
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 
@@ -140,7 +130,7 @@ public:
 	virtual void SetSprinting(bool NewSprinting) override;
 
 	/* Is character currently performing a jump action. Resets on landed.  */
-	UPROPERTY(Transient, Replicated)
+	UPROPERTY(BlueprintReadOnly, Category = Anims, Transient, Replicated)
 	bool bIsJumping;
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
@@ -154,8 +144,19 @@ public:
 	bool ServerSetIsJumping_Validate(bool NewJumping);
 
 
+
+
 	/* Client mapped to Input */
 	void OnCrouchToggle();
+
+	/*
+	void SetIsCrouched(bool NewCrouched);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerSetIsCrouched(bool NewCrouched);
+	void ServerSetIsCrouched_Implementation(bool NewCrouched);
+	bool ServerSetIsCrouched_Validate(bool NewCrouched);
+	*/
 
 
 	/************************************************************************/
@@ -309,42 +310,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Animation")
 	void SwapToNewWeaponMesh();
 
-protected:
-	
-	/** Fires a projectile. */
-	//void OnFire();
-
 public:
 	/** Returns Mesh1P subobject **/
 	FORCEINLINE class USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
 	/** Returns FirstPersonCameraComponent subobject **/
 	FORCEINLINE class UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 
-
-private:
-	/**
-	* OnFire Server version. Call this instead of OnFire when you're a client
-	
-	UFUNCTION(Server, Reliable, WithValidation)
-	void ServerOnFire();
-	void ServerOnFire_Implementation();
-	bool ServerOnFire_Validate();
-	
-	UFUNCTION()
-	void AttemptToFire();
-	*/
-	
-
-	//float TimeSinceLastHit = 0.f;
-	//MyPlayerState->ManaRegen();  // start the refresh tick
-
-public:
-	/** Applies damage to the character */
-	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
-
 	FORCEINLINE bool IsFirstPerson() const { return IsAlive() && Controller && Controller->IsLocalPlayerController(); }
 	
-		
+	/** Applies damage to the character */
+	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 	
 
 };
