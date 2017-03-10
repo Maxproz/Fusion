@@ -83,4 +83,13 @@ public:
 	UFUNCTION(reliable, client)
 	void ClientStartOnlineGame();
 
+
+	/** check if gameplay related actions (movement, weapon usage, etc) are allowed right now */
+	bool IsGameInputAllowed() const;
+
+protected:
+
+	/** if set, gameplay related actions (movement, weapn usage, etc) are allowed */
+	bool bAllowGameActions = true;
+
 };

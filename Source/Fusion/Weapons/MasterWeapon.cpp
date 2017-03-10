@@ -18,29 +18,32 @@ AMasterWeapon::AMasterWeapon(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	//PCIP. // removed "this" from first param and pcip seen at the start of this line to get it to compile
-	Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh3P"));
-	Mesh->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered;
-	Mesh->bReceivesDecals = true;
-	//Mesh->CastShadow = true;
-	Mesh->CastShadow = false;
-	Mesh->SetCollisionObjectType(ECC_WorldDynamic);
-	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	Mesh->SetCollisionResponseToAllChannels(ECR_Ignore);
-	Mesh->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-	RootComponent = Mesh;
+	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh1P"));
+	Mesh1P->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered;
+	Mesh1P->bReceivesDecals = false;
+	Mesh1P->CastShadow = false;
+	Mesh1P->SetCollisionObjectType(ECC_WorldDynamic);
+	Mesh1P->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Mesh1P->SetCollisionResponseToAllChannels(ECR_Ignore);
+	Mesh1P->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	RootComponent = Mesh1P;
 
-	// TODO: implement the first person mesh stuff
-
+	Mesh3P =CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh3P"));
+	Mesh3P->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered;
+	Mesh3P->bReceivesDecals = false;
+	Mesh3P->CastShadow = true;
+	Mesh3P->SetCollisionObjectType(ECC_WorldDynamic);
+	Mesh3P->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Mesh3P->SetCollisionResponseToAllChannels(ECR_Ignore);
+	Mesh3P->SetCollisionResponseToChannel(COLLISION_WEAPON, ECR_Block);
+	Mesh3P->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	Mesh3P->SetCollisionResponseToChannel(COLLISION_PROJECTILE, ECR_Block);
+	Mesh3P->SetupAttachment(Mesh1P);
 
 
 	bIsEquipped = false;
 	CurrentState = EWeaponState::Idle;
 
-	PrimaryActorTick.bCanEverTick = true;
-	PrimaryActorTick.TickGroup = TG_PrePhysics;
-
-	SetReplicates(true);
-	bNetUseOwnerRelevancy = true;
 
 	MuzzleAttachPoint = TEXT("MuzzleFlashSocket");
 	WeaponSlot = EEquippedWeaponTypes::EWT_Primary;
@@ -52,7 +55,11 @@ AMasterWeapon::AMasterWeapon(const FObjectInitializer& ObjectInitializer)
 	NoAnimReloadDuration = 1.5f;
 	NoEquipAnimDuration = 0.5f;
 
-
+	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.TickGroup = TG_PrePhysics;
+	SetRemoteRoleForBackwardsCompat(ROLE_SimulatedProxy);
+	bReplicates = true;
+	bNetUseOwnerRelevancy = true;
 
 }
 
@@ -84,7 +91,7 @@ Return Mesh of Weapon
 */
 USkeletalMeshComponent* AMasterWeapon::GetWeaponMesh() const
 {
-	return Mesh;
+	return Mesh1P;
 }
 
 
@@ -92,6 +99,70 @@ class AFusionCharacter* AMasterWeapon::GetPawnOwner() const
 {
 	return MyPawn;
 }
+
+void AMasterWeapon::AttachMeshToPawn(EEquippedWeaponTypes Slot)
+{
+	if (MyPawn)
+	{
+		// Remove and hide both first and third person meshesWeaponMesh
+		DetachMeshFromPawn();
+
+		// For locally controller players we attach both weapons and let the bOnlyOwnerSee, bOwnerNoSee flags deal with visibility.
+		//FName AttachPoint = MyPawn->GetWeaponAttachPoint();
+		FName AttachPoint = MyPawn->GetInventoryAttachPoint(Slot);
+
+		if (MyPawn->IsLocallyControlled() == true)
+		{
+			USkeletalMeshComponent* PawnMesh1p = MyPawn->GetSpecifcPawnMesh(true);
+			USkeletalMeshComponent* PawnMesh3p = MyPawn->GetSpecifcPawnMesh(false);
+			
+			Mesh1P->SetHiddenInGame(false);
+			Mesh3P->SetHiddenInGame(false);
+			Mesh1P->AttachToComponent(PawnMesh1p, FAttachmentTransformRules::KeepRelativeTransform, AttachPoint);
+			Mesh3P->AttachToComponent(PawnMesh3p, FAttachmentTransformRules::KeepRelativeTransform, AttachPoint);
+		}
+		else
+		{
+			USkeletalMeshComponent* UseWeaponMesh = GetWeaponMesh();
+			USkeletalMeshComponent* UsePawnMesh = MyPawn->GetPawnMesh();
+			UseWeaponMesh->AttachToComponent(UsePawnMesh, FAttachmentTransformRules::KeepRelativeTransform, AttachPoint);
+			UseWeaponMesh->SetHiddenInGame(false);
+		}
+	}
+}
+
+/*
+void AMasterWeapon::AttachMeshToPawn(EEquippedWeaponTypes Slot)
+{
+	if (MyPawn)
+	{
+		// Remove and hide
+		DetachMeshFromPawn();
+
+		USkeletalMeshComponent* PawnMesh = MyPawn->GetMesh1P(); // here I changed to the first person mesh
+		FName AttachPoint = MyPawn->GetInventoryAttachPoint(Slot);
+		Mesh1P->SetHiddenInGame(false);
+		Mesh1P->AttachToComponent(PawnMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, AttachPoint);
+	}
+}
+*/
+
+void AMasterWeapon::DetachMeshFromPawn()
+{
+	Mesh1P->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+	Mesh1P->SetHiddenInGame(true);
+
+	Mesh3P->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+	Mesh3P->SetHiddenInGame(true);
+}
+
+
+/*
+void AMasterWeapon::DetachMeshFromPawn()
+{
+	Mesh1P->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+	Mesh1P->SetHiddenInGame(true);
+}*/
 
 
 void AMasterWeapon::SetOwningPawn(AFusionCharacter* NewOwner)
@@ -118,26 +189,6 @@ void AMasterWeapon::OnRep_MyPawn()
 	}
 }
 
-void AMasterWeapon::AttachMeshToPawn(EEquippedWeaponTypes Slot)
-{
-	if (MyPawn)
-	{
-		// Remove and hide
-		DetachMeshFromPawn();
-
-		USkeletalMeshComponent* PawnMesh = MyPawn->GetMesh1P(); // here I changed to the first person mesh
-		FName AttachPoint = MyPawn->GetInventoryAttachPoint(Slot);
-		Mesh->SetHiddenInGame(false);
-		Mesh->AttachToComponent(PawnMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, AttachPoint);
-	}
-}
-
-
-void AMasterWeapon::DetachMeshFromPawn()
-{
-	Mesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
-	Mesh->SetHiddenInGame(true);
-}
 
 void AMasterWeapon::OnEquip(bool bPlayAnimation)
 {
@@ -147,13 +198,17 @@ void AMasterWeapon::OnEquip(bool bPlayAnimation)
 	if (bPlayAnimation)
 	{
 		float Duration = PlayWeaponAnimation(EquipAnim);
+
 		if (Duration <= 0.0f)
 		{
 			// Failsafe in case animation is missing
 			Duration = NoEquipAnimDuration;
 		}
+		
 		EquipStartedTime = GetWorld()->TimeSeconds;
 		EquipDuration = Duration;
+
+		// This timer is slightly out of sync by a second or so, because I currently have no equip anim for first person.
 
 		GetWorldTimerManager().SetTimer(EquipFinishedTimerHandle, this, &AMasterWeapon::OnEquipFinished, Duration, false);
 	}
@@ -196,7 +251,9 @@ void AMasterWeapon::OnUnEquip()
 void AMasterWeapon::OnEnterInventory(AFusionCharacter* NewOwner)
 {
 	SetOwningPawn(NewOwner);
-	AttachMeshToPawn(WeaponSlot);
+
+	// Removed this so I could use the swap to new weapon mesh inside of the anim blueprint
+	//AttachMeshToPawn(WeaponSlot);
 }
 
 
@@ -403,41 +460,92 @@ void AMasterWeapon::HandleFiring()
 
 void AMasterWeapon::SimulateWeaponFire()
 {
-	if (MuzzleFX)
+	if (Role == ROLE_Authority && CurrentState != EWeaponState::Firing)
 	{
-		MuzzlePSC = UGameplayStatics::SpawnEmitterAttached(MuzzleFX, Mesh, MuzzleAttachPoint);
+		return;
 	}
 
-	if (!bPlayingFireAnim)
+	if (MuzzleFX)
 	{
-		UFusionArms* Arms = Cast<UFusionArms>(MyPawn->GetMesh1P()->GetAnimInstance());
-
-		if (Arms)
+		USkeletalMeshComponent* UseWeaponMesh = GetWeaponMesh();
+		if (!bLoopedMuzzleFX || MuzzlePSC == NULL)
 		{
-			if (MyPawn->bIsZooming)
+			// Split screen requires we create 2 effects. One that we see and one that the other player sees.
+			if ((MyPawn != NULL) && (MyPawn->IsLocallyControlled() == true))
 			{
-				float AnimDurationArmMesh = Arms->Montage_Play(Arms->ZoomFireMontage);
+				AController* PlayerCon = MyPawn->GetController();
+				if (PlayerCon != NULL)
+				{
+					Mesh1P->GetSocketLocation(MuzzleAttachPoint);
+					MuzzlePSC = UGameplayStatics::SpawnEmitterAttached(MuzzleFX, Mesh1P, MuzzleAttachPoint);
+					MuzzlePSC->bOwnerNoSee = false;
+					MuzzlePSC->bOnlyOwnerSee = true;
+
+					Mesh3P->GetSocketLocation(MuzzleAttachPoint);
+					MuzzlePSCSecondary = UGameplayStatics::SpawnEmitterAttached(MuzzleFX, Mesh3P, MuzzleAttachPoint);
+					MuzzlePSCSecondary->bOwnerNoSee = true;
+					MuzzlePSCSecondary->bOnlyOwnerSee = false;
+
+				}
 			}
 			else
 			{
-				float AnimDurationArmMesh = Arms->Montage_Play(Arms->FireMontage);
+				MuzzlePSC = UGameplayStatics::SpawnEmitterAttached(MuzzleFX, UseWeaponMesh, MuzzleAttachPoint);
 			}
 		}
+	}
 
-		Mesh->GetAnimInstance()->Montage_Play(FireAnim);
-		//PlayWeaponAnimation(FireAnim);
+	if (!bLoopedFireAnim || !bPlayingFireAnim)
+	{
+		PlayWeaponAnimation(FireAnim);
+		//MyPawn->PlayAnimMontage(TheGunsFireMontage);
+		Mesh1P->GetAnimInstance()->Montage_Play(TheGunsFireMontage);
+		Mesh3P->GetAnimInstance()->Montage_Play(TheGunsFireMontage);
 		bPlayingFireAnim = true;
 	}
 
-	PlayWeaponSound(FireSound);
+	if (bLoopedFireSound)
+	{
+		if (FireAC == NULL)
+		{
+			FireAC = PlayWeaponSound(FireLoopSound);
+		}
+	}
+	else
+	{
+		PlayWeaponSound(FireSound);
+	}
+
 }
 
 void AMasterWeapon::StopSimulatingWeaponFire()
 {
-	if (bPlayingFireAnim)
+	if (bLoopedMuzzleFX)
+	{
+		if (MuzzlePSC != NULL)
+		{
+			MuzzlePSC->DeactivateSystem();
+			MuzzlePSC = NULL;
+		}
+		if (MuzzlePSCSecondary != NULL)
+		{
+			MuzzlePSCSecondary->DeactivateSystem();
+			MuzzlePSCSecondary = NULL;
+		}
+	}
+
+	if (bLoopedFireAnim && bPlayingFireAnim)
 	{
 		StopWeaponAnimation(FireAnim);
 		bPlayingFireAnim = false;
+	}
+
+	if (FireAC)
+	{
+		FireAC->FadeOut(0.1f, 0.0f);
+		FireAC = NULL;
+
+		//PlayWeaponSound(FireFinishSound);
 	}
 }
 
@@ -494,13 +602,14 @@ void AMasterWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 
 FVector AMasterWeapon::GetMuzzleLocation() const
 {
-	return Mesh->GetSocketLocation(MuzzleAttachPoint);
+	USkeletalMeshComponent* UseMesh = GetWeaponMesh();
+	return UseMesh->GetSocketLocation(MuzzleAttachPoint);
 }
-
 
 FVector AMasterWeapon::GetMuzzleDirection() const
 {
-	return Mesh->GetSocketRotation(MuzzleAttachPoint).Vector();
+	USkeletalMeshComponent* UseMesh = GetWeaponMesh();
+	return UseMesh->GetSocketRotation(MuzzleAttachPoint).Vector();
 }
 
 
@@ -611,7 +720,7 @@ float AMasterWeapon::GetEquipDuration() const
 	return EquipDuration;
 }
 
-
+/*
 float AMasterWeapon::PlayWeaponAnimation(UAnimMontage* Animation, float InPlayRate, FName StartSectionName)
 {
 	float Duration = 0.0f;
@@ -634,6 +743,34 @@ void AMasterWeapon::StopWeaponAnimation(UAnimMontage* Animation)
 		if (Animation)
 		{
 			MyPawn->StopAnimMontage(Animation);
+		}
+	}
+}
+*/
+
+float AMasterWeapon::PlayWeaponAnimation(const FWeaponAnim& Animation)
+{
+	float Duration = 0.0f;
+	if (MyPawn)
+	{
+		UAnimMontage* UseAnim = MyPawn->IsFirstPerson() ? Animation.Pawn1P : Animation.Pawn3P;
+		if (UseAnim)
+		{
+			Duration = MyPawn->PlayAnimMontage(UseAnim);
+		}
+	}
+
+	return Duration;
+}
+
+void AMasterWeapon::StopWeaponAnimation(const FWeaponAnim& Animation)
+{
+	if (MyPawn)
+	{
+		UAnimMontage* UseAnim = MyPawn->IsFirstPerson() ? Animation.Pawn1P : Animation.Pawn3P;
+		if (UseAnim)
+		{
+			MyPawn->StopAnimMontage(UseAnim);
 		}
 	}
 }
@@ -695,7 +832,6 @@ void AMasterWeapon::StartReload(bool bFromReplication)
 {
 	MyPawn->bIsReloading = true;
 
-
 	/* Push the request to server */
 	if (!bFromReplication && Role < ROLE_Authority)
 	{
@@ -708,15 +844,12 @@ void AMasterWeapon::StartReload(bool bFromReplication)
 		bPendingReload = true;
 		DetermineWeaponState();
 
-		UFusionArms* Arms = Cast<UFusionArms>(MyPawn->GetMesh1P()->GetAnimInstance());
-		
-		if (Arms)
-		{
-			float AnimDurationArmMesh = Arms->Montage_Play(Arms->ReloadMontage);
-		}
-		
-		float AnimDuration = Mesh->GetAnimInstance()->Montage_Play(ReloadAnim);
-		//float AnimDuration = PlayAWeaponAnimation(ReloadAnim);
+
+		float AnimDuration = PlayWeaponAnimation(ReloadAnim);
+		Mesh1P->GetAnimInstance()->Montage_Play(TheGunsReloadMontage);
+		Mesh3P->GetAnimInstance()->Montage_Play(TheGunsReloadMontage);
+
+
 
 		if (AnimDuration <= 0.0f)
 		{

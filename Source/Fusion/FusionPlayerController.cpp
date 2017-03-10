@@ -240,3 +240,9 @@ void AFusionPlayerController::ClientStartOnlineGame_Implementation()
 		GetWorld()->GetTimerManager().SetTimer(TimerHandle_ClientStartOnlineGame, this, &AFusionPlayerController::ClientStartOnlineGame_Implementation, 0.2f, false);
 	}
 }
+
+
+bool AFusionPlayerController::IsGameInputAllowed() const
+{
+	return bAllowGameActions && !bCinematicMode;
+}

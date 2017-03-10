@@ -19,6 +19,21 @@ enum class EWeaponState
 	Reloading
 };
 
+USTRUCT()
+struct FWeaponAnim
+{
+	GENERATED_USTRUCT_BODY()
+
+	/** animation played on pawn (1st person view) */
+	UPROPERTY(EditDefaultsOnly, Category = Animation)
+	UAnimMontage* Pawn1P;
+
+	/** animation played on pawn (3rd person view) */
+	UPROPERTY(EditDefaultsOnly, Category = Animation)
+	UAnimMontage* Pawn3P;
+
+};
+
 /**
 *
 */
@@ -51,7 +66,14 @@ class FUSION_API AMasterWeapon : public AActor
 
 	FTimerHandle EquipFinishedTimerHandle;
 
+private:
+	/** weapon mesh: 1st person view */
+	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
+	USkeletalMeshComponent* Mesh1P;
 
+	/** weapon mesh: 3rd person view */
+	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
+	USkeletalMeshComponent* Mesh3P;
 
 protected:
 
@@ -70,9 +92,9 @@ protected:
 	UPROPERTY(Transient, ReplicatedUsing = OnRep_MyPawn)
 	class AFusionCharacter* MyPawn;
 
-	/** weapon mesh: */
-	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-	USkeletalMeshComponent* Mesh;
+
+
+
 
 	UFUNCTION()
 	void OnRep_MyPawn();
@@ -116,9 +138,33 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
 	TSubclassOf<class AWeaponPickupActor> WeaponPickupClass;
 
+protected:
+	/** Returns Mesh1P subobject **/
+	FORCEINLINE USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
+	/** Returns Mesh3P subobject **/
+	FORCEINLINE USkeletalMeshComponent* GetMesh3P() const { return Mesh3P; }
+
+
+	/** reload animations */
+	UPROPERTY(EditDefaultsOnly, Category = Animation)
+	FWeaponAnim ReloadAnim;
+
+	/** equip animations */
+	UPROPERTY(EditDefaultsOnly, Category = Animation)
+	FWeaponAnim EquipAnim;
+
+	/** fire animations */
+	UPROPERTY(EditDefaultsOnly, Category = Animation)
+	FWeaponAnim FireAnim;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	UAnimMontage* TheGunsReloadMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	UAnimMontage* TheGunsFireMontage;
+
 
 public:
-
 	/************************************************************************/
 	/* Fire & Damage Handling                                               */
 	/************************************************************************/
@@ -203,14 +249,40 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	UParticleSystem* MuzzleFX;
 
-	UPROPERTY(EditDefaultsOnly)
-	UAnimMontage* EquipAnim;
+	//UPROPERTY(EditDefaultsOnly)
+	//UAnimMontage* EquipAnim;
 
-	UPROPERTY(EditDefaultsOnly)
-	UAnimMontage* FireAnim;
+	//UPROPERTY(EditDefaultsOnly)
+	//UAnimMontage* FireAnim;
+
+protected:
+
+	/** looped fire sound (bLoopedFireSound set) */
+	UPROPERTY(EditDefaultsOnly, Category = Sound)
+	USoundCue* FireLoopSound;
+		
+	/** is muzzle FX looped? */
+	UPROPERTY(EditDefaultsOnly, Category = Effects)
+	bool bLoopedMuzzleFX = false;
+
+	/** is fire sound looped? */
+	UPROPERTY(EditDefaultsOnly, Category = Sound)
+	bool bLoopedFireSound = false;
+
+	/** is fire animation looped? */
+	UPROPERTY(EditDefaultsOnly, Category = Animation)
+	bool bLoopedFireAnim = false;
+
+	/** firing audio (bLoopedFireSound set) */
+	UPROPERTY(Transient)
+	UAudioComponent* FireAC;
 
 	UPROPERTY(Transient)
 	UParticleSystemComponent* MuzzlePSC;
+
+	/** spawned component for second muzzle FX (Needed for split screen) */
+	UPROPERTY(Transient)
+	UParticleSystemComponent* MuzzlePSCSecondary;
 
 	UPROPERTY(EditDefaultsOnly)
 	FName MuzzleAttachPoint;
@@ -232,10 +304,14 @@ protected:
 
 	UAudioComponent* PlayWeaponSound(USoundCue* SoundToPlay);
 
-	float PlayWeaponAnimation(UAnimMontage* Animation, float InPlayRate = 1.f, FName StartSectionName = NAME_None);
+	//float PlayWeaponAnimation(UAnimMontage* Animation, float InPlayRate = 1.f, FName StartSectionName = NAME_None);
 
-	void StopWeaponAnimation(UAnimMontage* Animation);
+	//void StopWeaponAnimation(UAnimMontage* Animation);
 
+	float PlayWeaponAnimation(const FWeaponAnim& Animation);
+
+	void StopWeaponAnimation(const FWeaponAnim& Animation);
+	
 
 	/************************************************************************/
 	/* Ammo & Reloading                                                     */
@@ -284,9 +360,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Sounds")
 	USoundCue* ReloadSound;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Animation")
-	UAnimMontage* ReloadAnim;
 
 	virtual void ReloadWeapon();
 

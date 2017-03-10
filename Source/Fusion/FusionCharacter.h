@@ -56,6 +56,12 @@ public:
 
 	virtual void OnRep_PlayerState() override;
 
+	/** play anim montage */
+	virtual float PlayAnimMontage(class UAnimMontage* AnimMontage, float InPlayRate = 1.f, FName StartSectionName = NAME_None) override;
+
+	/** stop playing montage */
+	virtual void StopAnimMontage(class UAnimMontage* AnimMontage) override;
+
 protected:
 
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
@@ -144,10 +150,12 @@ public:
 	bool ServerSetIsJumping_Validate(bool NewJumping);
 
 
-
-
 	/* Client mapped to Input */
 	void OnCrouchToggle();
+
+	/** get aim offsets */
+	UFUNCTION(BlueprintCallable, Category = "Game|Weapon")
+	FRotator GetAimOffsets() const;
 
 	/*
 	void SetIsCrouched(bool NewCrouched);
@@ -225,6 +233,12 @@ private:
 	/* Mapped to input */
 	void OnStopFire();
 
+	/** player pressed targeting action */
+	void OnStartZooming();
+
+	/** player released targeting action */
+	void OnStopZooming();
+
 	/* Mapped to input */
 	void OnNextWeapon();
 
@@ -249,16 +263,56 @@ private:
 	/* Mapped to input. Drops current weapon */
 	void DropWeapon();
 
+	/** [server + local] change targeting state */
+	void SetZooming(bool bNewZooming);
+
 	UFUNCTION(Reliable, Server, WithValidation)
 	void ServerDropWeapon();
 	void ServerDropWeapon_Implementation();
 	bool ServerDropWeapon_Validate();
 	
-public:
-	// TODO: Should this be replicated?
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Debug)
+
+
+
+public:
+
+	/** get mesh component */
+	USkeletalMeshComponent* GetPawnMesh() const;
+
+	/*
+	* Get either first or third person mesh.
+	*
+	* @param	WantFirstPerson		If true returns the first peron mesh, else returns the third
+	*/
+	USkeletalMeshComponent* GetSpecifcPawnMesh(bool WantFirstPerson) const;
+
+	/** get targeting state */
+	UFUNCTION(BlueprintCallable, Category = "Game|Weapon")
+	bool IsZooming() const;
+
+	/** modifier for max movement speed */
+	UPROPERTY(EditDefaultsOnly, Category = Inventory)
+	float ZoomingSpeedModifier;
+
+	/** current targeting state */
+	UPROPERTY(Transient, Replicated, BlueprintReadOnly, Category = ExposedForAnims)
 	bool bIsZooming = false;
+
+	/** sound played when targeting state changes */
+	UPROPERTY(EditDefaultsOnly, Category = Pawn)
+	USoundCue* ZoomingSound;
+
+protected:
+
+	/** update targeting state */
+	UFUNCTION(reliable, server, WithValidation)
+	void ServerSetZooming(bool bNewZooming);
+	void ServerSetZooming_Implementation(bool bNewZooming);
+	bool ServerSetZooming_Validate(bool bNewZooming);
+
+
+public:
 
 	bool bIsReloading = false;
 
@@ -321,6 +375,7 @@ public:
 	/** Applies damage to the character */
 	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 	
+	FName GetWeaponAttachPoint() const;
 
 };
 

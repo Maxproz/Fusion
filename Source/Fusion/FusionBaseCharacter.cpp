@@ -41,6 +41,8 @@ bool AFusionBaseCharacter::IsAlive() const
 	return Health > 0;
 }
 
+
+
 float AFusionBaseCharacter::TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, class AActor* DamageCauser)
 {
 	if (Health <= 0.f)

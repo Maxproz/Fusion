@@ -254,7 +254,8 @@ void AFusionCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 	PlayerInputComponent->BindAction("Use", IE_Pressed, this, &AFusionCharacter::Use);
 	PlayerInputComponent->BindAction("DropWeapon", IE_Pressed, this, &AFusionCharacter::DropWeapon);
 
-
+	PlayerInputComponent->BindAction("Zooming", IE_Pressed, this, &AFusionCharacter::OnStartZooming);
+	PlayerInputComponent->BindAction("Zooming", IE_Released, this, &AFusionCharacter::OnStopZooming);
 
 	PlayerInputComponent->BindAction("SprintHold", IE_Pressed, this, &AFusionCharacter::OnStartSprinting);
 	PlayerInputComponent->BindAction("SprintHold", IE_Released, this, &AFusionCharacter::OnStopSprinting);
@@ -401,6 +402,7 @@ void AFusionCharacter::SetIsJumping(bool NewJumping)
 		{
 			/* Perform the built-in Jump on the character */
 			Jump();
+			//PlayAnimMontage(ThirdPersonJumpMontage);
 		}
 	}
 
@@ -410,6 +412,20 @@ void AFusionCharacter::SetIsJumping(bool NewJumping)
 	}
 }
 
+FRotator AFusionCharacter::GetAimOffsets() const
+{
+	const FVector AimDirWS = GetBaseAimRotation().Vector();
+	const FVector AimDirLS = ActorToWorld().InverseTransformVectorNoScale(AimDirWS);
+	const FRotator AimRotLS = AimDirLS.Rotation();
+
+	return AimRotLS;
+}
+
+
+USkeletalMeshComponent* AFusionCharacter::GetSpecifcPawnMesh(bool WantFirstPerson) const
+{
+	return WantFirstPerson == true ? Mesh1P : GetMesh();
+}
 
 void AFusionCharacter::OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode)
 {
@@ -468,6 +484,8 @@ void AFusionCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 	// Value is already updated locally, skip in replication step
 	DOREPLIFETIME_CONDITION(AFusionCharacter, bIsJumping, COND_SkipOwner);
+	DOREPLIFETIME_CONDITION(AFusionCharacter, bIsZooming, COND_SkipOwner);
+
 
 	// Replicate to every client, no special condition required
 	DOREPLIFETIME(AFusionCharacter, LastTakeHitInfo);
@@ -612,11 +630,12 @@ void AFusionCharacter::SetCurrentWeapon(class AMasterWeapon* NewWeapon, class AM
 	{
 		NewWeapon->SetOwningPawn(this);
 		// Only play equip animation when we already hold an item in hands 
-		NewWeapon->OnEquip(bHasPreviousWeapon);
+		//NewWeapon->OnEquip(bHasPreviousWeapon);
+		NewWeapon->OnEquip(true); // DEBUG: True to play animation always
 	}
 
 	// NOTE: If you don't have an equip animation w/ animnotify to swap the meshes halfway through, then uncomment this to immediately swap instead 
-	SwapToNewWeaponMesh();
+	//SwapToNewWeaponMesh();
 
 }
 
@@ -712,6 +731,7 @@ void AFusionCharacter::OnStartFire()
 	{
 		SetSprinting(false);
 	}
+
 
 
 	// TODO: Change this code to code that will throw the objective if holding one later.
@@ -1109,6 +1129,92 @@ void AFusionCharacter::OnCrouchToggle()
 		UnCrouch();
 	}
 }
+
+
+void AFusionCharacter::OnStartZooming()
+{
+	AFusionPlayerController* MyPC = Cast<AFusionPlayerController>(Controller);
+	
+	
+	if (MyPC && MyPC->IsGameInputAllowed())
+	{
+		/*
+		if (IsRunning())
+		{
+			SetRunning(false, false);
+		}
+		*/
+		SetZooming(true);
+	}
+}
+
+void AFusionCharacter::SetZooming(bool bNewZooming)
+{
+	bIsZooming = bNewZooming;
+
+	if (ZoomingSound)
+	{
+		UGameplayStatics::SpawnSoundAttached(ZoomingSound, GetRootComponent());
+	}
+
+	if (Role < ROLE_Authority)
+	{
+		ServerSetZooming(bNewZooming);
+	}
+}
+
+bool AFusionCharacter::ServerSetZooming_Validate(bool bNewZooming)
+{
+	return true;
+}
+
+void AFusionCharacter::ServerSetZooming_Implementation(bool bNewZooming)
+{
+	SetZooming(bNewZooming);
+}
+
+
+void AFusionCharacter::OnStopZooming()
+{
+	SetZooming(false);
+}
+
+float AFusionCharacter::PlayAnimMontage(class UAnimMontage* AnimMontage, float InPlayRate, FName StartSectionName)
+{
+	USkeletalMeshComponent* UseMesh = GetPawnMesh();
+	if (AnimMontage && UseMesh && UseMesh->AnimScriptInstance)
+	{
+		return UseMesh->AnimScriptInstance->Montage_Play(AnimMontage, InPlayRate);
+	}
+
+	return 0.0f;
+}
+
+void AFusionCharacter::StopAnimMontage(class UAnimMontage* AnimMontage)
+{
+	USkeletalMeshComponent* UseMesh = GetPawnMesh();
+	if (AnimMontage && UseMesh && UseMesh->AnimScriptInstance &&
+		UseMesh->AnimScriptInstance->Montage_IsPlaying(AnimMontage))
+	{
+		UseMesh->AnimScriptInstance->Montage_Stop(AnimMontage->BlendOut.GetBlendTime(), AnimMontage);
+	}
+}
+
+bool AFusionCharacter::IsZooming() const
+{
+	return bIsZooming;
+}
+
+USkeletalMeshComponent* AFusionCharacter::GetPawnMesh() const
+{
+	return IsFirstPerson() ? Mesh1P : GetMesh();
+}
+
+FName AFusionCharacter::GetWeaponAttachPoint() const
+{
+	return WeaponAttachPoint;
+}
+
 
 /*
 void AFusionCharacter::SetIsCrouched(bool NewCrouched)
