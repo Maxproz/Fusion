@@ -499,8 +499,12 @@ void AMasterWeapon::SimulateWeaponFire()
 	{
 		PlayWeaponAnimation(FireAnim);
 		//MyPawn->PlayAnimMontage(TheGunsFireMontage);
-		Mesh1P->GetAnimInstance()->Montage_Play(TheGunsFireMontage);
-		Mesh3P->GetAnimInstance()->Montage_Play(TheGunsFireMontage);
+		if (TheGunsFireMontage)
+		{
+			Mesh1P->GetAnimInstance()->Montage_Play(TheGunsFireMontage);
+			Mesh3P->GetAnimInstance()->Montage_Play(TheGunsFireMontage);
+		}
+
 		bPlayingFireAnim = true;
 	}
 
@@ -846,9 +850,12 @@ void AMasterWeapon::StartReload(bool bFromReplication)
 
 
 		float AnimDuration = PlayWeaponAnimation(ReloadAnim);
-		Mesh1P->GetAnimInstance()->Montage_Play(TheGunsReloadMontage);
-		Mesh3P->GetAnimInstance()->Montage_Play(TheGunsReloadMontage);
 
+		if (TheGunsReloadMontage)
+		{
+			Mesh1P->GetAnimInstance()->Montage_Play(TheGunsReloadMontage);
+			Mesh3P->GetAnimInstance()->Montage_Play(TheGunsReloadMontage);
+		}
 
 
 		if (AnimDuration <= 0.0f)

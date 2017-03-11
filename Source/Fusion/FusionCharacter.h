@@ -157,15 +157,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Game|Weapon")
 	FRotator GetAimOffsets() const;
 
-	/*
-	void SetIsCrouched(bool NewCrouched);
-
-	UFUNCTION(Server, Reliable, WithValidation)
-	void ServerSetIsCrouched(bool NewCrouched);
-	void ServerSetIsCrouched_Implementation(bool NewCrouched);
-	bool ServerSetIsCrouched_Validate(bool NewCrouched);
-	*/
-
 
 	/************************************************************************/
 	/* Object Interaction                                                   */

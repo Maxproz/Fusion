@@ -5,6 +5,68 @@
 #include "UObject/NoExportTypes.h"
 #include "TakeHitInfo.generated.h"
 
+
+#define FUSION_SURFACE_Default		SurfaceType_Default
+#define FUSION_SURFACE_Concrete		SurfaceType1
+#define FUSION_SURFACE_Dirt			SurfaceType2
+#define FUSION_SURFACE_Water		SurfaceType3
+#define FUSION_SURFACE_Metal		SurfaceType4
+#define FUSION_SURFACE_Wood			SurfaceType5
+#define FUSION_SURFACE_Grass		SurfaceType6
+#define FUSION_SURFACE_Glass		SurfaceType7
+#define FUSION_SURFACE_Flesh		SurfaceType8
+
+/** keep in sync with FusionImpactEffect */
+UENUM()
+namespace EFusionPhysMaterialType
+{
+	enum Type
+	{
+		Unknown,
+		Concrete,
+		Dirt,
+		Water,
+		Metal,
+		Wood,
+		Grass,
+		Glass,
+		Flesh,
+	};
+}
+
+namespace EFusionDialogType
+{
+	enum Type
+	{
+		None,
+		Generic,
+		ControllerDisconnected,
+	};
+}
+
+
+USTRUCT()
+struct FDecalData
+{
+	GENERATED_USTRUCT_BODY()
+
+	/** material */
+	UPROPERTY(EditDefaultsOnly, Category = Decal)
+	UMaterial* DecalMaterial;
+
+	/** quad size (width & height) */
+	UPROPERTY(EditDefaultsOnly, Category = Decal)
+	float DecalSize;
+
+	/** lifespan */
+	UPROPERTY(EditDefaultsOnly, Category = Decal)
+	float LifeSpan;
+
+	/** defaults */
+	FDecalData();
+
+};
+
 /**
  * 
  */

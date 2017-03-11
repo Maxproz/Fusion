@@ -340,6 +340,19 @@ protected:
 	UPROPERTY(Transient, ReplicatedUsing = OnRep_Reload)
 	bool bPendingReload;
 
+	enum class EAmmoType
+	{
+		EBullet,
+		ERocket,
+		EMax,
+	};
+
+	/** query ammo type */
+	virtual EAmmoType GetAmmoType() const
+	{
+		return EAmmoType::EBullet;
+	}
+
 	void UseAmmo();
 
 	UPROPERTY(Transient, Replicated)
