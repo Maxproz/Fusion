@@ -42,3 +42,8 @@ EHUDState AFusionHUD::GetCurrentState()
 {
 	return CurrentState;
 }
+
+void AFusionHUD::SetMatchState(EHUDState NewState)
+{
+	CurrentState = NewState;
+}

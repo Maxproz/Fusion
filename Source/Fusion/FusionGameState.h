@@ -46,13 +46,21 @@ public:
 	UPROPERTY(Replicated)
 	int32 NumTeams;
 
+	/** time left for warmup / match */
+	UPROPERTY(Transient, Replicated)
+	int32 RemainingTime;
+
+	/* Amount of time since the match started TODO: Figure out how I will track the game time later. */
+	UPROPERTY(BlueprintReadOnly, Replicated, Category = "Time")
+	int32 ElapsedGameMinutes = 0;
+
 	/* NetMulticast will send this event to all clients that know about this object, in the case of GameState that means every client. */
 	UFUNCTION(Reliable, NetMulticast)
 	void BroadcastGameMessage(EHUDMessage NewMessage);
 	void BroadcastGameMessage_Implementation(EHUDMessage MessageID);
 
 
-	/* Amount of time since the match started TODO: Figure out how I will track the game time later. */
-	UPROPERTY(BlueprintReadOnly, Replicated, Category = "Time")
-	int32 ElapsedGameMinutes = 0;
+
+
+	void RequestFinishAndExitToMainMenu();
 };

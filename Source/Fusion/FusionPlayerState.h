@@ -20,7 +20,6 @@ class FUSION_API AFusionPlayerState : public APlayerState
 	AFusionPlayerState(const FObjectInitializer& ObjectInitializer);
 
 
-
 	virtual void Reset() override;
 
 	virtual void GetLifetimeReplicatedProps(TArray< class FLifetimeProperty > & OutLifetimeProps) const override;
@@ -29,16 +28,10 @@ class FUSION_API AFusionPlayerState : public APlayerState
 
 	virtual void CopyProperties(class APlayerState* PlayerState) override;
 
-
-
-
-
 public:
 
 	/** get current team */
 	int32 GetTeamNum() const;
-
-	
 
 	void AddKill();
 
@@ -61,8 +54,9 @@ public:
 	float GetScore() const;
 
 	void UpdateTeamColors();
-
-public:
+	
+	/** Set whether the player is a quitter */
+	void SetQuitter(bool bInQuitter);
 
 	UFUNCTION()
 	void OnRep_TeamColor();
@@ -79,6 +73,11 @@ protected:
 
 	UPROPERTY(VisibleInstanceOnly, Transient, Replicated)
 	int32 NumDeaths;
+
+
+	/** whether the user quit the match */
+	UPROPERTY()
+	bool bQuitter = false;
 
 	/* Team color/number assigned to player */
 	/*

@@ -161,3 +161,8 @@ void AFusionPlayerState::GetLifetimeReplicatedProps(TArray< class FLifetimePrope
 
 }
 
+
+void AFusionPlayerState::SetQuitter(bool bInQuitter)
+{
+	bQuitter = bInQuitter;
+}

@@ -6,6 +6,7 @@
 #include "FusionCharacter.h"
 #include "FusionPlayerState.h"
 #include "FusionGameInstance.h"
+#include "FusionHUD.h"
 
 #include "Player/FusionPlayerCameraManager.h"
 
@@ -155,18 +156,18 @@ FText AFusionPlayerController::GetText(EHUDMessage MsgID)
 
 void AFusionPlayerController::ClientGameStarted_Implementation()
 {
-	//bAllowGameActions = true;
+	bAllowGameActions = true;
 
 	// Enable controls mode now the game has started
 	SetIgnoreMoveInput(false);
 
-	//AShooterHUD* ShooterHUD = GetShooterHUD();
-	//if (ShooterHUD)
-	//{
-	//	ShooterHUD->SetMatchState(EShooterMatchState::Playing);
+	AFusionHUD* FusionHUD = GetFusionHUD();
+	if (FusionHUD)
+	{
+		FusionHUD->SetMatchState(EHUDState::Playing);
 	//	ShooterHUD->ShowScoreboard(false);
-	//}
-	//bGameEndedFrame = false;
+	}
+	bGameEndedFrame = false;
 
 	//QueryAchievements();
 
@@ -209,7 +210,7 @@ void AFusionPlayerController::ClientGameStarted_Implementation()
 				Events->TriggerEvent(*UniqueId, TEXT("MultiplayerRoundStart"), MultiplayerParams);
 			}
 
-			//bHasSentStartEvents = true;
+			bHasSentStartEvents = true;
 		}
 	}
 }
@@ -241,8 +242,134 @@ void AFusionPlayerController::ClientStartOnlineGame_Implementation()
 	}
 }
 
+/** Ends the online game using the session name in the PlayerState */
+void AFusionPlayerController::ClientEndOnlineGame_Implementation()
+{
+	if (!IsPrimaryPlayer())
+		return;
+
+	AFusionPlayerState* FusionPlayerState = Cast<AFusionPlayerState>(PlayerState);
+	if (FusionPlayerState)
+	{
+		IOnlineSubsystem* OnlineSub = IOnlineSubsystem::Get();
+		if (OnlineSub)
+		{
+			IOnlineSessionPtr Sessions = OnlineSub->GetSessionInterface();
+			if (Sessions.IsValid())
+			{
+				UE_LOG(LogOnline, Log, TEXT("Ending session %s on client"), *FusionPlayerState->SessionName.ToString());
+				Sessions->EndSession(FusionPlayerState->SessionName);
+			}
+		}
+	}
+}
+
+void AFusionPlayerController::ClientSendRoundEndEvent_Implementation(bool bIsWinner, int32 ExpendedTimeInSeconds)
+{
+	const auto Events = Online::GetEventsInterface();
+	ULocalPlayer* LocalPlayer = Cast<ULocalPlayer>(Player);
+
+	if (bHasSentStartEvents && LocalPlayer != nullptr && Events.IsValid())
+	{
+		auto UniqueId = LocalPlayer->GetPreferredUniqueNetId();
+
+		if (UniqueId.IsValid())
+		{
+			FString MapName = *FPackageName::GetShortName(GetWorld()->PersistentLevel->GetOutermost()->GetName());
+			AFusionPlayerState* FusionPlayerState = Cast<AFusionPlayerState>(PlayerState);
+			int32 PlayerScore = FusionPlayerState ? FusionPlayerState->GetScore() : 0;
+
+			// Fire session end event for all cases
+			FOnlineEventParms Params;
+			Params.Add(TEXT("GameplayModeId"), FVariantData((int32)1)); // @todo determine game mode (ffa v tdm)
+			Params.Add(TEXT("DifficultyLevelId"), FVariantData((int32)0)); // unused
+			Params.Add(TEXT("ExitStatusId"), FVariantData((int32)0)); // unused
+			Params.Add(TEXT("PlayerScore"), FVariantData((int32)PlayerScore));
+			Params.Add(TEXT("PlayerWon"), FVariantData((bool)bIsWinner));
+			Params.Add(TEXT("MapName"), FVariantData(MapName));
+			Params.Add(TEXT("MapNameString"), FVariantData(MapName)); // @todo workaround for a bug in backend service, remove when fixed
+
+			Events->TriggerEvent(*UniqueId, TEXT("PlayerSessionEnd"), Params);
+
+			// Online matches require the MultiplayerRoundEnd event as well
+			UFusionGameInstance* FGI = GetWorld() != NULL ? Cast<UFusionGameInstance>(GetWorld()->GetGameInstance()) : NULL;
+			if (FGI->GetIsOnline())
+			{
+				FOnlineEventParms MultiplayerParams;
+
+				AFusionGameState* const MyGameState = GetWorld() != NULL ? GetWorld()->GetGameState<AFusionGameState>() : NULL;
+				if (ensure(MyGameState != nullptr))
+				{
+					MultiplayerParams.Add(TEXT("SectionId"), FVariantData((int32)0)); // unused
+					MultiplayerParams.Add(TEXT("GameplayModeId"), FVariantData((int32)1)); // @todo determine game mode (ffa v tdm)
+					MultiplayerParams.Add(TEXT("MatchTypeId"), FVariantData((int32)1)); // @todo abstract the specific meaning of this value across platforms
+					MultiplayerParams.Add(TEXT("DifficultyLevelId"), FVariantData((int32)0)); // unused
+					MultiplayerParams.Add(TEXT("TimeInSeconds"), FVariantData((float)ExpendedTimeInSeconds));
+					MultiplayerParams.Add(TEXT("ExitStatusId"), FVariantData((int32)0)); // unused
+
+					Events->TriggerEvent(*UniqueId, TEXT("MultiplayerRoundEnd"), MultiplayerParams);
+				}
+			}
+		}
+
+		bHasSentStartEvents = false;
+	}
+}
+
 
 bool AFusionPlayerController::IsGameInputAllowed() const
 {
 	return bAllowGameActions && !bCinematicMode;
 }
+
+AFusionHUD* AFusionPlayerController::GetFusionHUD() const
+{
+	return Cast<AFusionHUD>(GetHUD());
+}
+
+void AFusionPlayerController::HandleReturnToMainMenu()
+{
+	//OnHideScoreboard();
+	CleanupSessionOnReturnToMenu();
+}
+
+
+void AFusionPlayerController::ShowInGameMenu()
+{
+	AFusionHUD* FusionHUD = GetFusionHUD();
+	
+	
+	/* TODO: Implement Functionality for showing in-game menu UUserWidget
+	if (ShooterIngameMenu.IsValid() && !ShooterIngameMenu->GetIsGameMenuUp() && ShooterHUD && (ShooterHUD->IsMatchOver() == false))
+	{
+		ShooterIngameMenu->ToggleGameMenu();
+	}
+	*/
+}
+
+/** Ends and/or destroys game session */
+void AFusionPlayerController::CleanupSessionOnReturnToMenu()
+{
+	UFusionGameInstance * FGI = GetWorld() != NULL ? Cast<UFusionGameInstance>(GetWorld()->GetGameInstance()) : NULL;
+
+	if (ensure(FGI != NULL))
+	{
+		FGI->CleanupSessionOnReturnToMenu();
+	}
+}
+
+bool AFusionPlayerController::IsGameMenuVisible() const
+{
+	bool Result = false;
+
+	/* TODO: Needs implemented
+	if (ShooterIngameMenu.IsValid())
+	{
+		Result = ShooterIngameMenu->GetIsGameMenuUp();
+	}*/
+
+	return Result;
+}
+
+
+

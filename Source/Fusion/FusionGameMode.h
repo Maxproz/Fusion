@@ -59,6 +59,9 @@ protected:
 	UPROPERTY(VisibleInstanceOnly)
 	float MatchLength = 12.00f;
 
+	UPROPERTY(config)
+	int32 TimeBetweenMatches;
+
 	ETeamColors AutoAssignTeamColor();
 
 	/** best team */
@@ -107,7 +110,13 @@ public:
 	/** starts new match */
 	virtual void HandleMatchHasStarted() override;
 
-public:
+	/*Finishes the match and bumps everyone to main menu.*/
+	/*Only GameInstance should call this function */
+	void RequestFinishAndExitToMainMenu();
+
+	/** finish current match and lock players */
+	UFUNCTION(exec)
+	void FinishMatch();
 
 	/* Primary sun of the level. Assigned in Blueprint during BeginPlay (BlueprintReadWrite is required as tag instead of EditDefaultsOnly) */
 	UPROPERTY(BlueprintReadWrite, Category = "Level Brightness")
@@ -123,6 +132,13 @@ public:
 
 
 protected:
+
+	/** check who won */
+	virtual void DetermineMatchWinner();
+
+	/** check if PlayerState is a winner */
+	virtual bool IsWinner(class AFusionPlayerState* PlayerState) const;
+
 
 	/* Mutators to create when game starts */
 	UPROPERTY(EditAnywhere, Category = "Mutators")
@@ -147,6 +163,8 @@ protected:
 
 	/* Hacked into ReceiveBeginPlay() so we can do mutator replacement of Actors and such */
 	void BeginPlayMutatorHack(FFrame& Stack, RESULT_DECL);
+
+
 
 };
 

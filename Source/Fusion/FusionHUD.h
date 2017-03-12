@@ -34,6 +34,13 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "HUDEvents")
 	void MessageReceived(const FText& TextMessage);
 
+	/**
+	* Set state of current match.
+	*
+	* @param	NewState	The new match state.
+	*/
+	void SetMatchState(EHUDState NewState);
+
 private:
 	/** Crosshair asset pointer */
 	class UTexture2D* CrosshairTex;

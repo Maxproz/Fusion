@@ -4,11 +4,16 @@ using UnrealBuildTool;
 
 public class Fusion : ModuleRules
 {
-	public Fusion(TargetInfo Target)
-	{
+    public Fusion(TargetInfo Target)
+    {
         PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "OnlineSubsystem", "OnlineSubsystemUtils" });
 
         DynamicallyLoadedModuleNames.Add("OnlineSubsystemNull");
 
+        // TODO: Implement the string below once I am ready to get the loading screen stuff working.
+        /*"ShooterGameLoadingScreen",*/
+        PrivateDependencyModuleNames.AddRange(new string[] { "InputCore", "Slate", "SlateCore", "Json" });
     }
 }
+    
+

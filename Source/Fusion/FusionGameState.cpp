@@ -2,7 +2,9 @@
 
 #include "Fusion.h"
 
-
+#include "FusionGameMode.h"
+#include "FusionGameInstance.h"
+#include "FusionPlayerController.h"
 
 #include "FusionGameState.h"
 
@@ -65,4 +67,34 @@ void AFusionGameState::BroadcastGameMessage_Implementation(EHUDMessage MessageID
 			MyController->ClientHUDMessage(MessageID);
 		}
 	}
+}
+
+void AFusionGameState::RequestFinishAndExitToMainMenu()
+{
+	if (AuthorityGameMode)
+	{
+		// we are server, tell the gamemode
+		AFusionGameMode* const GameMode = Cast<AFusionGameMode>(AuthorityGameMode);
+		if (GameMode)
+		{
+			GameMode->RequestFinishAndExitToMainMenu();
+		}
+	}
+	else
+	{
+		// we are client, handle our own business
+		UFusionGameInstance* GameInstance = Cast<UFusionGameInstance>(GetGameInstance());
+		if (GameInstance)
+		{
+			GameInstance->RemoveSplitScreenPlayers();
+		}
+
+		AFusionPlayerController* const PrimaryPC = Cast<AFusionPlayerController>(GetGameInstance()->GetFirstLocalPlayerController());
+		if (PrimaryPC)
+		{
+			check(PrimaryPC->GetNetMode() == ENetMode::NM_Client);
+			PrimaryPC->HandleReturnToMainMenu();
+		}
+	}
+
 }

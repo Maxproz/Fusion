@@ -8,6 +8,7 @@
 #include "FusionBaseCharacter.h"
 #include "FusionPlayerController.h"
 #include "FusionPlayerState.h"
+#include "FusionGameInstance.h"
 
 #include "Player/FusionPlayerStart.h"
 #include "Mutators/Mutator.h"
@@ -409,6 +410,84 @@ void AFusionGameMode::Killed(AController* Killer, AController* VictimPlayer, APa
 	// Do nothing (can we used to apply score or keep track of kill count)
 }
 
+
+void AFusionGameMode::RequestFinishAndExitToMainMenu()
+{
+	FinishMatch();
+
+	UFusionGameInstance* const GameInstance = Cast<UFusionGameInstance>(GetGameInstance());
+	if (GameInstance)
+	{
+		GameInstance->RemoveSplitScreenPlayers();
+	}
+
+	AFusionPlayerController* LocalPrimaryController = nullptr;
+	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
+	{
+		AFusionPlayerController* Controller = Cast<AFusionPlayerController>(*Iterator);
+
+		if (Controller == NULL)
+		{
+			continue;
+		}
+
+		if (!Controller->IsLocalController())
+		{
+			const FString RemoteReturnReason = NSLOCTEXT("NetworkErrors", "HostHasLeft", "Host has left the game.").ToString();
+			Controller->ClientReturnToMainMenu(RemoteReturnReason);
+		}
+		else
+		{
+			LocalPrimaryController = Controller;
+		}
+	}
+
+	// GameInstance should be calling this from an EndState.  So call the PC function that performs cleanup, not the one that sets GI state.
+	if (LocalPrimaryController != NULL)
+	{
+		LocalPrimaryController->HandleReturnToMainMenu();
+	}
+}
+
+void AFusionGameMode::FinishMatch()
+{
+	AFusionGameState* const MyGameState = Cast<AFusionGameState>(GameState);
+	if (IsMatchInProgress())
+	{
+		EndMatch();
+		DetermineMatchWinner();
+
+		// notify players
+		for (FConstControllerIterator It = GetWorld()->GetControllerIterator(); It; ++It)
+		{
+			AFusionPlayerState* PlayerState = Cast<AFusionPlayerState>((*It)->PlayerState);
+			const bool bIsWinner = IsWinner(PlayerState);
+
+			(*It)->GameHasEnded(NULL, bIsWinner);
+		}
+
+		// lock all pawns
+		// pawns are not marked as keep for seamless travel, so we will create new pawns on the next match rather than
+		// turning these back on.
+		for (FConstPawnIterator It = GetWorld()->GetPawnIterator(); It; ++It)
+		{
+			(*It)->TurnOff();
+		}
+
+		// set up to restart the match
+		MyGameState->RemainingTime = TimeBetweenMatches;
+	}
+}
+
+void AFusionGameMode::DetermineMatchWinner()
+{
+	// nothing to do here
+}
+
+bool AFusionGameMode::IsWinner(class AFusionPlayerState* PlayerState) const
+{
+	return false;
+}
 
 /*
 void ASGameMode::SetPlayerDefaults(APawn* PlayerPawn)
