@@ -98,7 +98,6 @@ public:
 	virtual void Shutdown() override;
 	virtual void StartGameInstance() override;
 
-
 	bool HostGame(ULocalPlayer* LocalPlayer, const FString& GameType, const FString& InTravelURL);
 	bool JoinSession(ULocalPlayer* LocalPlayer, int32 SessionIndexInSearchResults);
 	bool JoinSession(ULocalPlayer* LocalPlayer, const FOnlineSessionSearchResult& SearchResult);
@@ -182,6 +181,23 @@ public:
 
 	/** Resets Play Together PS4 system event info after it's been handled */
 	void ResetPlayTogetherInfo() { PlayTogetherInfo = FFusionPlayTogetherInfo(); }
+
+
+	// Creating a Session
+	UFUNCTION(BlueprintCallable, Category = "Network|Test")
+	void StartOnlineGame();
+
+	// Searching and Finding a Session
+	UFUNCTION(BlueprintCallable, Category = "Network|Test")
+	void FindOnlineGames();
+
+	// Joining a Session
+	UFUNCTION(BlueprintCallable, Category = "Network|Test")
+	void JoinOnlineGame();
+
+	// Destroying a Session
+	UFUNCTION(BlueprintCallable, Category = "Network|Test")
+	void DestroySessionAndLeaveGame();
 
 private:
 

@@ -3,16 +3,30 @@
 	"EngineAssociation": "4.14",
 	"Category": "",
 	"Description": "",
-	"Modules": [
-		{
-			"Name": "Fusion",
-			"Type": "Runtime",
-			"LoadingPhase": "Default",
-			"AdditionalDependencies": [
-				"Engine",
-				"CoreUObject",
-				"OnlineSubsystemUtils"
-			]
-		}
-	]
+  "Modules": [
+    {
+      "Name": "Fusion",
+      "Type": "Runtime",
+      "LoadingPhase": "Default",
+      "AdditionalDependencies": [
+        "Engine",
+        "CoreUObject",
+        "OnlineSubsystemUtils"
+      ]
+    }
+  ],
+  "Plugins": [
+    {
+      "Name": "OnlineSubsystem",
+      "Enabled": true
+    },
+    {
+      "Name": "OnlineSubsystemUtils",
+      "Enabled": true
+    },
+    {
+      "Name": "OnlineSubsystemNull",
+      "Enabled": true
+    }
+  ]
 }

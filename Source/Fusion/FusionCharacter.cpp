@@ -13,6 +13,7 @@
 #include "Player/Pickups/WeaponPickupActor.h"
 
 #include "FusionPlayerState.h"
+#include "FusionGameInstance.h"
 
 #include "GameFramework/InputSettings.h"
 
@@ -1212,3 +1213,93 @@ FName AFusionCharacter::GetWeaponAttachPoint() const
 	return WeaponAttachPoint;
 }
 
+#define LOCTEXT_NAMESPACE "Fusion.HUD.Menu"
+
+void AFusionCharacter::HostGame(const FString& GameType)
+{
+	ULocalPlayer* const Player = UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetLocalPlayer();
+	UFusionGameInstance* GameInstance = Cast<UFusionGameInstance>(GetGameInstance());
+	
+	//if (ensure(IsValid(GameInstance) && Player != NULL))
+	if (Player != NULL)
+	{
+		bool bIsLanMatch = false;
+		FString BotNames = FString(TEXT("Bots"));
+		int32 AmountOfBots = 0;
+		bool bIsRecordingDemo = false;
+
+		FString const StartURL = FString::Printf(TEXT("/Game/Maps/%s?game=%s%s%s?%s=%d%s"), *FString(TEXT("DownFall")), *GameType, GameInstance->GetIsOnline() ? TEXT("?listen") : TEXT(""), bIsLanMatch ? TEXT("?bIsLanMatch") : TEXT(""), *BotNames, AmountOfBots, bIsRecordingDemo ? TEXT("?DemoRec") : TEXT(""));
+		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, FString::Printf(TEXT("StartURL: %s"), *StartURL));
+		// Game instance will handle success, failure and dialogs
+		//GameInstance->HostGame(Player, GameType, StartURL); // This doesn't work at all.
+		
+		GameInstance->SetIsOnline(true);
+
+		GameInstance->BeginHostingQuickMatch();
+		// So begin hosting quick match works, but only on 1/5 clients.... gotta figure out why
+		
+	}
+}
+
+void AFusionCharacter::HostFreeForAll()
+{
+	HostGame(LOCTEXT("FFA", "FFA").ToString());
+}
+
+#undef LOCTEXT_NAMESPACE
+
+
+
+/* The find sessions function inside of the game instance is crashing me so I need to implement the function below */
+/* After I get it working here, I can begin moving it into a main menu widget.
+void FShooterMainMenu::BeginQuickMatchSearch()
+
+{
+	auto Sessions = Online::GetSessionInterface();
+	if (!Sessions.IsValid())
+	{
+		UE_LOG(LogOnline, Warning, TEXT("Quick match is not supported: couldn't find online session interface."));
+		return;
+	}
+
+	if (GetPlayerOwnerControllerId() == -1)
+	{
+		UE_LOG(LogOnline, Warning, TEXT("Quick match is not supported: Could not get controller id from player owner"));
+		return;
+	}
+
+	QuickMatchSearchSettings = MakeShareable(new FShooterOnlineSearchSettings(false, true));
+	QuickMatchSearchSettings->QuerySettings.Set(SEARCH_XBOX_LIVE_HOPPER_NAME, FString("TeamDeathmatch"), EOnlineComparisonOp::Equals);
+	QuickMatchSearchSettings->QuerySettings.Set(SEARCH_XBOX_LIVE_SESSION_TEMPLATE_NAME, FString("MatchSession"), EOnlineComparisonOp::Equals);
+	QuickMatchSearchSettings->TimeoutInSeconds = 120.0f;
+
+	FShooterOnlineSessionSettings SessionSettings(false, true, 8);
+	SessionSettings.Set(SETTING_GAMEMODE, FString("TDM"), EOnlineDataAdvertisementType::ViaOnlineService);
+	SessionSettings.Set(SETTING_MATCHING_HOPPER, FString("TeamDeathmatch"), EOnlineDataAdvertisementType::DontAdvertise);
+	SessionSettings.Set(SETTING_MATCHING_TIMEOUT, 120.0f, EOnlineDataAdvertisementType::ViaOnlineService);
+	SessionSettings.Set(SETTING_SESSION_TEMPLATE_NAME, FString("GameSession"), EOnlineDataAdvertisementType::DontAdvertise);
+
+	auto QuickMatchSearchSettingsRef = QuickMatchSearchSettings.ToSharedRef();
+
+	DisplayQuickmatchSearchingUI();
+
+	Sessions->ClearOnMatchmakingCompleteDelegate_Handle(OnMatchmakingCompleteDelegateHandle);
+	OnMatchmakingCompleteDelegateHandle = Sessions->AddOnMatchmakingCompleteDelegate_Handle(OnMatchmakingCompleteDelegate);
+
+	// Perform matchmaking with all local players
+	TArray<TSharedRef<const FUniqueNetId>> LocalPlayerIds;
+	for (int i = 0; i < GameInstance->GetNumLocalPlayers(); ++i)
+	{
+		auto PlayerId = GameInstance->GetLocalPlayerByIndex(i)->GetPreferredUniqueNetId();
+		if (PlayerId.IsValid())
+		{
+			LocalPlayerIds.Add(PlayerId.ToSharedRef());
+		}
+	}
+
+	if (!Sessions->StartMatchmaking(LocalPlayerIds, GameSessionName, SessionSettings, QuickMatchSearchSettingsRef))
+	{
+		OnMatchmakingComplete(GameSessionName, false);
+	}
+}
+*/

@@ -36,7 +36,7 @@ void UFusionFullBody::UpdateAnimationProperties(float DeltaTime)
 			FRotator CombinedRots = UKismetMathLibrary::ComposeRotators(RotatedXVec, InvertPlayerRot);
 
 			Speed = PlayerVelocity.Size();
-			UE_LOG(LogTemp, Warning, TEXT("Player Speed %f"), Speed);
+			//UE_LOG(LogTemp, Warning, TEXT("Player Speed %f"), Speed);
 
 			if (Speed > 0.f)
 			{

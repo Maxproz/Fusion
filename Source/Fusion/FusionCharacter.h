@@ -68,6 +68,13 @@ protected:
 
 public:
 
+	/** Returns the player that owns the main menu. */
+	//ULocalPlayer* GetPlayerOwner() const;
+
+	void HostGame(const FString& GameType);
+
+	UFUNCTION(BlueprintCallable, Category = Debug)
+	void HostFreeForAll();
 
 	/** Gun muzzle's offset from the characters location */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Gameplay)

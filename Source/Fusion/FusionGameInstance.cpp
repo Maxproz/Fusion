@@ -912,6 +912,8 @@ TSubclassOf<UOnlineSession> UFusionGameInstance::GetOnlineSessionClass()
 // starts playing a game as the host
 bool UFusionGameInstance::HostGame(ULocalPlayer* LocalPlayer, const FString& GameType, const FString& InTravelURL)
 {
+
+
 	if (!GetIsOnline())
 	{
 		//
@@ -923,6 +925,7 @@ bool UFusionGameInstance::HostGame(ULocalPlayer* LocalPlayer, const FString& Gam
 
 		// Travel to the specified match URL
 		TravelURL = InTravelURL;
+		UE_LOG(LogTemp, Warning, TEXT("Not online... using TravelURL: %s"), *TravelURL);
 		GetWorld()->ServerTravel(TravelURL);
 		return true;
 	}
@@ -944,6 +947,8 @@ bool UFusionGameInstance::HostGame(ULocalPlayer* LocalPlayer, const FString& Gam
 		const FString& MapNameSubStr = "/Game/Maps/";
 		const FString& ChoppedMapName = TravelURL.RightChop(MapNameSubStr.Len());
 		const FString& MapName = ChoppedMapName.LeftChop(ChoppedMapName.Len() - ChoppedMapName.Find("?game"));
+
+		UE_LOG(LogTemp, Warning, TEXT("MapName: %s"), *MapName);
 
 		if (GameSession->HostSession(LocalPlayer->GetPreferredUniqueNetId(), GameSessionName, GameType, MapName, bIsLanMatch, true, AFusionGameSession::DEFAULT_NUM_PLAYERS))
 		{
@@ -1924,5 +1929,80 @@ void UFusionGameInstance::SendPlayTogetherInvites()
 		}
 
 		PlayTogetherInfo = FFusionPlayTogetherInfo();
+	}
+}
+
+// Function didnt work, caused crash
+void UFusionGameInstance::StartOnlineGame()
+{
+	// Creating a local player where we can get the UserID from
+	ULocalPlayer* const Player = GetFirstGamePlayer();
+
+	// Call our custom HostSession function. GameSessionName is a GameInstance variable
+	
+	//HostGame(Player, *GameSessionName.ToString(), TravelURL);
+	/*
+	const FString FFA = TEXT("FFA");
+	const FString MapName = TEXT("DownFall");
+
+	GetGameSession()->HostSession(Player->GetPreferredUniqueNetId(), GameSessionName, *FFA, *MapName, false, false, 4);
+	*/
+}
+
+// Function didnt work, caused crash
+void UFusionGameInstance::FindOnlineGames()
+{
+	ULocalPlayer* const Player = GetFirstGamePlayer();
+
+
+	//GetGameSession()->FindSessions(Player->GetPreferredUniqueNetId(), GameSessionName, true, true);
+	//FindSessions(Player, true);
+}
+
+
+// Function didnt work, caused crash
+void UFusionGameInstance::JoinOnlineGame()
+{
+	ULocalPlayer* const Player = GetFirstGamePlayer();
+
+	// Just a SearchResult where we can save the one we want to use, for the case we find more than one!
+	FOnlineSessionSearchResult SearchResult;
+	
+	/*
+	// If the Array is not empty, we can go through it
+	if (GetGameSession()->GetSearchResults().Num() > 0)
+	{
+		for (int32 i = 0; i < GetGameSession()->GetSearchResults().Num(); i++)
+		{
+			// To avoid something crazy, we filter sessions from ourself
+			if (GetGameSession()->GetSearchResults()[i].Session.OwningUserId != Player->GetPreferredUniqueNetId())
+			{
+				SearchResult = GetGameSession()->GetSearchResults()[i];
+
+				// Once we found sounce a Session that is not ours, just join it. Instead of using a for loop, you could
+				// use a widget that you click on and have a reference for the GameSession it represents which you can use
+				// here
+				GetGameSession()->JoinSession(Player->GetPreferredUniqueNetId(), GameSessionName, SearchResult);
+				//JoinSession(Player, SearchResult);
+				break;
+			}
+		}
+	}*/
+}
+
+// Function worked, but I was never registers a session for some reason.
+// So I always got a "this session is null" when i tried to destroy.
+void UFusionGameInstance::DestroySessionAndLeaveGame()
+{
+	IOnlineSubsystem* OnlineSub = IOnlineSubsystem::Get();
+	if (OnlineSub)
+	{
+		IOnlineSessionPtr Sessions = OnlineSub->GetSessionInterface();
+
+		if (Sessions.IsValid())
+		{
+			//Sessions->AddOnDestroySessionCompleteDelegate_Handle(GetGameSession()->OnDestroySessionCompleteDelegate);
+			Sessions->DestroySession(GameSessionName);
+		}
 	}
 }
