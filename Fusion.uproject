@@ -3,7 +3,7 @@
 	"EngineAssociation": "4.14",
 	"Category": "",
 	"Description": "",
-  "Modules": [
+	"Modules": [
     {
       "Name": "Fusion",
       "Type": "Runtime",
@@ -11,22 +11,28 @@
       "AdditionalDependencies": [
         "Engine",
         "CoreUObject",
-        "OnlineSubsystemUtils"
+        "OnlineSubsystemUtils",
+        "UMG"
       ]
-    }
-  ],
-  "Plugins": [
-    {
-      "Name": "OnlineSubsystem",
-      "Enabled": true
     },
     {
-      "Name": "OnlineSubsystemUtils",
-      "Enabled": true
-    },
-    {
-      "Name": "OnlineSubsystemNull",
-      "Enabled": true
-    }
-  ]
+			"Name": "FusionGameLoadingScreen",
+			"Type": "Runtime",
+			"LoadingPhase": "PreLoadingScreen"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "OnlineSubsystem",
+			"Enabled": true
+		},
+		{
+			"Name": "OnlineSubsystemUtils",
+			"Enabled": true
+		},
+		{
+			"Name": "OnlineSubsystemNull",
+			"Enabled": true
+		}
+	]
 }

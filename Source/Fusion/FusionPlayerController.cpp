@@ -8,6 +8,10 @@
 #include "FusionGameInstance.h"
 #include "FusionHUD.h"
 
+#include "Widgets/Gameplay/InGameHUD.h"
+
+#include "FusionGameViewportClient.h"
+
 #include "Player/FusionPlayerCameraManager.h"
 
 #include "FusionPlayerController.h"
@@ -371,5 +375,27 @@ bool AFusionPlayerController::IsGameMenuVisible() const
 	return Result;
 }
 
+void AFusionPlayerController::PreClientTravel(const FString& PendingURL, ETravelType TravelType, bool bIsSeamlessTravel)
+{
+	Super::PreClientTravel(PendingURL, TravelType, bIsSeamlessTravel);
+
+	if (GetWorld() != NULL)
+	{
+		UFusionGameViewportClient* FusionViewport = Cast<UFusionGameViewportClient>(GetWorld()->GetGameViewport());
+
+		if (FusionViewport != NULL)
+		{
+			FusionViewport->ShowLoadingScreen();
+		}
+
+		AFusionHUD* FusionHUD = Cast<AFusionHUD>(GetHUD());
+		if (FusionHUD != nullptr)
+		{
+			// Passing true to bFocus here ensures that focus is returned to the game viewport.
+			//FusionHUD->ShowScoreboard(false, true);
+			FusionHUD->GetInGameHUDWidget()->ShowInGameHUD();
+		}
+	}
+}
 
 

@@ -85,15 +85,20 @@ void AMasterWeapon::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 }
 
+/*
+USkeletalMeshComponent* AMasterWeapon::GetWeaponMesh() const
+{
+	return Mesh1P;
+}
+*/
 
 /*
 Return Mesh of Weapon
 */
 USkeletalMeshComponent* AMasterWeapon::GetWeaponMesh() const
 {
-	return Mesh1P;
+	return (MyPawn != NULL && MyPawn->IsFirstPerson()) ? Mesh1P : Mesh3P;
 }
-
 
 class AFusionCharacter* AMasterWeapon::GetPawnOwner() const
 {

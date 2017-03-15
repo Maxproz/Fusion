@@ -4,6 +4,9 @@
 #include "FusionHUD.generated.h"
 
 
+class UInGameHUD;
+class UMainMenuUI;
+
 UENUM(BlueprintType)
 enum class EHUDState : uint8
 {
@@ -19,6 +22,36 @@ class AFusionHUD : public AHUD
 
 public:
 	AFusionHUD();
+
+	
+	FORCEINLINE UInGameHUD* GetInGameHUDWidget() const { return ActiveInGameHUDWidget; }
+	FORCEINLINE UMainMenuUI* GetMainMenuUIWidget() const { return ActiveMainMenuUIWidget; }
+
+protected:
+	//////////////////////////////////
+	///// Game Widget Management /////
+	//////////////////////////////////
+
+	// Widget Classes
+	UPROPERTY(EditDefaultsOnly, Category = "InGame Widgets")
+	TAssetSubclassOf<UInGameHUD> InGameHUDWidget;
+	UPROPERTY(EditDefaultsOnly, Category = "Menu Widgets")
+	TAssetSubclassOf<UMainMenuUI> MainMenuUIWidget;
+
+	// Active Widgets
+	UInGameHUD* ActiveInGameHUDWidget;
+	UMainMenuUI* ActiveMainMenuUIWidget;
+
+	void CreateInGameHUDWidget();
+	void CreateMainMenuUIWidget();
+
+
+public:
+
+	// Functions
+	void CreateGameWidgets();
+	void RemoveGameWidgets();
+
 
 	/** Primary draw call for the HUD */
 	virtual void DrawHUD() override;

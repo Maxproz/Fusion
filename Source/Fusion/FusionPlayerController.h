@@ -114,6 +114,7 @@ public:
 	/** is game menu currently active? */
 	bool IsGameMenuVisible() const;
 
+	virtual void PreClientTravel(const FString& PendingURL, ETravelType TravelType, bool bIsSeamlessTravel) override;
 
 protected:
 

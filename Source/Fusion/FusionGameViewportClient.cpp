@@ -1,8 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Fusion.h"
+#include "SSafeZone.h"
+#include "SThrobber.h"
 
 #include "FusionBaseCharacter.h"
+
+#include "Player/FusionLocalPlayer.h"
 
 #include "FusionGameViewportClient.h"
 
@@ -16,7 +20,8 @@ UFusionGameViewportClient::UFusionGameViewportClient(const FObjectInitializer& O
 
 void UFusionGameViewportClient::ShowDialog(TWeakObjectPtr<ULocalPlayer> PlayerOwner, EFusionDialogType::Type DialogType, const FText& Message, const FText& Confirm, const FText& Cancel, const FOnClicked& OnConfirm, const FOnClicked& OnCancel)
 {
-	//UE_LOG(LogPlayerManagement, Log, TEXT("UShooterGameViewportClient::ShowDialog..."));
+
+	//UE_LOG(LogPlayerManagement, Log, TEXT("UFusionGameViewportClient::ShowDialog..."));
 	/*
 	if (DialogWidget.IsValid())
 	{
@@ -29,7 +34,7 @@ void UFusionGameViewportClient::ShowDialog(TWeakObjectPtr<ULocalPlayer> PlayerOw
 		HideExistingWidgets();
 	}
 
-	DialogWidget = SNew(SShooterConfirmationDialog)
+	DialogWidget = SNew(SFusionConfirmationDialog)
 		.PlayerOwner(PlayerOwner)
 		.DialogType(DialogType)
 		.MessageText(Message)
@@ -54,12 +59,13 @@ void UFusionGameViewportClient::ShowDialog(TWeakObjectPtr<ULocalPlayer> PlayerOw
 		FSlateApplication::Get().SetKeyboardFocus(DialogWidget, EFocusCause::SetDirectly);
 	}
 	*/
+
 }
 
 void UFusionGameViewportClient::HideDialog()
 {
 	/*
-	UE_LOG(LogPlayerManagement, Log, TEXT("UShooterGameViewportClient::HideDialog. DialogWidget: %p, OldFocusWidget: %p"), DialogWidget.Get(), OldFocusWidget.Get());
+	UE_LOG(LogPlayerManagement, Log, TEXT("UFusionGameViewportClient::HideDialog. DialogWidget: %p, OldFocusWidget: %p"), DialogWidget.Get(), OldFocusWidget.Get());
 
 	if (DialogWidget.IsValid())
 	{
@@ -87,40 +93,40 @@ void UFusionGameViewportClient::HideDialog()
 	*/
 }
 
-
 void UFusionGameViewportClient::ShowLoadingScreen()
 {
 
-	/*
 	if (LoadingScreenWidget.IsValid())
 	{
 		return;
 	}
-
+	/*
 	if (DialogWidget.IsValid())
 	{
 		// Hide the dialog widget (loading screen takes priority)
 		check(!HiddenViewportContentStack.Contains(DialogWidget.ToSharedRef()));
 		check(ViewportContentStack.Contains(DialogWidget.ToSharedRef()));
-		RemoveViewportWidgetContent(DialogWidget.ToSharedRef());
-		HiddenViewportContentStack.Add(DialogWidget.ToSharedRef());
+		//RemoveViewportWidgetContent(DialogWidget.ToSharedRef());
+		//HiddenViewportContentStack.Add(DialogWidget.ToSharedRef());
 	}
 	else
 	{
 		// Hide all existing widgets
 		HideExistingWidgets();
 	}
+	*/
 
-	LoadingScreenWidget = SNew(SShooterLoadingScreen);
+	// Hide all existing widgets
+	HideExistingWidgets();
+
+	LoadingScreenWidget = SNew(SFusionLoadingScreen);
 
 	AddViewportWidgetContent(LoadingScreenWidget.ToSharedRef());
-	*/
+	
 }
 
 void UFusionGameViewportClient::HideLoadingScreen()
 {
-
-	/*
 
 	if (!LoadingScreenWidget.IsValid())
 	{
@@ -131,6 +137,7 @@ void UFusionGameViewportClient::HideLoadingScreen()
 
 	LoadingScreenWidget = NULL;
 
+	/*
 	// Show the dialog widget if we need to
 	if (DialogWidget.IsValid())
 	{
@@ -144,28 +151,29 @@ void UFusionGameViewportClient::HideLoadingScreen()
 		ShowExistingWidgets();
 	}
 	*/
+	ShowExistingWidgets();
 
 }
 
-/*
 
 
-void UShooterGameViewportClient::NotifyPlayerAdded(int32 PlayerIndex, ULocalPlayer* AddedPlayer)
+void UFusionGameViewportClient::NotifyPlayerAdded(int32 PlayerIndex, ULocalPlayer* AddedPlayer)
 {
 	Super::NotifyPlayerAdded(PlayerIndex, AddedPlayer);
 
-	UShooterLocalPlayer* const ShooterLP = Cast<UShooterLocalPlayer>(AddedPlayer);
-	if (ShooterLP)
+	UFusionLocalPlayer* const FusionLP = Cast<UFusionLocalPlayer>(AddedPlayer);
+	if (FusionLP)
 	{
-		ShooterLP->LoadPersistentUser();
+		FusionLP->LoadPersistentUser();
 	}
 }
 
-void UShooterGameViewportClient::AddViewportWidgetContent(TSharedRef<class SWidget> ViewportContent, const int32 ZOrder)
+void UFusionGameViewportClient::AddViewportWidgetContent(TSharedRef<class SWidget> ViewportContent, const int32 ZOrder)
 {
-	UE_LOG(LogPlayerManagement, Log, TEXT("UShooterGameViewportClient::AddViewportWidgetContent: %p"), &ViewportContent.Get());
+	UE_LOG(LogTemp, Warning, TEXT("UFusionGameViewportClient::AddViewportWidgetContent: %p"), &ViewportContent.Get());
 
-	if ((DialogWidget.IsValid() || LoadingScreenWidget.IsValid()) && ViewportContent != DialogWidget && ViewportContent != LoadingScreenWidget)
+	//if ((DialogWidget.IsValid() || LoadingScreenWidget.IsValid()) && ViewportContent != DialogWidget && ViewportContent != LoadingScreenWidget)
+	if (LoadingScreenWidget.IsValid() && ViewportContent != LoadingScreenWidget)
 	{
 		// Add to hidden list, and don't show until we hide the dialog widget
 		HiddenViewportContentStack.AddUnique(ViewportContent);
@@ -182,9 +190,9 @@ void UShooterGameViewportClient::AddViewportWidgetContent(TSharedRef<class SWidg
 	Super::AddViewportWidgetContent(ViewportContent, 0);
 }
 
-void UShooterGameViewportClient::RemoveViewportWidgetContent(TSharedRef<class SWidget> ViewportContent)
+void UFusionGameViewportClient::RemoveViewportWidgetContent(TSharedRef<class SWidget> ViewportContent)
 {
-	UE_LOG(LogPlayerManagement, Log, TEXT("UShooterGameViewportClient::RemoveViewportWidgetContent: %p"), &ViewportContent.Get());
+	UE_LOG(LogTemp, Warning, TEXT("UFusionGameViewportClient::RemoveViewportWidgetContent: %p"), &ViewportContent.Get());
 
 	ViewportContentStack.Remove(ViewportContent);
 	HiddenViewportContentStack.Remove(ViewportContent);
@@ -192,7 +200,7 @@ void UShooterGameViewportClient::RemoveViewportWidgetContent(TSharedRef<class SW
 	Super::RemoveViewportWidgetContent(ViewportContent);
 }
 
-void UShooterGameViewportClient::HideExistingWidgets()
+void UFusionGameViewportClient::HideExistingWidgets()
 {
 	check(HiddenViewportContentStack.Num() == 0);
 
@@ -206,7 +214,7 @@ void UShooterGameViewportClient::HideExistingWidgets()
 	HiddenViewportContentStack = CopyOfViewportContentStack;
 }
 
-void UShooterGameViewportClient::ShowExistingWidgets()
+void UFusionGameViewportClient::ShowExistingWidgets()
 {
 	// We shouldn't have any visible widgets at this point
 	check(ViewportContentStack.Num() == 0);
@@ -224,20 +232,21 @@ void UShooterGameViewportClient::ShowExistingWidgets()
 }
 
 
-
-
-EShooterDialogType::Type UShooterGameViewportClient::GetDialogType() const
+EFusionDialogType::Type UFusionGameViewportClient::GetDialogType() const
 {
-	return (DialogWidget.IsValid() ? DialogWidget->DialogType : EShooterDialogType::None);
+	//return (DialogWidget.IsValid() ? DialogWidget->DialogType : EFusionDialogType::None);
+	return EFusionDialogType::None;
 }
 
-TWeakObjectPtr<ULocalPlayer> UShooterGameViewportClient::GetDialogOwner() const
+TWeakObjectPtr<ULocalPlayer> UFusionGameViewportClient::GetDialogOwner() const
 {
-	return (DialogWidget.IsValid() ? DialogWidget->PlayerOwner : nullptr);
+	//return (DialogWidget.IsValid() ? DialogWidget->PlayerOwner : nullptr);
+	return nullptr;
 }
 
-void UShooterGameViewportClient::Tick(float DeltaSeconds)
+void UFusionGameViewportClient::Tick(float DeltaSeconds)
 {
+	/*
 	if (DialogWidget.IsValid() && !LoadingScreenWidget.IsValid())
 	{
 		// Make sure the dialog widget always has focus
@@ -249,34 +258,16 @@ void UShooterGameViewportClient::Tick(float DeltaSeconds)
 			// Force focus back to dialog
 			FSlateApplication::Get().SetKeyboardFocus(DialogWidget, EFocusCause::SetDirectly);
 		}
-	}
+	}*/
+
 }
 
-#if WITH_EDITOR
-void UShooterGameViewportClient::DrawTransition(UCanvas* Canvas)
+void SFusionLoadingScreen::Construct(const FArguments& InArgs)
 {
-	if (GetOuterUEngine() != NULL)
-	{
-		TEnumAsByte<enum ETransitionType> Type = GetOuterUEngine()->TransitionType;
-		switch (Type)
-		{
-		case TT_Connecting:
-			DrawTransitionMessage(Canvas, NSLOCTEXT("GameViewportClient", "ConnectingMessage", "CONNECTING").ToString());
-			break;
-		case TT_WaitingToConnect:
-			DrawTransitionMessage(Canvas, NSLOCTEXT("GameViewportClient", "Waitingtoconnect", "Waiting to connect...").ToString());
-			break;
-		}
-	}
-}
-#endif //WITH_EDITOR
-
-void SShooterLoadingScreen::Construct(const FArguments& InArgs)
-{
-	static const FName LoadingScreenName(TEXT("/Game/UI/Menu/LoadingScreen.LoadingScreen"));
+	static const FName LoadingScreenName(TEXT("/Game/Tracked/Images/LoadingScreenTest.LoadingScreenTest"));
 
 	//since we are not using game styles here, just load one image
-	LoadingScreenBrush = MakeShareable(new FShooterGameLoadingScreenBrush(LoadingScreenName, FVector2D(1920, 1080)));
+	LoadingScreenBrush = MakeShareable(new FFusionGameLoadingScreenBrush(LoadingScreenName, FVector2D(1920, 1080)));
 
 
 	ChildSlot
@@ -300,9 +291,38 @@ void SShooterLoadingScreen::Construct(const FArguments& InArgs)
 		.IsTitleSafe(true)
 		[
 			SNew(SThrobber)
-			.Visibility(this, &SShooterLoadingScreen::GetLoadIndicatorVisibility)
+			.Visibility(this, &SFusionLoadingScreen::GetLoadIndicatorVisibility)
 		]
 		]
 		];
 }
+
+
+
+/*
+
+
+
+
+
+
+#if WITH_EDITOR
+void UFusionGameViewportClient::DrawTransition(UCanvas* Canvas)
+{
+	if (GetOuterUEngine() != NULL)
+	{
+		TEnumAsByte<enum ETransitionType> Type = GetOuterUEngine()->TransitionType;
+		switch (Type)
+		{
+		case TT_Connecting:
+			DrawTransitionMessage(Canvas, NSLOCTEXT("GameViewportClient", "ConnectingMessage", "CONNECTING").ToString());
+			break;
+		case TT_WaitingToConnect:
+			DrawTransitionMessage(Canvas, NSLOCTEXT("GameViewportClient", "Waitingtoconnect", "Waiting to connect...").ToString());
+			break;
+		}
+	}
+}
+#endif //WITH_EDITOR
+
 */

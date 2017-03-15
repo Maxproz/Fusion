@@ -229,6 +229,7 @@ private:
 
 	/** Main menu UI */
 	//TSharedPtr<FShooterMainMenu> MainMenuUI;
+	TWeakObjectPtr<class UMainMenuUI> MainMenuUI;
 
 	/** Message menu (Shown in the even of errors - unable to connect etc) */
 	//TSharedPtr<FShooterMessageMenu> MessageMenuUI;

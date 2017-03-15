@@ -10,7 +10,11 @@
 #include "FusionGameState.h"
 #include "FusionPlayerState.h"
 
+#include "Widgets/Menus/MainMenuUI.h"
+
 #include "Online/FusionOnlineSessionClient.h"
+
+#include "FusionGameLoadingScreen.h"
 
 #include "OnlineKeyValuePair.h"
 
@@ -415,12 +419,12 @@ void UFusionGameInstance::ShowLoadingScreen()
 	//  In this case, we just add a widget to the viewport, and have it update on the main thread
 	//  To simplify things, we just do both, and you can't tell, one will cover the other if they both show at the same time
 	
-	/* TODO: Need to figure out how this is implemented
-	IShooterGameLoadingScreenModule* const LoadingScreenModule = FModuleManager::LoadModulePtr<IShooterGameLoadingScreenModule>("ShooterGameLoadingScreen");
+	/* TODO: Need to figure out how this is implemented*/
+	IFusionGameLoadingScreenModule* const LoadingScreenModule = FModuleManager::LoadModulePtr<IFusionGameLoadingScreenModule>("FusionGameLoadingScreen");
 	if (LoadingScreenModule != nullptr)
 	{
 		LoadingScreenModule->StartInGameLoadingScreen();
-	}*/
+	}
 
 	UFusionGameViewportClient* FusionViewport = Cast<UFusionGameViewportClient>(GetGameViewportClient());
 
@@ -691,13 +695,19 @@ void UFusionGameInstance::BeginMainMenuState()
 
 	// player 0 gets to own the UI
 	ULocalPlayer* const Player = GetFirstGamePlayer();
-
+	
 	/* TODO: Create a mainmenu UI userwidget 
 	MainMenuUI = MakeShareable(new FShooterMainMenu());
 	MainMenuUI->Construct(this, Player);
-	MainMenuUI->AddMenuToGameViewport();
 	*/
 
+	MainMenuUI = Cast<AFusionPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0))->GetFusionHUD()->GetMainMenuUIWidget();
+	if (MainMenuUI.IsValid())
+	{
+		//MainMenuUI->AddMenuToGameViewport();
+		MainMenuUI.Get()->ShowMainMenu();
+	}
+	
 	// It's possible that a play together event was sent by the system while the player was in-game or didn't
 	// have the application launched. The game will automatically go directly to the main menu state in those cases
 	// so this will handle Play Together if that is why we transitioned here.
@@ -721,12 +731,18 @@ void UFusionGameInstance::BeginMainMenuState()
 
 void UFusionGameInstance::EndMainMenuState()
 {
-	/* TODO: Create a mainmenu UI userwidget 
+	/* TODO: Create a mainmenu UI userwidget
 	if (MainMenuUI.IsValid())
 	{
 		MainMenuUI->RemoveMenuFromGameViewport();
 		MainMenuUI = nullptr;
 	}*/
+
+	if (MainMenuUI.IsValid())
+	{
+		MainMenuUI.Get()->HideMainMenu();
+		MainMenuUI = nullptr;
+	}
 }
 
 void UFusionGameInstance::BeginMessageMenuState()
@@ -1656,7 +1672,7 @@ bool UFusionGameInstance::ValidatePlayerForOnlinePlay(ULocalPlayer* LocalPlayer)
 			const FText Msg = NSLOCTEXT("NetworkFailures", "ServiceDisconnected", "You must be connected to the Xbox LIVE service to play online.");
 			const FText OKButtonString = NSLOCTEXT("DialogButtons", "OKAY", "OK");
 
-			ShooterViewport->ShowDialog(
+			FusionViewport->ShowDialog(
 				NULL,
 				EFusionDialogType::Generic,
 				Msg,

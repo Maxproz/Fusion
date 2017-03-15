@@ -62,19 +62,15 @@ public:
 	/** stop playing montage */
 	virtual void StopAnimMontage(class UAnimMontage* AnimMontage) override;
 
+	class AFusionHUD* PlayerHUD;
+
 protected:
 
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 
 public:
 
-	/** Returns the player that owns the main menu. */
-	//ULocalPlayer* GetPlayerOwner() const;
 
-	void HostGame(const FString& GameType);
-
-	UFUNCTION(BlueprintCallable, Category = Debug)
-	void HostFreeForAll();
 
 	/** Gun muzzle's offset from the characters location */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Gameplay)
