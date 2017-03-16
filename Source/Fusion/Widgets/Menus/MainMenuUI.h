@@ -62,6 +62,8 @@ protected:
 
 	void HostFreeForAll();
 
+	void HostTeamDeathMatch();
+
 	void BeginQuickMatchSearch();
 
 	void Quit();

@@ -487,7 +487,9 @@ AFusionGameSession* UFusionGameInstance::GetGameSession() const
 
 void UFusionGameInstance::TravelLocalSessionFailure(UWorld *World, ETravelFailure::Type FailureType, const FString& ReasonString)
 {
-	AFusionPlayerController_Menu* const FirstPC = Cast<AFusionPlayerController_Menu>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+	//AFusionPlayerController_Menu* const FirstPC = Cast<AFusionPlayerController_Menu>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+	AFusionPlayerController* const FirstPC = Cast<AFusionPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+
 	if (FirstPC != nullptr)
 	{
 		FText ReturnReason = NSLOCTEXT("NetworkErrors", "JoinSessionFailed", "Join Session failed.");
@@ -700,8 +702,15 @@ void UFusionGameInstance::BeginMainMenuState()
 	MainMenuUI = MakeShareable(new FShooterMainMenu());
 	MainMenuUI->Construct(this, Player);
 	*/
-
-	MainMenuUI = Cast<AFusionPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0))->GetFusionHUD()->GetMainMenuUIWidget();
+	
+	//MainMenuUI = Cast<AFusionPlayerController_Menu>(UGameplayStatics::GetPlayerController(GetWorld(), 0))->GetFusionHUD()->GetMainMenuUIWidget();
+	
+	
+	AFusionPlayerController* FPC = Cast<AFusionPlayerController>(Player->GetPlayerController(GetWorld()));
+	MainMenuUI = FPC->GetFusionHUD()->GetMainMenuUIWidget();
+	
+	//FPC->GetFusionHUD()->CreateGameWidgets();
+	//MainMenuUI = Cast<AFusionPlayerController>(Player->GetPlayerController(GetWorld()))->GetFusionHUD()->GetMainMenuUIWidget();
 	if (MainMenuUI.IsValid())
 	{
 		//MainMenuUI->AddMenuToGameViewport();
@@ -1212,7 +1221,11 @@ bool UFusionGameInstance::Tick(float DeltaSeconds)
 		return true;
 	}
 
+	GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, FString::Printf(TEXT("CurrentState: %s"), *CurrentState.ToString()));
+	GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, FString::Printf(TEXT("PendingState: %s"), *PendingState.ToString()));
+	
 	MaybeChangeState();
+
 
 	UFusionGameViewportClient* FusionViewport = Cast<UFusionGameViewportClient>(GetGameViewportClient());
 
@@ -1882,6 +1895,7 @@ void UFusionGameInstance::BeginHostingQuickMatch()
 
 	// Travel to the specified match URL
 	GetWorld()->ServerTravel(TEXT("/Game/Maps/Downfall?game=TDM?listen"));
+	
 }
 
 void UFusionGameInstance::OnPlayTogetherEventReceived(const int32 UserIndex, const TArray<TSharedPtr<const FUniqueNetId>>& UserIdList)

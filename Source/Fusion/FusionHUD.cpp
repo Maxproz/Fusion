@@ -21,6 +21,8 @@ AFusionHUD::AFusionHUD()
 void AFusionHUD::CreateMainMenuUIWidget()
 {
 	//check(ActiveMainMenuUIWidget == nullptr, TEXT("MainMenuUI Widget Already Initialized"));
+	
+	//if (ActiveMainMenuUIWidget != nullptr) return; // maybe later, return here if its already initalized
 
 	ActiveMainMenuUIWidget = CreateWidget<UMainMenuUI>(GetOwningPlayerController(), MainMenuUIWidget.LoadSynchronous());
 	//check(ActiveMainMenuUIWidget != nullptr, TEXT("Unable to Create MainMenuUI Widget Widget"));

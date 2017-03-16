@@ -5,6 +5,7 @@
 #include "FusionGameLoadingScreen.h"
 
 #include "FusionGameInstance.h"
+#include "FusionGameSession.h"
 
 #include "Online/FusionOnlineGameSettings.h"
 
@@ -25,8 +26,8 @@ void UMainMenuUI::NativeConstruct()
 
 
 	// Note: CreateSP wouldn't work with my current setup, so I had to change it to UObject. No idea what the consequences are.
+	//OnMatchmakingCompleteDelegate = FOnMatchmakingCompleteDelegate::CreateUObject(this, &UMainMenuUI::OnMatchmakingComplete);
 	OnMatchmakingCompleteDelegate = FOnMatchmakingCompleteDelegate::CreateUObject(this, &UMainMenuUI::OnMatchmakingComplete);
-
 }
 
 void UMainMenuUI::ShowMainMenu()
@@ -53,12 +54,32 @@ void UMainMenuUI::OnClickedHostButton()
 	//HostFreeForAll();
 	ULocalPlayer* const Player = GetOwningLocalPlayer();
 	UFusionGameInstance* GameInstance = Cast<UFusionGameInstance>(Player->GetGameInstance());
-
+	
+	
 	GameInstance->BeginHostingQuickMatch();
+
+	//GameInstance->HostGame(Player, "TDM", "/Game/Maps/Downfall?game=TDM?listen");
+
+	//HostTeamDeathMatch();
+	
+	//FString const StartURL = TEXT("/Game/Maps/Downfall?game=TDM?listen");
+	//GetOwningPlayer()->ClientTravel(StartURL, ETravelType::TRAVEL_Relative);
+
+	//MenuWidget->LockControls(true);
+	
+	//GameInstance->GetGameSession()->TravelToSession(Player->GetControllerId(), TEXT("/Game/Maps/Downfall?game=TDM?listen"));
+
 }
+
+
 
 void UMainMenuUI::OnClickedJoinButton()
 {
+	//BeginQuickMatchSearch();
+	//.ULocalPlayer* const Player = GetOwningLocalPlayer();
+	//UFusionGameInstance* GameInstance = Cast<UFusionGameInstance>(Player->GetGameInstance());
+
+
 	BeginQuickMatchSearch();
 }
 
@@ -79,11 +100,15 @@ void UMainMenuUI::HostGame(const FString& GameType)
 		FString BotNames = FString(TEXT("Bots"));
 		int32 AmountOfBots = 0;
 		bool bIsRecordingDemo = false;
-		
+		FString MapName = TEXT("Downfall");
+
 		GameInstance->SetIsOnline(true);
-		FString const StartURL = FString::Printf(TEXT("/Game/Maps/%s?game=%s%s%s?%s=%d%s"), *FString(TEXT("DownFall")), *GameType, GameInstance->GetIsOnline() ? TEXT("?listen") : TEXT(""), bIsLanMatch ? TEXT("?bIsLanMatch") : TEXT(""), *BotNames, AmountOfBots, bIsRecordingDemo ? TEXT("?DemoRec") : TEXT(""));
+
+		FString const StartURL = TEXT("/Game/Maps/Downfall?game=TDM?listen");
+		//FString const StartURL = FString::Printf(TEXT("/Game/Maps/%s?game=%s%s%s?%s=%d%s"), *MapName, *GameType, GameInstance->GetIsOnline() ? TEXT("?listen") : TEXT(""), bIsLanMatch ? TEXT("?bIsLanMatch") : TEXT(""), *BotNames, AmountOfBots, bIsRecordingDemo ? TEXT("?DemoRec") : TEXT(""));
 		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, FString::Printf(TEXT("StartURL: %s"), *StartURL));
 		// Game instance will handle success, failure and dialogs
+		
 		GameInstance->HostGame(Player, GameType, StartURL); // This doesn't work at all.
 
 		
@@ -94,9 +119,26 @@ void UMainMenuUI::HostGame(const FString& GameType)
 	}
 }
 
+/*
+void UMainMenuUI::HostGame(const FString& GameType)
+{
+	if (ensure(GameInstance.IsValid()) && GetPlayerOwner() != NULL)
+	{
+		FString const StartURL = FString::Printf(TEXT("/Game/Maps/%s?game=%s%s%s?%s=%d%s"), *GetMapName(), *GameType, GameInstance->GetIsOnline() ? TEXT("?listen") : TEXT(""), bIsLanMatch ? TEXT("?bIsLanMatch") : TEXT(""), *AShooterGameMode::GetBotsCountOptionName(), BotsCountOpt, bIsRecordingDemo ? TEXT("?DemoRec") : TEXT(""));
+
+		// Game instance will handle success, failure and dialogs
+		GameInstance->HostGame(GetPlayerOwner(), GameType, StartURL);
+	}
+}*/
+
 void UMainMenuUI::HostFreeForAll()
 {
 	HostGame(LOCTEXT("FFA", "FFA").ToString());
+}
+
+void UMainMenuUI::HostTeamDeathMatch()
+{
+	HostGame(LOCTEXT("TDM", "TDM").ToString());
 }
 
 // The find sessions function inside of the game instance is crashing me so I need to implement the function below 
@@ -240,7 +282,7 @@ void UMainMenuUI::OnMatchmakingComplete(FName SessionName, bool bWasSuccessful)
 
 	UE_LOG(LogOnline, Log, TEXT("OnMatchmakingComplete: Session host is %d."), *MatchmadeSession->OwningUserId->ToString());
 
-	if (ensure(GameInstance->IsValidLowLevel()))
+	if (GameInstance)
 	{
 		//MenuWidget->LockControls(true);
 
@@ -263,7 +305,7 @@ void UMainMenuUI::Quit()
 	ULocalPlayer* const Player = GetOwningLocalPlayer();
 	UFusionGameInstance* GameInstance = Cast<UFusionGameInstance>(Player->GetGameInstance());
 
-	if (ensure(GameInstance->IsValidLowLevel()))
+	if (GameInstance)
 	{
 		UGameViewportClient* const Viewport = GameInstance->GetGameViewportClient();
 		if (ensure(Viewport))

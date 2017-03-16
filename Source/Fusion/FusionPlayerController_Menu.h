@@ -16,4 +16,8 @@ class FUSION_API AFusionPlayerController_Menu : public APlayerController
 	/** After game is initialized */
 	virtual void PostInitializeComponents() override;
 
+	/** Returns a pointer to the Fusion game hud. May return NULL. */
+	class AFusionHUD* GetFusionHUD() const;
+
+	//virtual void BeginPlay() override;
 };

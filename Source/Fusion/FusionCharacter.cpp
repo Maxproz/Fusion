@@ -5,7 +5,9 @@
 #include "FusionProjectile.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
+
 #include "FusionPlayerController.h"
+#include "FusionPlayerController_Menu.h"
 
 #include "Weapons/MasterWeapon.h"
 
@@ -117,12 +119,26 @@ void AFusionCharacter::BeginPlay()
 	RechargeShields();
 
 
+	
 	PlayerHUD = Cast<AFusionPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0))->GetFusionHUD();
+
 	if (PlayerHUD)
 	{
 		PlayerHUD->CreateGameWidgets();
 		PlayerHUD->GetMainMenuUIWidget()->ShowMainMenu();
+		//PlayerHUD->GetInGameHUDWidget()->ShowInGameHUD();
 	}
+
+	/*
+	PlayerHUD = Cast<AFusionPlayerController_Menu>(UGameplayStatics::GetPlayerController(GetWorld(), 0))->GetFusionHUD();
+
+	if (PlayerHUD)
+	{
+		PlayerHUD->CreateGameWidgets();
+		PlayerHUD->GetMainMenuUIWidget()->ShowMainMenu();
+	}*/
+
+
 }
 
 void AFusionCharacter::PostInitializeComponents()
@@ -166,10 +182,14 @@ void AFusionCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (PlayerHUD->GetInGameHUDWidget()->IsHealthBarValid())
+	if (PlayerHUD)
 	{
-		PlayerHUD->GetInGameHUDWidget()->UpdatePlayerHealthBar(GetHealth());
+		if (PlayerHUD->GetInGameHUDWidget()->IsHealthBarValid())
+		{
+			PlayerHUD->GetInGameHUDWidget()->UpdatePlayerHealthBar(GetHealth());
+		}
 	}
+
 
 	if (bWantsToSprint && !IsSprinting())
 	{
