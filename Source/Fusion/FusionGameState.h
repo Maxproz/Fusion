@@ -11,6 +11,9 @@
 #include "FusionGameState.generated.h"
 
 
+/** ranked PlayerState map, created from the GameState */
+typedef TMap <int32,TWeakObjectPtr<class AFusionPlayerState>> RankedPlayerMap;
+
 /**
  * 
  */
@@ -19,14 +22,6 @@ class FUSION_API AFusionGameState : public AGameState
 {
 	GENERATED_BODY()
 	
-	
-	/* Total score of Red Team  */
-	UPROPERTY(Replicated)
-	int32 RedTeamScore = 0;
-	
-	/* Total score of Blue Team  */
-	UPROPERTY(Replicated)
-	int32 BlueTeamScore = 0;
 
 public:
 
@@ -34,33 +29,36 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	UFUNCTION(BlueprintCallable, Category = "Score")
-	int32 GetRedTeamScore();
 
-	UFUNCTION(BlueprintCallable, Category = "Score")
-	int32 GetBlueTeamScore();
 
-	void AddScore(int32 Score, ETeamColors TeamColor);
-
-	/** number of teams */
-	UPROPERTY(Replicated)
+	/** number of teams in current game (doesn't deprecate when no players are left in a team) */
+	UPROPERTY(Transient, Replicated)
 	int32 NumTeams;
+
+	/** accumulated score per team */
+	UPROPERTY(Transient, Replicated)
+	TArray<int32> TeamScores;
 
 	/** time left for warmup / match */
 	UPROPERTY(Transient, Replicated)
 	int32 RemainingTime;
 
-	/* Amount of time since the match started TODO: Figure out how I will track the game time later. */
-	UPROPERTY(BlueprintReadOnly, Replicated, Category = "Time")
-	int32 ElapsedGameMinutes = 0;
+	/** is timer paused? */
+	UPROPERTY(Transient, Replicated)
+	bool bTimerPaused;
+
+	/** gets ranked PlayerState map for specific team */
+	void GetRankedMap(int32 TeamIndex, RankedPlayerMap& OutRankedMap) const;
+
+	void RequestFinishAndExitToMainMenu();
+
+
+
 
 	/* NetMulticast will send this event to all clients that know about this object, in the case of GameState that means every client. */
 	UFUNCTION(Reliable, NetMulticast)
 	void BroadcastGameMessage(EHUDMessage NewMessage);
 	void BroadcastGameMessage_Implementation(EHUDMessage MessageID);
 
-
-
-
-	void RequestFinishAndExitToMainMenu();
+	
 };

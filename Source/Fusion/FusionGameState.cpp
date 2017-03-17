@@ -12,49 +12,51 @@ AFusionGameState::AFusionGameState(const class FObjectInitializer& ObjectInitial
 	: Super(ObjectInitializer)
 {
 	NumTeams = 0;
+	RemainingTime = 0;
+	bTimerPaused = false;
 }
 
 void AFusionGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(AFusionGameState, ElapsedGameMinutes);
-	DOREPLIFETIME(AFusionGameState, RedTeamScore);
-	DOREPLIFETIME(AFusionGameState, BlueTeamScore);
 	DOREPLIFETIME(AFusionGameState, NumTeams);
+	DOREPLIFETIME(AFusionGameState, RemainingTime);
+	DOREPLIFETIME(AFusionGameState, bTimerPaused);
+	DOREPLIFETIME(AFusionGameState, TeamScores);
 
 }
 
-int32 AFusionGameState::GetRedTeamScore()
+void AFusionGameState::GetRankedMap(int32 TeamIndex, RankedPlayerMap& OutRankedMap) const
 {
-	return RedTeamScore;
-}
+	OutRankedMap.Empty();
 
-int32 AFusionGameState::GetBlueTeamScore()
-{
-	return BlueTeamScore;
-}
-
-void AFusionGameState::AddScore(int32 Score, ETeamColors TeamColor)
-{
-
-	switch (TeamColor)
+	//first, we need to go over all the PlayerStates, grab their score, and rank them
+	TMultiMap<int32, AFusionPlayerState*> SortedMap;
+	for (int32 i = 0; i < PlayerArray.Num(); ++i)
 	{
-		case ETeamColors::ETC_RED:
+		int32 Score = 0;
+		AFusionPlayerState* CurPlayerState = Cast<AFusionPlayerState>(PlayerArray[i]);
+		if (CurPlayerState && (CurPlayerState->GetTeamNum() == TeamIndex))
 		{
-			RedTeamScore += Score;
-			break;
+			SortedMap.Add(FMath::TruncToInt(CurPlayerState->Score), CurPlayerState);
 		}
-		case ETeamColors::ETC_BLUE:
-		{
-			BlueTeamScore += Score;
-			break;
-		}
-		default:
-			UE_LOG(LogTemp, Warning, TEXT("No TeamColor set for enum value in AFusionGameState::AddScore()."))
-		
 	}
+
+	//sort by the keys
+	SortedMap.KeySort(TGreater<int32>());
+
+	//now, add them back to the ranked map
+	OutRankedMap.Empty();
+
+	int32 Rank = 0;
+	for (TMultiMap<int32, AFusionPlayerState*>::TIterator It(SortedMap); It; ++It)
+	{
+		OutRankedMap.Add(Rank++, It.Value());
+	}
+
 }
+
 
 /* As with Server side functions, NetMulticast functions have a _Implementation body */
 void AFusionGameState::BroadcastGameMessage_Implementation(EHUDMessage MessageID)

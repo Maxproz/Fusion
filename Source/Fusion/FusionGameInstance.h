@@ -182,7 +182,7 @@ public:
 	/** Resets Play Together PS4 system event info after it's been handled */
 	void ResetPlayTogetherInfo() { PlayTogetherInfo = FFusionPlayTogetherInfo(); }
 
-
+	
 	// Creating a Session
 	UFUNCTION(BlueprintCallable, Category = "Network|Test")
 	void StartOnlineGame();
@@ -198,7 +198,7 @@ public:
 	// Destroying a Session
 	UFUNCTION(BlueprintCallable, Category = "Network|Test")
 	void DestroySessionAndLeaveGame();
-
+	
 private:
 
 	UPROPERTY(config)

@@ -38,14 +38,16 @@ class FUSION_API AFusionGameSession : public AGameSession
 	
 	GENERATED_UCLASS_BODY()
 
+public:
+	/** Delegate for destroying a session */
+	FOnDestroySessionCompleteDelegate OnDestroySessionCompleteDelegate;
+	
 protected:
 
 	/** Delegate for creating a new session */
 	FOnCreateSessionCompleteDelegate OnCreateSessionCompleteDelegate;
 	/** Delegate after starting a session */
 	FOnStartSessionCompleteDelegate OnStartSessionCompleteDelegate;
-	/** Delegate for destroying a session */
-	FOnDestroySessionCompleteDelegate OnDestroySessionCompleteDelegate;
 	/** Delegate for searching for sessions */
 	FOnFindSessionsCompleteDelegate OnFindSessionsCompleteDelegate;
 	/** Delegate after joining a session */

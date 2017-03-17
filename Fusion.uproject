@@ -1,21 +1,21 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "4.14",
+	"EngineAssociation": "4.15",
 	"Category": "",
 	"Description": "",
 	"Modules": [
-    {
-      "Name": "Fusion",
-      "Type": "Runtime",
-      "LoadingPhase": "Default",
-      "AdditionalDependencies": [
-        "Engine",
-        "CoreUObject",
-        "OnlineSubsystemUtils",
-        "UMG"
-      ]
-    },
-    {
+		{
+			"Name": "Fusion",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine",
+				"CoreUObject",
+				"OnlineSubsystemUtils",
+				"UMG"
+			]
+		},
+		{
 			"Name": "FusionGameLoadingScreen",
 			"Type": "Runtime",
 			"LoadingPhase": "PreLoadingScreen"

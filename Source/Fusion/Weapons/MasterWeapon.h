@@ -347,11 +347,7 @@ protected:
 		EMax,
 	};
 
-	/** query ammo type */
-	virtual EAmmoType GetAmmoType() const
-	{
-		return EAmmoType::EBullet;
-	}
+
 
 	void UseAmmo();
 
@@ -421,4 +417,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Ammo")
 	FORCEINLINE int32 GetMaxAmmo() const { return MaxAmmo; }
+
+	/** query ammo type */
+	virtual EAmmoType GetAmmoType() const
+	{
+		return EAmmoType::EBullet;
+	}
 };

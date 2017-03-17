@@ -9,15 +9,12 @@
 #include "FusionPlayerController.h"
 #include "FusionPlayerState.h"
 #include "FusionGameInstance.h"
+#include "FusionGameSession.h"
 
 #include "Player/FusionPlayerStart.h"
 #include "Mutators/Mutator.h"
 
 #include "FusionGameMode.h"
-
-//#include "SCharacter.h"
-//#include "STypes.h"
-//#include "SSpectatorPawn.h"
 
 
 AFusionGameMode::AFusionGameMode(const FObjectInitializer& ObjectInitializer)
@@ -27,197 +24,147 @@ AFusionGameMode::AFusionGameMode(const FObjectInitializer& ObjectInitializer)
 	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnClassFinder(TEXT("/Game/Tracked/Characters/FirstPersonCharacter"));
 	DefaultPawnClass = PlayerPawnClassFinder.Class;
 
+	//static ConstructorHelpers::FClassFinder<APawn> BotPawnOb(TEXT("/Game/Blueprints/Pawns/BotPawn"));
+	//BotPawnClass = BotPawnOb.Class;
+	
 	HUDClass = AFusionHUD::StaticClass();
-
-	/* Assign the class types used by this gamemode */
 	PlayerControllerClass = AFusionPlayerController::StaticClass();
 	PlayerStateClass = AFusionPlayerState::StaticClass();
+	//SpectatorClass = AShooterSpectatorPawn::StaticClass();
 	GameStateClass = AFusionGameState::StaticClass();
-	//SpectatorClass = ASSpectatorPawn::StaticClass();
-	
+	//ReplaySpectatorPlayerControllerClass = AShooterDemoSpectator::StaticClass();
+
+
+	MinRespawnDelay = 5.0f;
+
+	bAllowBots = true;
+	bNeedsBotCreation = true;
 	bUseSeamlessTravel = true;
-
-	NumberOfTeams = 2;
-
 }
 
-void AFusionGameMode::PostLogin(APlayerController* NewPlayer)
+FString AFusionGameMode::GetBotsCountOptionName()
 {
-	/**/
-	
-	// Place player on a team before Super (VoIP team based init, findplayerstart, etc)
-	AFusionPlayerState* NewPlayerState = CastChecked<AFusionPlayerState>(NewPlayer->PlayerState);
-	const int32 TeamNum = ChooseTeam(NewPlayerState);
-	NewPlayerState->SetTeamNum(TeamNum);
-
-	if (TeamNum == 0)
-	{
-		RedTeamPlayers++;
-	}
-	else
-	{
-		BlueTeamPlayers++;
-	}
-
-	// Supposed to be split functionality, with the team deathmatch implementation above
-
-
-	// update spectator location for client
-	AFusionPlayerController* NewPC = Cast<AFusionPlayerController>(NewPlayer);
-	if (NewPC && NewPC->GetPawn() == NULL)
-	{
-		//NewPC->ClientSetSpectatorCamera(NewPC->GetSpawnLocation(), NewPC->GetControlRotation());
-	}
-
-	// notify new player if match is already in progress
-	if (NewPC && IsMatchInProgress())
-	{
-		NewPC->ClientGameStarted();
-		NewPC->ClientStartOnlineGame();
-	}
-
-	Super::PostLogin(NewPlayer);
+	return FString(TEXT("Bots"));
 }
 
-
-
-void AFusionGameMode::InitGameState()
+void AFusionGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
 {
-	Super::InitGameState();
+	const int32 BotsCountOptionValue = UGameplayStatics::GetIntOption(Options, GetBotsCountOptionName(), 0);
+	SetAllowBots(BotsCountOptionValue > 0 ? true : false, BotsCountOptionValue);
+	Super::InitGame(MapName, Options, ErrorMessage);
 
-	AFusionGameState* MyGameState = Cast<AFusionGameState>(GameState);
-	if (MyGameState)
+	const UGameInstance* GameInstance = GetGameInstance();
+	if (GameInstance && Cast<UFusionGameInstance>(GameInstance)->GetIsOnline())
 	{
-		MyGameState->ElapsedGameMinutes = MatchLength;
-		MyGameState->NumTeams = NumberOfTeams;
+		bPauseable = false;
 	}
 }
 
+void AFusionGameMode::SetAllowBots(bool bInAllowBots, int32 InMaxBots)
+{
+	bAllowBots = bInAllowBots;
+	MaxBots = InMaxBots;
+}
 
+/** Returns game session class to use */
+TSubclassOf<AGameSession> AFusionGameMode::GetGameSessionClass() const
+{
+	return AFusionGameSession::StaticClass();
+}
 
 void AFusionGameMode::PreInitializeComponents()
 {
 	Super::PreInitializeComponents();
 
-	/* Set timer to run every second */
 	GetWorldTimerManager().SetTimer(TimerHandle_DefaultTimer, this, &AFusionGameMode::DefaultTimer, GetWorldSettings()->GetEffectiveTimeDilation(), true);
 }
 
-int32 AFusionGameMode::ChooseTeam(AFusionPlayerState* ForPlayerState) const
-{
-	TArray<int32> TeamBalance;
-	TeamBalance.AddZeroed(NumberOfTeams);
-
-	// get current team balance
-	for (int32 i = 0; i < GameState->PlayerArray.Num(); i++)
-	{
-		AFusionPlayerState const* const TestPlayerState = Cast<AFusionPlayerState>(GameState->PlayerArray[i]);
-		if (TestPlayerState && TestPlayerState != ForPlayerState && TeamBalance.IsValidIndex(TestPlayerState->GetTeamNum()))
-		{
-			TeamBalance[TestPlayerState->GetTeamNum()]++;
-		}
-	}
-
-	// find least populated one
-	int32 BestTeamScore = TeamBalance[0];
-	for (int32 i = 1; i < TeamBalance.Num(); i++)
-	{
-		if (BestTeamScore > TeamBalance[i])
-		{
-			BestTeamScore = TeamBalance[i];
-		}
-	}
-
-	// there could be more than one...
-	TArray<int32> BestTeams;
-	for (int32 i = 0; i < TeamBalance.Num(); i++)
-	{
-		if (TeamBalance[i] == BestTeamScore)
-		{
-			BestTeams.Add(i);
-		}
-	}
-
-	// get random from best list
-	const int32 RandomBestTeam = BestTeams[FMath::RandHelper(BestTeams.Num())];
-	return RandomBestTeam;
-}
-
-
-void AFusionGameMode::StartMatch()
-{
-	Super::StartMatch();
-
-}
-
-
 void AFusionGameMode::DefaultTimer()
 {
-	/* Immediately start the match while playing in editor */
+	// don't update timers for Play In Editor mode, it's not real match
 	if (GetWorld()->IsPlayInEditor())
 	{
+		// start match if necessary.
 		if (GetMatchState() == MatchState::WaitingToStart)
 		{
 			StartMatch();
 		}
+		return;
 	}
 
-	/* Only increment time of day while game is active */
-	if (IsMatchInProgress())
+	AFusionGameState* const MyGameState = Cast<AFusionGameState>(GameState);
+	if (MyGameState && MyGameState->RemainingTime > 0 && !MyGameState->bTimerPaused)
 	{
-		AFusionGameState* MyGameState = Cast<AFusionGameState>(GameState);
-		if (MyGameState)
+		MyGameState->RemainingTime--;
+
+		if (MyGameState->RemainingTime <= 0)
 		{
-			/* decerase out match timer */
-			// TODO: This timer is going to be off at first, but it can be adjusted easily.
-			MyGameState->ElapsedGameMinutes -= 0.01f;
+			if (GetMatchState() == MatchState::WaitingPostMatch)
+			{
+				RestartGame();
+			}
+			else if (GetMatchState() == MatchState::InProgress)
+			{
+				FinishMatch();
+
+				// Send end round events
+				for (FConstControllerIterator It = GetWorld()->GetControllerIterator(); It; ++It)
+				{
+					AFusionPlayerController* PlayerController = Cast<AFusionPlayerController>(*It);
+
+					if (PlayerController && MyGameState)
+					{
+						AFusionPlayerState* PlayerState = Cast<AFusionPlayerState>((*It)->PlayerState);
+						const bool bIsWinner = IsWinner(PlayerState);
+
+						PlayerController->ClientSendRoundEndEvent(bIsWinner, MyGameState->ElapsedTime);
+					}
+				}
+			}
+			else if (GetMatchState() == MatchState::WaitingToStart)
+			{
+				StartMatch();
+			}
 		}
 	}
 }
 
-
-bool AFusionGameMode::CanDealDamage(class AFusionPlayerState* DamageCauser, class AFusionPlayerState* DamagedPlayer) const
+void AFusionGameMode::HandleMatchIsWaitingToStart()
 {
-	if (bAllowFriendlyFireDamage)
+	Super::HandleMatchIsWaitingToStart();
+
+	if (bNeedsBotCreation)
 	{
-		return true;
+		//CreateBotControllers();
+		bNeedsBotCreation = false;
 	}
 
-	/* Allow damage to self */
-	if (DamagedPlayer == DamageCauser)
+	if (bDelayedStart)
 	{
-		return true;
+		// start warmup if needed
+		AFusionGameState* const MyGameState = Cast<AFusionGameState>(GameState);
+		if (MyGameState && MyGameState->RemainingTime == 0)
+		{
+			const bool bWantsMatchWarmup = !GetWorld()->IsPlayInEditor();
+			if (bWantsMatchWarmup && WarmupTime > 0)
+			{
+				MyGameState->RemainingTime = WarmupTime;
+			}
+			else
+			{
+				MyGameState->RemainingTime = 0.0f;
+			}
+		}
 	}
-
-	// Compare Team Colors
-	return DamageCauser && DamagedPlayer && (DamageCauser->GetTeamColor() != DamagedPlayer->GetTeamColor());
-}
-
-
-FString AFusionGameMode::InitNewPlayer(class APlayerController* NewPlayerController, const FUniqueNetIdRepl& UniqueId, const FString& Options, const FString& Portal)
-{
-	FString Result = Super::InitNewPlayer(NewPlayerController, UniqueId, Options, Portal);
-
-	// Done above inside of PostLogin()
-	/*
-	AFusionPlayerState* NewPlayerState = Cast<AFusionPlayerState>(NewPlayerController->PlayerState);
-	if (NewPlayerState)
-	{
-		
-		NewPlayerState->UpdateTeamColors();
-	}*/
-	
-
-	return Result;
 }
 
 void AFusionGameMode::HandleMatchHasStarted()
 {
-	//bNeedsBotCreation = true;
+	bNeedsBotCreation = true;
 	Super::HandleMatchHasStarted();
 
 	AFusionGameState* const MyGameState = Cast<AFusionGameState>(GameState);
-	//MyGameState->RemainingTime = RoundTime;
+	MyGameState->RemainingTime = RoundTime;
 	//StartBots();
 
 	// notify players
@@ -229,187 +176,37 @@ void AFusionGameMode::HandleMatchHasStarted()
 			PC->ClientGameStarted();
 		}
 	}
-
 }
 
-
-
-ETeamColors AFusionGameMode::AutoAssignTeamColor()
+void AFusionGameMode::FinishMatch()
 {
-	// TODO: Figure out how I am going to do the rules for max players and associate it with this functionality below.
-
-	//if (RedTeamPlayers == BlueTeamPlayers)
-	//{
-		//RedTeamPlayers++;
-		//return ETeamColors::ETC_RED;
-	//}
-
-
-	if (RedTeamPlayers > BlueTeamPlayers)
+	AFusionGameState* const MyGameState = Cast<AFusionGameState>(GameState);
+	if (IsMatchInProgress())
 	{
-		BlueTeamPlayers++;
-		return ETeamColors::ETC_BLUE;
-	}
-	else
-	{
-		RedTeamPlayers++;
-		return ETeamColors::ETC_RED;
-	}
+		EndMatch();
+		DetermineMatchWinner();
 
-}
-
-float AFusionGameMode::ModifyDamage(float Damage, AActor* DamagedActor, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) const
-{
-	float ActualDamage = Damage;
-
-	AFusionBaseCharacter* DamagedPawn = Cast<AFusionBaseCharacter>(DamagedActor);
-	if (DamagedPawn && EventInstigator)
-	{
-		AFusionPlayerState* DamagedPlayerState = Cast<AFusionPlayerState>(DamagedPawn->PlayerState);
-		AFusionPlayerState* InstigatorPlayerState = Cast<AFusionPlayerState>(EventInstigator->PlayerState);
-
-		// Check for friendly fire
-		if (!CanDealDamage(InstigatorPlayerState, DamagedPlayerState))
+		// notify players
+		for (FConstControllerIterator It = GetWorld()->GetControllerIterator(); It; ++It)
 		{
-			ActualDamage = 0.f;
-		}
-	}
+			AFusionPlayerState* PlayerState = Cast<AFusionPlayerState>((*It)->PlayerState);
+			const bool bIsWinner = IsWinner(PlayerState);
 
-	return ActualDamage;
-}
-
-
-bool AFusionGameMode::ShouldSpawnAtStartSpot(AController* Player)
-{
-	/* Always pick a random location */
-	return false;
-}
-
-
-
-
-AActor* AFusionGameMode::ChoosePlayerStart_Implementation(AController* Player)
-{
-	TArray<APlayerStart*> PreferredSpawns;
-	TArray<APlayerStart*> FallbackSpawns;
-
-	/* Get all playerstart objects in level */
-	TArray<AActor*> PlayerStarts;
-	UGameplayStatics::GetAllActorsOfClass(this, APlayerStart::StaticClass(), PlayerStarts);
-
-	/* Split the player starts into two arrays for preferred and fallback spawns */
-	for (int32 i = 0; i < PlayerStarts.Num(); i++)
-	{
-		APlayerStart* TestStart = Cast<APlayerStart>(PlayerStarts[i]);
-
-		if (TestStart && IsSpawnpointAllowed(TestStart, Player))
-		{
-			if (IsSpawnpointPreferred(TestStart, Player))
-			{
-				PreferredSpawns.Add(TestStart);
-			}
-			else
-			{
-				FallbackSpawns.Add(TestStart);
-			}
+			(*It)->GameHasEnded(NULL, bIsWinner);
 		}
 
-	}
-
-	/* Pick a random spawnpoint from the filtered spawn points */
-	APlayerStart* BestStart = nullptr;
-	if (PreferredSpawns.Num() > 0)
-	{
-		BestStart = PreferredSpawns[FMath::RandHelper(PreferredSpawns.Num())];
-	}
-	else if (FallbackSpawns.Num() > 0)
-	{
-		BestStart = FallbackSpawns[FMath::RandHelper(FallbackSpawns.Num())];
-	}
-
-	/* If we failed to find any (so BestStart is nullptr) fall back to the base code */
-	return BestStart ? BestStart : Super::ChoosePlayerStart_Implementation(Player);
-}
-
-
-bool AFusionGameMode::IsSpawnpointAllowed(APlayerStart* SpawnPoint, AController* Controller)
-{
-	if (Controller == nullptr || Controller->PlayerState == nullptr)
-		return true;
-
-	/* Check for extended playerstart class */
-	AFusionPlayerStart* MyPlayerStart = Cast<AFusionPlayerStart>(SpawnPoint);
-	if (MyPlayerStart)
-	{
-		return MyPlayerStart->GetIsPlayerOnly() && !Controller->PlayerState->bIsABot;
-	}
-
-	/* Cast failed, Anyone can spawn at the base playerstart class */
-	return true;
-}
-
-
-bool AFusionGameMode::IsSpawnpointPreferred(APlayerStart* SpawnPoint, AController* Controller)
-{
-	if (SpawnPoint)
-	{
-		/* Iterate all pawns to check for collision overlaps with the spawn point */
-		const FVector SpawnLocation = SpawnPoint->GetActorLocation();
-		for (FConstPawnIterator It = GetWorld()->GetPawnIterator(); It; It++)
+		// lock all pawns
+		// pawns are not marked as keep for seamless travel, so we will create new pawns on the next match rather than
+		// turning these back on.
+		for (FConstPawnIterator It = GetWorld()->GetPawnIterator(); It; ++It)
 		{
-			ACharacter* OtherPawn = Cast<ACharacter>(*It);
-			if (OtherPawn)
-			{
-				const float CombinedHeight = (SpawnPoint->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + OtherPawn->GetCapsuleComponent()->GetScaledCapsuleHalfHeight()) * 2.0f;
-				const float CombinedWidth = SpawnPoint->GetCapsuleComponent()->GetScaledCapsuleRadius() + OtherPawn->GetCapsuleComponent()->GetScaledCapsuleRadius();
-				const FVector OtherLocation = OtherPawn->GetActorLocation();
-
-				// Check if player overlaps the playerstart
-				if (FMath::Abs(SpawnLocation.Z - OtherLocation.Z) < CombinedHeight && (SpawnLocation - OtherLocation).Size2D() < CombinedWidth)
-				{
-					return false;
-				}
-			}
+			(*It)->TurnOff();
 		}
 
-		/* Check if spawnpoint is exclusive to players */
-		AFusionPlayerStart* MyPlayerStart = Cast<AFusionPlayerStart>(SpawnPoint);
-		if (MyPlayerStart)
-		{
-			return MyPlayerStart->GetIsPlayerOnly() && !Controller->PlayerState->bIsABot;
-		}
+		// set up to restart the match
+		MyGameState->RemainingTime = TimeBetweenMatches;
 	}
-
-	return false;
 }
-
-
-
-// Used by RestartPlayer() to determine the pawn to create and possess when a bot or player spawns 
-UClass* AFusionGameMode::GetDefaultPawnClassForController_Implementation(AController* InController)
-{
-	if (Cast<AFusionPlayerController>(InController))
-	{
-		return BotPawnClass;
-	}
-
-	return Super::GetDefaultPawnClassForController_Implementation(InController);
-}
-
-
-bool AFusionGameMode::CanSpectate_Implementation(APlayerController* Viewer, APlayerState* ViewTarget)
-{
-	/* Don't allow spectating of other non-player bots */
-	return (ViewTarget && !ViewTarget->bIsABot);
-}
-
-
-
-void AFusionGameMode::Killed(AController* Killer, AController* VictimPlayer, APawn* VictimPawn, const UDamageType* DamageType)
-{
-	// Do nothing (can we used to apply score or keep track of kill count)
-}
-
 
 void AFusionGameMode::RequestFinishAndExitToMainMenu()
 {
@@ -449,36 +246,6 @@ void AFusionGameMode::RequestFinishAndExitToMainMenu()
 	}
 }
 
-void AFusionGameMode::FinishMatch()
-{
-	AFusionGameState* const MyGameState = Cast<AFusionGameState>(GameState);
-	if (IsMatchInProgress())
-	{
-		EndMatch();
-		DetermineMatchWinner();
-
-		// notify players
-		for (FConstControllerIterator It = GetWorld()->GetControllerIterator(); It; ++It)
-		{
-			AFusionPlayerState* PlayerState = Cast<AFusionPlayerState>((*It)->PlayerState);
-			const bool bIsWinner = IsWinner(PlayerState);
-
-			(*It)->GameHasEnded(NULL, bIsWinner);
-		}
-
-		// lock all pawns
-		// pawns are not marked as keep for seamless travel, so we will create new pawns on the next match rather than
-		// turning these back on.
-		for (FConstPawnIterator It = GetWorld()->GetPawnIterator(); It; ++It)
-		{
-			(*It)->TurnOff();
-		}
-
-		// set up to restart the match
-		MyGameState->RemainingTime = TimeBetweenMatches;
-	}
-}
-
 void AFusionGameMode::DetermineMatchWinner()
 {
 	// nothing to do here
@@ -489,108 +256,310 @@ bool AFusionGameMode::IsWinner(class AFusionPlayerState* PlayerState) const
 	return false;
 }
 
-/*
-void ASGameMode::SetPlayerDefaults(APawn* PlayerPawn)
+void AFusionGameMode::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
 {
-	Super::SetPlayerDefaults(PlayerPawn);
-
-	SpawnDefaultInventory(PlayerPawn);
-}
-*/
-
-
-/*
-void ASGameMode::SpawnDefaultInventory(APawn* PlayerPawn)
-{
-	ASCharacter* MyPawn = Cast<ASCharacter>(PlayerPawn);
-	if (MyPawn)
+	AFusionGameState* const MyGameState = Cast<AFusionGameState>(GameState);
+	const bool bMatchIsOver = MyGameState && MyGameState->HasMatchEnded();
+	if (bMatchIsOver)
 	{
-		for (int32 i = 0; i < DefaultInventoryClasses.Num(); i++)
-		{
-			if (DefaultInventoryClasses[i])
-			{
-				FActorSpawnParameters SpawnInfo;
-				SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-				ASWeapon* NewWeapon = GetWorld()->SpawnActor<ASWeapon>(DefaultInventoryClasses[i], SpawnInfo);
+		ErrorMessage = TEXT("Match is over!");
+	}
+	else
+	{
+		// GameSession can be NULL if the match is over
+		Super::PreLogin(Options, Address, UniqueId, ErrorMessage);
+	}
+}
 
-				MyPawn->AddWeapon(NewWeapon);
+
+void AFusionGameMode::PostLogin(APlayerController* NewPlayer)
+{
+	Super::PostLogin(NewPlayer);
+
+	// update spectator location for client
+	AFusionPlayerController* NewPC = Cast<AFusionPlayerController>(NewPlayer);
+	if (NewPC && NewPC->GetPawn() == NULL)
+	{
+		NewPC->ClientSetSpectatorCamera(NewPC->GetSpawnLocation(), NewPC->GetControlRotation());
+	}
+
+	// notify new player if match is already in progress
+	if (NewPC && IsMatchInProgress())
+	{
+		NewPC->ClientGameStarted();
+		NewPC->ClientStartOnlineGame();
+	}
+}
+
+
+
+bool AFusionGameMode::CanDealDamage(class AFusionPlayerState* DamageCauser, class AFusionPlayerState* DamagedPlayer) const
+{
+	return true;
+}
+
+float AFusionGameMode::ModifyDamage(float Damage, AActor* DamagedActor, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) const
+{
+	float ActualDamage = Damage;
+
+	AFusionBaseCharacter* DamagedPawn = Cast<AFusionBaseCharacter>(DamagedActor);
+	if (DamagedPawn && EventInstigator)
+	{
+		AFusionPlayerState* DamagedPlayerState = Cast<AFusionPlayerState>(DamagedPawn->PlayerState);
+		AFusionPlayerState* InstigatorPlayerState = Cast<AFusionPlayerState>(EventInstigator->PlayerState);
+
+		// Check for friendly fire
+		if (!CanDealDamage(InstigatorPlayerState, DamagedPlayerState))
+		{
+			ActualDamage = 0.f;
+		}
+	}
+
+	return ActualDamage;
+}
+
+void AFusionGameMode::Killed(AController* Killer, AController* KilledPlayer, APawn* KilledPawn, const UDamageType* DamageType)
+{
+	AFusionPlayerState* KillerPlayerState = Killer ? Cast<AFusionPlayerState>(Killer->PlayerState) : NULL;
+	AFusionPlayerState* VictimPlayerState = KilledPlayer ? Cast<AFusionPlayerState>(KilledPlayer->PlayerState) : NULL;
+
+	if (KillerPlayerState && KillerPlayerState != VictimPlayerState)
+	{
+		KillerPlayerState->ScoreKill(VictimPlayerState, KillScore);
+		KillerPlayerState->InformAboutKill(KillerPlayerState, DamageType, VictimPlayerState);
+	}
+
+	if (VictimPlayerState)
+	{
+		VictimPlayerState->ScoreDeath(KillerPlayerState, DeathScore);
+		VictimPlayerState->BroadcastDeath(KillerPlayerState, DamageType, VictimPlayerState);
+	}
+}
+
+bool AFusionGameMode::AllowCheats(APlayerController* P)
+{
+	return true;
+}
+
+
+bool AFusionGameMode::ShouldSpawnAtStartSpot(AController* Player)
+{
+	/* Always pick a random location */
+	return false;
+}
+
+
+UClass* AFusionGameMode::GetDefaultPawnClassForController_Implementation(AController* InController)
+{
+	//if (InController->IsA<AShooterAIController>())
+	{
+		//return BotPawnClass;
+	}
+
+	return Super::GetDefaultPawnClassForController_Implementation(InController);
+}
+
+AActor* AFusionGameMode::ChoosePlayerStart_Implementation(AController* Player)
+{
+	TArray<APlayerStart*> PreferredSpawns;
+	TArray<APlayerStart*> FallbackSpawns;
+	
+	APlayerStart* BestStart = NULL;
+	for (TActorIterator<APlayerStart> It(GetWorld()); It; ++It)
+	{
+		APlayerStart* TestSpawn = *It;
+		if (TestSpawn->IsA<APlayerStartPIE>())
+		{
+			// Always prefer the first "Play from Here" PlayerStart, if we find one while in PIE mode
+			BestStart = TestSpawn;
+			break;
+		}
+		else
+		{
+			if (IsSpawnpointAllowed(TestSpawn, Player))
+			{
+				if (IsSpawnpointPreferred(TestSpawn, Player))
+				{
+					PreferredSpawns.Add(TestSpawn);
+				}
+				else
+				{
+					FallbackSpawns.Add(TestSpawn);
+				}
 			}
 		}
 	}
-}
-*/
-
-/************************************************************************/
-/* Modding & Mutators                                                   */
-/************************************************************************/
 
 
-void AFusionGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
-{
-	// HACK: workaround to inject CheckRelevance() into the BeginPlay sequence
-	UFunction* Func = AActor::GetClass()->FindFunctionByName(FName(TEXT("ReceiveBeginPlay")));
-	Func->FunctionFlags |= FUNC_Native;
-	Func->SetNativeFunc((Native)&AFusionGameMode::BeginPlayMutatorHack);
+	
 
-	/* Spawn all mutators. */
-	for (int32 i = 0; i < MutatorClasses.Num(); i++)
+	if (BestStart == NULL)
 	{
-		AddMutator(MutatorClasses[i]);
+		if (PreferredSpawns.Num() > 0)
+		{
+			BestStart = PreferredSpawns[FMath::RandHelper(PreferredSpawns.Num())];
+		}
+		else if (FallbackSpawns.Num() > 0)
+		{
+			BestStart = FallbackSpawns[FMath::RandHelper(FallbackSpawns.Num())];
+		}
 	}
-
-	if (BaseMutator)
-	{
-		BaseMutator->InitGame(MapName, Options, ErrorMessage);
-	}
-
-	Super::InitGame(MapName, Options, ErrorMessage);
+	return BestStart ? BestStart : Super::ChoosePlayerStart_Implementation(Player);
 }
 
-
-bool AFusionGameMode::CheckRelevance_Implementation(AActor* Other)
+bool AFusionGameMode::IsSpawnpointAllowed(APlayerStart* SpawnPoint, AController* Player) const
 {
-	/* Execute the first in the mutator chain */
-	if (BaseMutator)
+	if (Player == nullptr || Player->PlayerState == nullptr)
+		return true;
+
+	AFusionPlayerStart* FusionSpawnPoint = Cast<AFusionPlayerStart>(SpawnPoint);
+	if (FusionSpawnPoint)
 	{
-		return BaseMutator->CheckRelevance(Other);
+		//AShooterAIController* AIController = Cast<AShooterAIController>(Player);
+		//if (ShooterSpawnPoint->bNotForBots && AIController)
+		{
+			//return false;
+		}
+
+		if (FusionSpawnPoint->GetIsPlayerOnly() && !Player->PlayerState->bIsABot)
+		{
+			return true;
+		}
+		
+		return false;
+	}
+
+	/* Cast failed, Anyone can spawn at the base playerstart class */
+	return true;
+}
+
+bool AFusionGameMode::IsSpawnpointPreferred(APlayerStart* SpawnPoint, AController* Player) const
+{
+	ACharacter* MyPawn = Cast<ACharacter>((*DefaultPawnClass)->GetDefaultObject<ACharacter>());
+	//AShooterAIController* AIController = Cast<AShooterAIController>(Player);
+	//if (AIController != nullptr)
+	{
+		//MyPawn = Cast<ACharacter>(BotPawnClass->GetDefaultObject<ACharacter>());
+	}
+
+	if (MyPawn)
+	{
+		const FVector SpawnLocation = SpawnPoint->GetActorLocation();
+		for (FConstPawnIterator It = GetWorld()->GetPawnIterator(); It; ++It)
+		{
+			ACharacter* OtherPawn = Cast<ACharacter>(*It);
+			if (OtherPawn && OtherPawn != MyPawn)
+			{
+				const float CombinedHeight = (MyPawn->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + OtherPawn->GetCapsuleComponent()->GetScaledCapsuleHalfHeight()) * 2.0f;
+				const float CombinedRadius = MyPawn->GetCapsuleComponent()->GetScaledCapsuleRadius() + OtherPawn->GetCapsuleComponent()->GetScaledCapsuleRadius();
+				const FVector OtherLocation = OtherPawn->GetActorLocation();
+
+				// check if player start overlaps this pawn
+				if (FMath::Abs(SpawnLocation.Z - OtherLocation.Z) < CombinedHeight && (SpawnLocation - OtherLocation).Size2D() < CombinedRadius)
+				{
+					return false;
+				}
+			}
+		}
+
+		/* Check if spawnpoint is exclusive to players */
+		AFusionPlayerStart* MyPlayerStart = Cast<AFusionPlayerStart>(SpawnPoint);
+		if (MyPlayerStart)
+		{
+			return MyPlayerStart->GetIsPlayerOnly() && !Player->PlayerState->bIsABot;
+		}
+	}
+	else
+	{
+		return false;
 	}
 
 	return true;
 }
 
-
-void AFusionGameMode::BeginPlayMutatorHack(FFrame& Stack, RESULT_DECL)
+/*
+void AShooterGameMode::CreateBotControllers()
 {
-	P_FINISH;
-
-	// WARNING: This function is called by every Actor in the level during his BeginPlay sequence. Meaning:  'this' is actually an AActor! Only do AActor things!
-	if (!IsA(ALevelScriptActor::StaticClass()) && !IsA(AMutator::StaticClass()) &&
-		(RootComponent == NULL || RootComponent->Mobility != EComponentMobility::Static || (!IsA(AStaticMeshActor::StaticClass()) && !IsA(ALight::StaticClass()))))
+	UWorld* World = GetWorld();
+	int32 ExistingBots = 0;
+	for (FConstControllerIterator It = World->GetControllerIterator(); It; ++It)
 	{
-		AFusionGameMode* Game = GetWorld()->GetAuthGameMode<AFusionGameMode>();
-		// a few type checks being AFTER the CheckRelevance() call is intentional; want mutators to be able to modify, but not outright destroy
-		if (Game != NULL && Game != this && !Game->CheckRelevance((AActor*)this) && !IsA(APlayerController::StaticClass()))
+		AShooterAIController* AIC = Cast<AShooterAIController>(*It);
+		if (AIC)
 		{
-			/* Actors are destroyed if they fail the relevance checks (which moves through the gamemode specific check AND the chain of mutators) */
-			Destroy();
+			++ExistingBots;
+		}
+	}
+
+	// Create any necessary AIControllers.  Hold off on Pawn creation until pawns are actually necessary or need recreating.	
+	int32 BotNum = ExistingBots;
+	for (int32 i = 0; i < MaxBots - ExistingBots; ++i)
+	{
+		CreateBot(BotNum + i);
+	}
+}
+*/
+
+/*
+AShooterAIController* AShooterGameMode::CreateBot(int32 BotNum)
+{
+	FActorSpawnParameters SpawnInfo;
+	SpawnInfo.Instigator = nullptr;
+	SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	SpawnInfo.OverrideLevel = nullptr;
+
+	UWorld* World = GetWorld();
+	AShooterAIController* AIC = World->SpawnActor<AShooterAIController>(SpawnInfo);
+	InitBot(AIC, BotNum);
+
+	return AIC;
+}
+
+void AShooterGameMode::StartBots()
+{
+	// checking number of existing human player.
+	UWorld* World = GetWorld();
+	for (FConstControllerIterator It = World->GetControllerIterator(); It; ++It)
+	{
+		AShooterAIController* AIC = Cast<AShooterAIController>(*It);
+		if (AIC)
+		{
+			RestartPlayer(AIC);
 		}
 	}
 }
 
-
-void AFusionGameMode::AddMutator(TSubclassOf<AMutator> MutClass)
+void AShooterGameMode::InitBot(AShooterAIController* AIController, int32 BotNum)
 {
-	AMutator* NewMut = GetWorld()->SpawnActor<AMutator>(MutClass);
-	if (NewMut)
+	if (AIController)
 	{
-		if (BaseMutator == nullptr)
+		if (AIController->PlayerState)
 		{
-			BaseMutator = NewMut;
-		}
-		else
-		{
-			// Add as child in chain
-			BaseMutator->NextMutator = NewMut;
+			FString BotName = FString::Printf(TEXT("Bot %d"), BotNum);
+			AIController->PlayerState->PlayerName = BotName;
 		}
 	}
 }
+*/
+
+void AFusionGameMode::RestartGame()
+{
+	// Hide the scoreboard too !
+	for (FConstControllerIterator It = GetWorld()->GetControllerIterator(); It; ++It)
+	{
+		AFusionPlayerController* PlayerController = Cast<AFusionPlayerController>(*It);
+		if (PlayerController != nullptr)
+		{
+			AFusionHUD* FusionHUD = Cast<AFusionHUD>(PlayerController->GetHUD());
+			if (FusionHUD != nullptr)
+			{
+				// Passing true to bFocus here ensures that focus is returned to the game viewport.
+				//FusionHUD->ShowScoreboard(false, true);
+			}
+		}
+	}
+
+	Super::RestartGame();
+}
+
+

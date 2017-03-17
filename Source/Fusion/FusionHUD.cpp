@@ -6,6 +6,8 @@
 #include "Widgets/Gameplay/InGameHUD.h"
 #include "Widgets/Menus/MainMenuUI.h"
 
+#include "FusionPlayerController_Menu.h"
+
 #include "Engine/Canvas.h"
 #include "TextureResource.h"
 
@@ -22,7 +24,7 @@ void AFusionHUD::CreateMainMenuUIWidget()
 {
 	//check(ActiveMainMenuUIWidget == nullptr, TEXT("MainMenuUI Widget Already Initialized"));
 	
-	//if (ActiveMainMenuUIWidget != nullptr) return; // maybe later, return here if its already initalized
+	if (ActiveMainMenuUIWidget != nullptr) return; // maybe later, return here if its already initalized
 
 	ActiveMainMenuUIWidget = CreateWidget<UMainMenuUI>(GetOwningPlayerController(), MainMenuUIWidget.LoadSynchronous());
 	//check(ActiveMainMenuUIWidget != nullptr, TEXT("Unable to Create MainMenuUI Widget Widget"));
@@ -45,6 +47,7 @@ void AFusionHUD::CreateMainMenuUIWidget()
 void AFusionHUD::CreateInGameHUDWidget()
 {
 	//check(ActiveInGameHUDWidget == nullptr, TEXT("InGameHUD Widget Already Initialized"));
+	if (ActiveInGameHUDWidget != nullptr) return;
 
 	ActiveInGameHUDWidget = CreateWidget<UInGameHUD>(GetOwningPlayerController(), InGameHUDWidget.LoadSynchronous());
 	//check(ActiveInGameHUDWidget != nullptr, TEXT("Unable to Create InGameHUD Widget"));
@@ -71,6 +74,9 @@ void AFusionHUD::RemoveGameWidgets()
 void AFusionHUD::DrawHUD()
 {
 	Super::DrawHUD();
+
+	AFusionPlayerController_Menu* PC = Cast<AFusionPlayerController_Menu>(GetOwningPlayerController());
+	if (PC) return; // Don't draw crosshair inside of Main Menu
 
 	// Draw very simple crosshair
 

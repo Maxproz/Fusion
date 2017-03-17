@@ -9,129 +9,114 @@
 UCLASS()
 class AFusionGameMode : public AGameMode
 {
+
 	GENERATED_BODY()
 
-protected:
+public:
 
 	AFusionGameMode(const FObjectInitializer& ObjectInitializer);
-
-	virtual void PreInitializeComponents() override;
-
-	virtual void InitGameState();
-
-	virtual void PostLogin(APlayerController* NewPlayer);
-
-	virtual void DefaultTimer();
-
-	virtual void StartMatch();
-
-	//virtual void SpawnDefaultInventory(APawn* PlayerPawn);
-
-	/**
-	* Make sure pawn properties are back to default
-	* Also a good place to modify them on spawn
-	*/
-	//virtual void SetPlayerDefaults(APawn* PlayerPawn) override;
-
-	/* Handle for efficient management of DefaultTimer timer */
-	FTimerHandle TimerHandle_DefaultTimer;
-
-	/* Can we deal damage to players in the same team */
-	UPROPERTY(EditDefaultsOnly, Category = "Rules")
-	bool bAllowFriendlyFireDamage = true;
-
-	/* Called once on every new player that enters the gamemode */
-	virtual FString InitNewPlayer(class APlayerController* NewPlayerController, const FUniqueNetIdRepl& UniqueId, const FString& Options, const FString& Portal = TEXT("")) override;
-
-	/* The teamcolors assigned to Players */
-	ETeamColors RedTeam = ETeamColors::ETC_RED;
-
-	ETeamColors BlueTeam = ETeamColors::ETC_BLUE;
-
-	int32 NumberOfTeams = 2;
-
-	UPROPERTY(VisibleInstanceOnly)
-	int32 RedTeamPlayers = 0;
-
-	UPROPERTY(VisibleInstanceOnly)
-	int32 BlueTeamPlayers = 0;
-
-	UPROPERTY(VisibleInstanceOnly)
-	float MatchLength = 12.00f;
-
-	UPROPERTY(config)
-	int32 TimeBetweenMatches;
-
-	ETeamColors AutoAssignTeamColor();
-
-	/** best team */
-	int32 WinnerTeam;
-
-	/** pick team with least players in or random when it's equal */
-	int32 ChooseTeam(class AFusionPlayerState* ForPlayerState) const;
 
 
 	/** The bot pawn class */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = GameMode)
 	TSubclassOf<APawn> BotPawnClass;
 
-	/************************************************************************/
-	/* Player Spawning                                                      */
-	/************************************************************************/
+	UFUNCTION(exec)
+	void SetAllowBots(bool bInAllowBots, int32 InMaxBots = 8);
 
-	/* Don't allow spectating of bots */
-	virtual bool CanSpectate_Implementation(APlayerController* Viewer, APlayerState* ViewTarget) override;
+	virtual void PreInitializeComponents() override;
 
+	/** Initialize the game. This is called before actors' PreInitializeComponents. */
+	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
+
+	/** Accept or reject a player attempting to join the server.  Fails login if you set the ErrorMessage to a non-empty string. */
+	virtual void PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage) override;
+
+	/** starts match warmup */
+	virtual void PostLogin(APlayerController* NewPlayer) override;
+
+	/** select best spawn point for player */
 	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
 
-	/* Always pick a random location */
+	/** always pick new random spawn */
 	virtual bool ShouldSpawnAtStartSpot(AController* Player) override;
-
-	virtual bool IsSpawnpointAllowed(APlayerStart* SpawnPoint, AController* Controller);
-
-	virtual bool IsSpawnpointPreferred(APlayerStart* SpawnPoint, AController* Controller);
 
 	/** returns default pawn class for given controller */
 	virtual UClass* GetDefaultPawnClassForController_Implementation(AController* InController) override;
 
-	/************************************************************************/
-	/* Damage & Killing                                                     */
-	/************************************************************************/
-
-public:
-
-	virtual void Killed(AController* Killer, AController* VictimPlayer, APawn* VictimPawn, const UDamageType* DamageType);
-
-	/* Can the player deal damage according to gamemode rules (eg. friendly-fire disabled) */
-	virtual bool CanDealDamage(class AFusionPlayerState* DamageCauser, class AFusionPlayerState* DamagedPlayer) const;
-
+	/** prevents friendly fire */
 	virtual float ModifyDamage(float Damage, AActor* DamagedActor, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) const;
+
+	/** notify about kills */
+	virtual void Killed(AController* Killer, AController* KilledPlayer, APawn* KilledPawn, const UDamageType* DamageType);
+
+	/** can players damage each other? */
+	virtual bool CanDealDamage(class AFusionPlayerState* DamageInstigator, AFusionPlayerState* DamagedPlayer) const;
+
+	/** always create cheat manager */
+	virtual bool AllowCheats(APlayerController* P) override;
+
+	/** update remaining time */
+	virtual void DefaultTimer();
+
+	/** called before startmatch */
+	virtual void HandleMatchIsWaitingToStart() override;
 
 	/** starts new match */
 	virtual void HandleMatchHasStarted() override;
 
-	/*Finishes the match and bumps everyone to main menu.*/
-	/*Only GameInstance should call this function */
-	void RequestFinishAndExitToMainMenu();
+	/** hides the onscreen hud and restarts the map */
+	virtual void RestartGame() override;
 
-	/** finish current match and lock players */
-	UFUNCTION(exec)
-	void FinishMatch();
+	/** Creates AIControllers for all bots */
+	//void CreateBotControllers();
 
-	/* Primary sun of the level. Assigned in Blueprint during BeginPlay (BlueprintReadWrite is required as tag instead of EditDefaultsOnly) */
-	UPROPERTY(BlueprintReadWrite, Category = "Level Brightness")
-	ADirectionalLight* PrimarySunLight;
-
-	/* The default weapons to spawn with */
-	//UPROPERTY(EditDefaultsOnly, Category = "Player")
-	//TArray<TSubclassOf<class ASWeapon>> DefaultInventoryClasses;
-
-	/************************************************************************/
-	/* Modding & Mutators                                                   */
-	/************************************************************************/
-
+	///** Create a bot */
+	//AShooterAIController* CreateBot(int32 BotNum);
 
 protected:
+
+	/** delay between first player login and starting match */
+	UPROPERTY(config)
+	int32 WarmupTime;
+
+	/** match duration */
+	UPROPERTY(config)
+	int32 RoundTime;
+
+	UPROPERTY(config)
+	int32 TimeBetweenMatches;
+
+	/** score for kill */
+	UPROPERTY(config)
+	int32 KillScore;
+
+	/** score for death */
+	UPROPERTY(config)
+	int32 DeathScore;
+
+	/** scale for self instigated damage */
+	UPROPERTY(config)
+	float DamageSelfScale;
+
+	UPROPERTY(config)
+	int32 MaxBots;
+
+	//UPROPERTY()
+	//TArray<class AFusionAIController*> BotControllers;
+
+	/** Handle for efficient management of DefaultTimer timer */
+	FTimerHandle TimerHandle_DefaultTimer;
+
+	bool bNeedsBotCreation;
+
+	bool bAllowBots;
+
+	/** spawning all bots for this game */
+	//void StartBots();
+
+	/** initialization for bot after creation */
+	//virtual void InitBot(AShooterAIController* AIC, int32 BotNum);
 
 	/** check who won */
 	virtual void DetermineMatchWinner();
@@ -139,34 +124,31 @@ protected:
 	/** check if PlayerState is a winner */
 	virtual bool IsWinner(class AFusionPlayerState* PlayerState) const;
 
+	/** check if player can use spawnpoint */
+	virtual bool IsSpawnpointAllowed(APlayerStart* SpawnPoint, AController* Player) const;
 
-	/* Mutators to create when game starts */
-	UPROPERTY(EditAnywhere, Category = "Mutators")
-	TArray<TSubclassOf<class AMutator>> MutatorClasses;
+	/** check if player should use spawnpoint */
+	virtual bool IsSpawnpointPreferred(APlayerStart* SpawnPoint, AController* Player) const;
 
-	/* First mutator in the execution chain */
-	class AMutator* BaseMutator;
+	/** Returns game session class to use */
+	virtual TSubclassOf<AGameSession> GetGameSessionClass() const override;
 
-	void AddMutator(TSubclassOf<AMutator> MutClass);
+public:
 
-	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
+	/** finish current match and lock players */
+	UFUNCTION(exec)
+	void FinishMatch();
 
-	/** From UT Source: Used to modify, remove, and replace Actors. Return false to destroy the passed in Actor. Default implementation queries mutators.
-	* note that certain critical Actors such as PlayerControllers can't be destroyed, but we'll still call this code path to allow mutators
-	* to change properties on them
-	*/
-	UFUNCTION(BlueprintNativeEvent, BlueprintAuthorityOnly)
-	bool CheckRelevance(AActor* Other);
+	/*Finishes the match and bumps everyone to main menu.*/
+	/*Only GameInstance should call this function */
+	void RequestFinishAndExitToMainMenu();
 
-	/* Note: Functions flagged with BlueprintNativeEvent like above require _Implementation for a C++ implementation */
-	virtual bool CheckRelevance_Implementation(AActor* Other);
+	/** get the name of the bots count option used in server travel URL */
+	static FString GetBotsCountOptionName();
 
-	/* Hacked into ReceiveBeginPlay() so we can do mutator replacement of Actors and such */
-	void BeginPlayMutatorHack(FFrame& Stack, RESULT_DECL);
-
-
+	UPROPERTY()
+	TArray<class AMasterPickupActor*> LevelPickups;
 
 };
-
 
 

@@ -55,12 +55,13 @@ void UMainMenuUI::OnClickedHostButton()
 	ULocalPlayer* const Player = GetOwningLocalPlayer();
 	UFusionGameInstance* GameInstance = Cast<UFusionGameInstance>(Player->GetGameInstance());
 	
+	//GameInstance->StartOnlineGame();
 	
-	GameInstance->BeginHostingQuickMatch();
+	//GameInstance->BeginHostingQuickMatch();
 
 	//GameInstance->HostGame(Player, "TDM", "/Game/Maps/Downfall?game=TDM?listen");
 
-	//HostTeamDeathMatch();
+	HostTeamDeathMatch();
 	
 	//FString const StartURL = TEXT("/Game/Maps/Downfall?game=TDM?listen");
 	//GetOwningPlayer()->ClientTravel(StartURL, ETravelType::TRAVEL_Relative);
@@ -75,17 +76,21 @@ void UMainMenuUI::OnClickedHostButton()
 
 void UMainMenuUI::OnClickedJoinButton()
 {
-	//BeginQuickMatchSearch();
-	//.ULocalPlayer* const Player = GetOwningLocalPlayer();
-	//UFusionGameInstance* GameInstance = Cast<UFusionGameInstance>(Player->GetGameInstance());
+	ULocalPlayer* const Player = GetOwningLocalPlayer();
+	UFusionGameInstance* GameInstance = Cast<UFusionGameInstance>(Player->GetGameInstance());
 
-
+	//GameInstance->JoinOnlineGame();
 	BeginQuickMatchSearch();
 }
 
 void UMainMenuUI::OnClickedQuitButton()
 {
 	Quit();
+	ULocalPlayer* const Player = GetOwningLocalPlayer();
+	UFusionGameInstance* GameInstance = Cast<UFusionGameInstance>(Player->GetGameInstance());
+
+	//GameInstance->FindOnlineGames();
+
 }
 
 void UMainMenuUI::HostGame(const FString& GameType)
@@ -102,19 +107,14 @@ void UMainMenuUI::HostGame(const FString& GameType)
 		bool bIsRecordingDemo = false;
 		FString MapName = TEXT("Downfall");
 
-		GameInstance->SetIsOnline(true);
+		//GameInstance->SetIsOnline(true);
 
-		FString const StartURL = TEXT("/Game/Maps/Downfall?game=TDM?listen");
-		//FString const StartURL = FString::Printf(TEXT("/Game/Maps/%s?game=%s%s%s?%s=%d%s"), *MapName, *GameType, GameInstance->GetIsOnline() ? TEXT("?listen") : TEXT(""), bIsLanMatch ? TEXT("?bIsLanMatch") : TEXT(""), *BotNames, AmountOfBots, bIsRecordingDemo ? TEXT("?DemoRec") : TEXT(""));
+		//FString const StartURL = TEXT("/Game/Maps/Downfall?game=TDM?listen");
+		FString const StartURL = FString::Printf(TEXT("/Game/Maps/%s?game=%s%s%s?%s=%d%s"), *MapName, *GameType, GameInstance->GetIsOnline() ? TEXT("?listen") : TEXT(""), bIsLanMatch ? TEXT("?bIsLanMatch") : TEXT(""), *BotNames, AmountOfBots, bIsRecordingDemo ? TEXT("?DemoRec") : TEXT(""));
 		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, FString::Printf(TEXT("StartURL: %s"), *StartURL));
+		
 		// Game instance will handle success, failure and dialogs
-		
 		GameInstance->HostGame(Player, GameType, StartURL); // This doesn't work at all.
-
-		
-		//GameInstance->BeginHostingQuickMatch();
-
-		// So begin hosting quick match works, but only on 1/5 clients.... gotta figure out why
 
 	}
 }

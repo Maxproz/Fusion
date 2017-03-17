@@ -10,6 +10,20 @@
 
 AFusionPlayerController_Menu::AFusionPlayerController_Menu(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
+	// TODO: Maybe needs moved
+	
+}
+
+void AFusionPlayerController_Menu::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (IsLocalPlayerController())
+	{
+		GetFusionHUD()->CreateGameWidgets();
+		ClientShowMainMenu();
+	}
+	
 }
 
 void AFusionPlayerController_Menu::PostInitializeComponents()
@@ -18,6 +32,7 @@ void AFusionPlayerController_Menu::PostInitializeComponents()
 
 	//FShooterStyle::Initialize();
 
+
 }
 
 AFusionHUD* AFusionPlayerController_Menu::GetFusionHUD() const
@@ -25,3 +40,9 @@ AFusionHUD* AFusionPlayerController_Menu::GetFusionHUD() const
 	return Cast<AFusionHUD>(GetHUD());
 }
 
+
+void AFusionPlayerController_Menu::ClientShowMainMenu_Implementation()
+{
+	GetFusionHUD()->GetMainMenuUIWidget()->ShowMainMenu();
+	//Widget->SetVisibility(ESlateVisibility::Visible);
+}

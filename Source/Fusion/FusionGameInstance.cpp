@@ -154,7 +154,7 @@ void UFusionGameInstance::HandleNetworkConnectionStatusChanged(EOnlineServerConn
 {
 	UE_LOG(LogOnlineGame, Warning, TEXT("UFusionGameInstance::HandleNetworkConnectionStatusChanged: %s"), EOnlineServerConnectionStatus::ToString(ConnectionStatus));
 
-#if SHOOTER_CONSOLE_UI
+#if FUSION_CONSOLE_UI
 	// If we are disconnected from server, and not currently at (or heading to) the welcome screen
 	// then display a message on consoles
 	if (bIsOnline &&
@@ -185,7 +185,7 @@ void UFusionGameInstance::HandleSessionFailure(const FUniqueNetId& NetId, ESessi
 {
 	UE_LOG(LogOnlineGame, Warning, TEXT("UFusionGameInstance::HandleSessionFailure: %u"), (uint32)FailureType);
 
-#if SHOOTER_CONSOLE_UI
+#if FUSION_CONSOLE_UI
 	// If we are not currently at (or heading to) the welcome screen then display a message on consoles
 	if (bIsOnline &&
 		PendingState != FusionGameInstanceState::WelcomeScreen &&
@@ -341,7 +341,7 @@ void UFusionGameInstance::StartGameInstance()
 
 FName UFusionGameInstance::GetInitialState()
 {
-#if SHOOTER_CONSOLE_UI	
+#if FUSION_CONSOLE_UI	
 	// Start in the welcome screen state on consoles
 	return FusionGameInstanceState::WelcomeScreen;
 #else
@@ -487,8 +487,9 @@ AFusionGameSession* UFusionGameInstance::GetGameSession() const
 
 void UFusionGameInstance::TravelLocalSessionFailure(UWorld *World, ETravelFailure::Type FailureType, const FString& ReasonString)
 {
-	//AFusionPlayerController_Menu* const FirstPC = Cast<AFusionPlayerController_Menu>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
-	AFusionPlayerController* const FirstPC = Cast<AFusionPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+	AFusionPlayerController_Menu* const FirstPC = Cast<AFusionPlayerController_Menu>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+	//AFusionPlayerController* const FirstPC = Cast<AFusionPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+	
 
 	if (FirstPC != nullptr)
 	{
@@ -692,6 +693,9 @@ void UFusionGameInstance::BeginMainMenuState()
 	// Set presence to menu state for the owning player
 	SetPresenceForLocalPlayers(FVariantData(FString(TEXT("OnMenu"))));
 
+	GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Emerald, FString::Printf(TEXT("Inside BeginMainMenuState")));
+
+
 	// load startup map
 	LoadFrontEndMap(MainMenuMap);
 
@@ -703,16 +707,19 @@ void UFusionGameInstance::BeginMainMenuState()
 	MainMenuUI->Construct(this, Player);
 	*/
 	
-	//MainMenuUI = Cast<AFusionPlayerController_Menu>(UGameplayStatics::GetPlayerController(GetWorld(), 0))->GetFusionHUD()->GetMainMenuUIWidget();
+	MainMenuUI = Cast<AFusionPlayerController_Menu>(Player->GetPlayerController(GetWorld()))->GetFusionHUD()->GetMainMenuUIWidget();
 	
-	
-	AFusionPlayerController* FPC = Cast<AFusionPlayerController>(Player->GetPlayerController(GetWorld()));
-	MainMenuUI = FPC->GetFusionHUD()->GetMainMenuUIWidget();
+	//AFusionPlayerController* FPC = Cast<AFusionPlayerController>(Player->GetPlayerController(GetWorld()));
+	//MainMenuUI = FPC->GetFusionHUD()->GetMainMenuUIWidget();
 	
 	//FPC->GetFusionHUD()->CreateGameWidgets();
 	//MainMenuUI = Cast<AFusionPlayerController>(Player->GetPlayerController(GetWorld()))->GetFusionHUD()->GetMainMenuUIWidget();
+	
 	if (MainMenuUI.IsValid())
 	{
+
+		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Emerald, FString::Printf(TEXT("Trying to show main menu")));
+
 		//MainMenuUI->AddMenuToGameViewport();
 		MainMenuUI.Get()->ShowMainMenu();
 	}
@@ -725,7 +732,7 @@ void UFusionGameInstance::BeginMainMenuState()
 		//MainMenuUI->OnPlayTogetherEventReceived();
 	}
 
-#if !SHOOTER_CONSOLE_UI
+#if !FUSION_CONSOLE_UI
 	// The cached unique net ID is usually set on the welcome screen, but there isn't
 	// one on PC/Mac, so do it here.
 	if (Player != nullptr)
@@ -937,8 +944,6 @@ TSubclassOf<UOnlineSession> UFusionGameInstance::GetOnlineSessionClass()
 // starts playing a game as the host
 bool UFusionGameInstance::HostGame(ULocalPlayer* LocalPlayer, const FString& GameType, const FString& InTravelURL)
 {
-
-
 	if (!GetIsOnline())
 	{
 		//
@@ -1234,7 +1239,7 @@ bool UFusionGameInstance::Tick(float DeltaSeconds)
 		// If at any point we aren't licensed (but we are after welcome screen) bounce them back to the welcome screen
 		if (!bIsLicensed && CurrentState != FusionGameInstanceState::None && !FusionViewport->IsShowingDialog())
 		{
-			const FText ReturnReason = NSLOCTEXT("ProfileMessages", "NeedLicense", "The signed in users do not have a license for this game. Please purchase ShooterGame from the Xbox Marketplace or sign in a user with a valid license.");
+			const FText ReturnReason = NSLOCTEXT("ProfileMessages", "NeedLicense", "The signed in users do not have a license for this game. Please purchase Fusion from the Xbox Marketplace or sign in a user with a valid license.");
 			const FText OKButton = NSLOCTEXT("DialogButtons", "OKAY", "OK");
 
 			ShowMessageThenGotoState(ReturnReason, OKButton, FText::GetEmpty(), FusionGameInstanceState::WelcomeScreen);
@@ -1312,7 +1317,7 @@ void UFusionGameInstance::HandleSignInChangeMessaging()
 	// Master user signed out, go to initial state (if we aren't there already)
 	if (CurrentState != GetInitialState())
 	{
-#if SHOOTER_CONSOLE_UI
+#if FUSION_CONSOLE_UI
 		// Display message on consoles
 		const FText ReturnReason = NSLOCTEXT("ProfileMessages", "SignInChange", "Sign in status change occurred.");
 		const FText OKButton = NSLOCTEXT("DialogButtons", "OKAY", "OK");
@@ -1504,7 +1509,7 @@ void UFusionGameInstance::HandleControllerPairingChanged(int GameUserIndex, cons
 		return;
 	}
 
-#if SHOOTER_CONSOLE_UI && PLATFORM_XBOXONE
+#if FUSION_CONSOLE_UI && PLATFORM_XBOXONE
 	if (IgnorePairingChangeForControllerId != -1 && GameUserIndex == IgnorePairingChangeForControllerId)
 	{
 		// We were told to ignore
@@ -1548,7 +1553,7 @@ void UFusionGameInstance::HandleControllerPairingChanged(int GameUserIndex, cons
 		{
 			FusionViewport->ShowDialog(
 				nullptr,
-				EShooterDialogType::Generic,
+				EFUSIONDialogType::Generic,
 				NSLOCTEXT("ProfileMessages", "PairingChanged", "Your controller has been paired to another profile, would you like to switch to this new profile now? Selecting YES will sign out of the previous profile."),
 				NSLOCTEXT("DialogButtons", "YES", "A - YES"),
 				NSLOCTEXT("DialogButtons", "NO", "B - NO"),
@@ -1962,76 +1967,67 @@ void UFusionGameInstance::SendPlayTogetherInvites()
 	}
 }
 
-// Function didnt work, caused crash
+
+
+//bool AFusionGameSession::HostSession(TSharedPtr<const FUniqueNetId> UserId, FName InSessionName, const FString& GameType, const FString& MapName, bool bIsLAN, bool bIsPresence, int32 MaxNumPlayers)
+//void UFusionGameInstance::StartOnlineGame(FString ServerName, int32 MaxNumPlayers, bool bIsLAN, bool bIsPresence, bool bIsPasswordProtected, FString SessionPassword)
+#define LOCTEXT_NAMESPACE "Fusion.HUD.Menu"
 void UFusionGameInstance::StartOnlineGame()
 {
 	// Creating a local player where we can get the UserID from
 	ULocalPlayer* const Player = GetFirstGamePlayer();
 
 	// Call our custom HostSession function. GameSessionName is a GameInstance variable
-	
-	//HostGame(Player, *GameSessionName.ToString(), TravelURL);
-	/*
-	const FString FFA = TEXT("FFA");
-	const FString MapName = TEXT("DownFall");
+	//FString ServerName = TEXT("MyGameName");
+	const FString& GameTypee = (LOCTEXT("TDM", "TDM").ToString());
+	const FString& Mapp = FString(TEXT("Downfall"));
+	bool bIsLAN = false;
+	bool bIsPresencee = false;
+	//FName MySessionName = FName("MySession");
 
-	GetGameSession()->HostSession(Player->GetPreferredUniqueNetId(), GameSessionName, *FFA, *MapName, false, false, 4);
-	*/
+	GetGameSession()->HostSession(Player->GetPreferredUniqueNetId(), GameSessionName, GameTypee, Mapp, bIsLAN, bIsPresencee, 8);
 }
 
-// Function didnt work, caused crash
+
+#undef LOCTEXT_NAMESPACE
+
+
+//void UFusionGameInstance::FindOnlineGames(bool bIsLAN, bool bIsPresence)
 void UFusionGameInstance::FindOnlineGames()
 {
 	ULocalPlayer* const Player = GetFirstGamePlayer();
+	
+	//FName MySessionName = FName("MySession");
+	bool bIsLAN = false;
+	bool bIsPresencee = false;
 
-
-	//GetGameSession()->FindSessions(Player->GetPreferredUniqueNetId(), GameSessionName, true, true);
-	//FindSessions(Player, true);
+	GetGameSession()->FindSessions(Player->GetPreferredUniqueNetId(), GameSessionName, bIsLAN, bIsPresencee);
 }
 
-
-// Function didnt work, caused crash
+//void UFusionGameInstance::JoinOnlineGame(int32 SessionIndex)
 void UFusionGameInstance::JoinOnlineGame()
 {
 	ULocalPlayer* const Player = GetFirstGamePlayer();
 
-	// Just a SearchResult where we can save the one we want to use, for the case we find more than one!
 	FOnlineSessionSearchResult SearchResult;
-	
-	/*
-	// If the Array is not empty, we can go through it
-	if (GetGameSession()->GetSearchResults().Num() > 0)
-	{
-		for (int32 i = 0; i < GetGameSession()->GetSearchResults().Num(); i++)
-		{
-			// To avoid something crazy, we filter sessions from ourself
-			if (GetGameSession()->GetSearchResults()[i].Session.OwningUserId != Player->GetPreferredUniqueNetId())
-			{
-				SearchResult = GetGameSession()->GetSearchResults()[i];
+	SearchResult = GetGameSession()->GetSearchResults()[0];
 
-				// Once we found sounce a Session that is not ours, just join it. Instead of using a for loop, you could
-				// use a widget that you click on and have a reference for the GameSession it represents which you can use
-				// here
-				GetGameSession()->JoinSession(Player->GetPreferredUniqueNetId(), GameSessionName, SearchResult);
-				//JoinSession(Player, SearchResult);
-				break;
-			}
-		}
-	}*/
+	int32 MaxPlayersinSession = SearchResult.Session.SessionSettings.NumPublicConnections;
+
+	GetGameSession()->JoinSession(Player->GetPreferredUniqueNetId(), GameSessionName, SearchResult);
+
 }
 
-// Function worked, but I was never registers a session for some reason.
-// So I always got a "this session is null" when i tried to destroy.
+
 void UFusionGameInstance::DestroySessionAndLeaveGame()
 {
 	IOnlineSubsystem* OnlineSub = IOnlineSubsystem::Get();
 	if (OnlineSub)
 	{
 		IOnlineSessionPtr Sessions = OnlineSub->GetSessionInterface();
-
 		if (Sessions.IsValid())
 		{
-			//Sessions->AddOnDestroySessionCompleteDelegate_Handle(GetGameSession()->OnDestroySessionCompleteDelegate);
+			Sessions->AddOnDestroySessionCompleteDelegate_Handle(GetGameSession()->OnDestroySessionCompleteDelegate);
 			Sessions->DestroySession(GameSessionName);
 		}
 	}

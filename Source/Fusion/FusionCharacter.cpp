@@ -120,14 +120,15 @@ void AFusionCharacter::BeginPlay()
 
 
 	
-	PlayerHUD = Cast<AFusionPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0))->GetFusionHUD();
+	//PlayerHUD = Cast<AFusionPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0))->GetFusionHUD();
+	
 
-	if (PlayerHUD)
-	{
-		PlayerHUD->CreateGameWidgets();
-		PlayerHUD->GetMainMenuUIWidget()->ShowMainMenu();
+	//if (PlayerHUD)
+	//{
+		//PlayerHUD->CreateGameWidgets();
+		//PlayerHUD->GetMainMenuUIWidget()->ShowMainMenu();
 		//PlayerHUD->GetInGameHUDWidget()->ShowInGameHUD();
-	}
+	//}
 
 	/*
 	PlayerHUD = Cast<AFusionPlayerController_Menu>(UGameplayStatics::GetPlayerController(GetWorld(), 0))->GetFusionHUD();
@@ -182,13 +183,14 @@ void AFusionCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	/*
 	if (PlayerHUD)
 	{
 		if (PlayerHUD->GetInGameHUDWidget()->IsHealthBarValid())
 		{
 			PlayerHUD->GetInGameHUDWidget()->UpdatePlayerHealthBar(GetHealth());
 		}
-	}
+	}*/
 
 
 	if (bWantsToSprint && !IsSprinting())

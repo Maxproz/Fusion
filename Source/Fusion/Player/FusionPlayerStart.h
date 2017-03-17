@@ -19,9 +19,15 @@ class FUSION_API AFusionPlayerStart : public APlayerStart
 	UPROPERTY(EditAnywhere, Category = "PlayerStart")
 	bool bPlayerOnly;
 
+
+
+
 public:
 
 	bool GetIsPlayerOnly() { return bPlayerOnly; }
+	/** Which team can start at this point */
 	
+	UPROPERTY(EditInstanceOnly, Category = Team)
+	int32 SpawnTeam;
 	
 };

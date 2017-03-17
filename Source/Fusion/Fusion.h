@@ -34,4 +34,14 @@
 #define SURFACE_LEG					SurfaceType5
 
 
+/** Set to 1 to pretend we're building for console even on a PC, for testing purposes */
+#define FUSION_SIMULATE_CONSOLE_UI	0
+
+#if PLATFORM_PS4 || PLATFORM_XBOXONE || PLATFORM_WOLF || FUSION_SIMULATE_CONSOLE_UI
+#define FUSION_CONSOLE_UI 1
+#else
+#define FUSION_CONSOLE_UI 0
+#endif
+
+
 #endif

@@ -26,7 +26,9 @@ class FUSION_API AFusionPlayerState : public APlayerState
 
 	virtual void ClientInitialize(AController* InController) override;
 
-	virtual void CopyProperties(class APlayerState* PlayerState) override;
+	virtual void UnregisterPlayerWithSession() override;
+
+	virtual void CopyProperties(class APlayerState* PlayerState) override; 
 
 public:
 
@@ -37,31 +39,56 @@ public:
 
 	void AddDeath();
 
+	/** player killed someone */
+	void ScoreKill(class AFusionPlayerState* Victim, int32 Points);
+
+	/** player died */
+	void ScoreDeath(class AFusionPlayerState* KilledBy, int32 Points);
+
+	void SetTeamNum(int32 NewTeamNumber);
+
 	void AddScore(int32 Amount);
 
-	void SetTeamColor(ETeamColors NewTeamColor);
 
-	UFUNCTION(BlueprintCallable, Category = "Teams")
-	ETeamColors GetTeamColor() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Score")
 	int32 GetKills() const;
 
-	UFUNCTION(BlueprintCallable, Category = "Score")
 	int32 GetDeaths() const;
 
-	UFUNCTION(BlueprintCallable, Category = "Score")
 	float GetScore() const;
+
+	/** get number of bullets fired this match */
+	int32 GetNumBulletsFired() const;
+
+	/** get number of rockets fired this match */
+	int32 GetNumRocketsFired() const;
 
 	void UpdateTeamColors();
 	
 	/** Set whether the player is a quitter */
 	void SetQuitter(bool bInQuitter);
 
+	/** get whether the player quit the match */
+	bool IsQuitter() const;
+
 	UFUNCTION()
 	void OnRep_TeamColor();
 
-	void SetTeamNum(int32 NewTeamNumber);
+	/** gets truncated player name to fit in death log and scoreboards */
+	FString GetShortPlayerName() const;
+
+	//We don't need stats about amount of ammo fired to be server authenticated, so just increment these with local functions
+	void AddBulletsFired(int32 NumBullets);
+	void AddRocketsFired(int32 NumRockets);
+
+	/** Sends kill (excluding self) to clients */
+	UFUNCTION(Reliable, Client)
+	void InformAboutKill(class AFusionPlayerState* KillerPlayerState, const UDamageType* KillerDamageType, class AFusionPlayerState* KilledPlayerState);
+	void InformAboutKill_Implementation(class AFusionPlayerState* KillerPlayerState, const UDamageType* KillerDamageType, class AFusionPlayerState* KilledPlayerState);
+
+	/** broadcast death to local clients */
+	UFUNCTION(Reliable, NetMulticast)
+	void BroadcastDeath(class AFusionPlayerState* KillerPlayerState, const UDamageType* KillerDamageType, class AFusionPlayerState* KilledPlayerState);
+	void BroadcastDeath_Implementation(class AFusionPlayerState* KillerPlayerState, const UDamageType* KillerDamageType, class AFusionPlayerState* KilledPlayerState);
 
 protected:
 	/** team number */
@@ -74,26 +101,19 @@ protected:
 	UPROPERTY(VisibleInstanceOnly, Transient, Replicated)
 	int32 NumDeaths;
 
+	/** number of Bullets fired this match */
+	UPROPERTY()
+	int32 NumBulletsFired;
+
+	/** number of rockets fired this match */
+	UPROPERTY()
+	int32 NumRocketsFired;
 
 	/** whether the user quit the match */
 	UPROPERTY()
 	bool bQuitter = false;
 
-	/* Team color/number assigned to player */
-	/*
-	UPROPERTY(VisibleInstanceOnly, Transient, ReplicatedUsing=OnRep_TeamColor)
-	ETeamColors TeamColor;
-	*/
-
-
-	/*
-	UPROPERTY(Transient, Replicated) // TODO: implement later if kills/deaths is working.
-	int32 NumAssists;
-	*/
-
-	/*
-	UFUNCTION(BlueprintCallable, Category = "Score")
-	int32 GetAssists() const;
-	*/
+	/** helper for scoring points */
+	void ScorePoints(int32 Points);
 
 };
