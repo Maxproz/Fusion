@@ -7,8 +7,9 @@ public class FusionTarget : TargetRules
 {
 	public FusionTarget(TargetInfo Target)
 	{
-		Type = TargetType.Game;
-	}
+        Type = TargetType.Game;
+        bUsesSteam = true;
+    }
 
 	//
 	// TargetRules interface.
