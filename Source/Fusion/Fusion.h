@@ -33,6 +33,7 @@
 #define SURFACE_ARM					SurfaceType4
 #define SURFACE_LEG					SurfaceType5
 
+//#define PLATFORM_WOLF 0
 
 /** Set to 1 to pretend we're building for console even on a PC, for testing purposes */
 #define FUSION_SIMULATE_CONSOLE_UI	0
