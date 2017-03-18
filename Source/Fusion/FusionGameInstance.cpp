@@ -20,57 +20,19 @@
 
 #include "FusionGameInstance.h"
 
-/*
-void SShooterWaitDialog::Construct(const FArguments& InArgs)
-{
-	const FShooterMenuItemStyle* ItemStyle = &FShooterStyle::Get().GetWidgetStyle<FShooterMenuItemStyle>("DefaultShooterMenuItemStyle");
-	const FButtonStyle* ButtonStyle = &FShooterStyle::Get().GetWidgetStyle<FButtonStyle>("DefaultShooterButtonStyle");
-	ChildSlot
-		.VAlign(VAlign_Center)
-		.HAlign(HAlign_Center)
-		[
-			SNew(SVerticalBox)
-			+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(20.0f)
-		.VAlign(VAlign_Center)
-		.HAlign(HAlign_Center)
-		[
-			SNew(SBorder)
-			.Padding(50.0f)
-		.VAlign(VAlign_Center)
-		.HAlign(HAlign_Center)
-		.BorderImage(&ItemStyle->BackgroundBrush)
-		.BorderBackgroundColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f))
-		[
-			SNew(STextBlock)
-			.TextStyle(FShooterStyle::Get(), "ShooterGame.MenuHeaderTextStyle")
-		.ColorAndOpacity(this, &SShooterWaitDialog::GetTextColor)
-		.Text(InArgs._MessageText)
-		.WrapTextAt(500.0f)
-		]
-		]
-		];
+//we include the steam api here to be able to get the steam avatar
+//refresh your visual studio files from editor after adding this to avoid weird redline errors
+#if PLATFORM_WINDOWS || PLATFORM_MAC || PLATFORM_LINUX
 
-	//Setup a curve
-	const float StartDelay = 0.0f;
-	const float SecondDelay = 0.0f;
-	const float AnimDuration = 2.0f;
+#pragma push_macro("ARRAY_COUNT")
+#undef ARRAY_COUNT
 
-	WidgetAnimation = FCurveSequence();
-	TextColorCurve = WidgetAnimation.AddCurve(StartDelay + SecondDelay, AnimDuration, ECurveEaseFunction::QuadInOut);
-	WidgetAnimation.Play(this->AsShared(), true);
-}
+//#include <steam/steam_api.h>
+#include "ThirdParty/Steamworks/Steamv132/sdk/public/steam/steam_api.h"
+#pragma pop_macro("ARRAY_COUNT")
 
-FSlateColor SShooterWaitDialog::GetTextColor() const
-{
-	//instead of going from black -> white, go from white -> grey.
-	float fAlpha = 1.0f - TextColorCurve.GetLerp();
-	fAlpha = fAlpha * 0.5f + 0.5f;
-	return FLinearColor(FColor(155, 164, 182, FMath::Clamp((int32)(fAlpha * 255.0f), 0, 255)));
-}
+#endif
 
-*/
 
 namespace FusionGameInstanceState
 {
@@ -292,6 +254,7 @@ void UFusionGameInstance::HandleDemoPlaybackFailure(EDemoPlayFailure::Type Failu
 
 void UFusionGameInstance::StartGameInstance()
 {
+	/*
 #if PLATFORM_PS4 == 0
 	TCHAR Parm[4096] = TEXT("");
 
@@ -335,7 +298,7 @@ void UFusionGameInstance::StartGameInstance()
 		}
 	}
 #endif
-
+*/
 	GotoInitialState();
 }
 
@@ -1193,6 +1156,7 @@ bool UFusionGameInstance::FindSessions(ULocalPlayer* PlayerOwner, bool bFindLAN)
 	check(PlayerOwner != nullptr);
 	if (PlayerOwner)
 	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, FString::Printf(TEXT("Player Owner Is not nullptr")));
 		AFusionGameSession* const GameSession = GetGameSession();
 		if (GameSession)
 		{
@@ -1220,15 +1184,28 @@ void UFusionGameInstance::OnSearchSessionsComplete(bool bWasSuccessful)
 
 bool UFusionGameInstance::Tick(float DeltaSeconds)
 {
+
+
+
 	// Dedicated server doesn't need to worry about game state
 	if (IsRunningDedicatedServer() == true)
 	{
 		return true;
 	}
 
-	GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, FString::Printf(TEXT("CurrentState: %s"), *CurrentState.ToString()));
-	GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, FString::Printf(TEXT("PendingState: %s"), *PendingState.ToString()));
-	
+	/*
+	FTimerHandle Handle;
+	FTimerDelegate Del;
+
+	Del.BindLambda([&]()
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, FString::Printf(TEXT("CurrentState: %s"), *CurrentState.ToString()));
+		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, FString::Printf(TEXT("PendingState: %s"), *PendingState.ToString()));
+	});
+
+	GetWorld()->GetTimerManager().SetTimer(Handle, Del, 5.f, true);
+	*/
+
 	MaybeChangeState();
 
 
@@ -2001,7 +1978,12 @@ void UFusionGameInstance::FindOnlineGames()
 	bool bIsLAN = false;
 	bool bIsPresencee = false;
 
-	GetGameSession()->FindSessions(Player->GetPreferredUniqueNetId(), GameSessionName, bIsLAN, bIsPresencee);
+
+
+	FindSessions(Player, bIsLAN);
+
+
+	//GetGameSession()->FindSessions(Player->GetPreferredUniqueNetId(), GameSessionName, bIsLAN, bIsPresencee);
 }
 
 //void UFusionGameInstance::JoinOnlineGame(int32 SessionIndex)

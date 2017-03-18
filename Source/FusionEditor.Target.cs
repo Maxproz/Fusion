@@ -8,7 +8,8 @@ public class FusionEditorTarget : TargetRules
 	public FusionEditorTarget(TargetInfo Target)
 	{
 		Type = TargetType.Editor;
-	}
+        //bUsesSteam = true;
+    }
 
 	//
 	// TargetRules interface.

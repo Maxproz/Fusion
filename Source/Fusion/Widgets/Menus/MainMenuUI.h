@@ -5,6 +5,19 @@
 #include "Widgets/MasterWidget.h"
 #include "MainMenuUI.generated.h"
 
+
+struct FServerEntry
+{
+	FString ServerName;
+	FString CurrentPlayers;
+	FString MaxPlayers;
+	FString GameType;
+	FString MapName;
+	FString Ping;
+	int32 SearchResultsIndex;
+};
+
+
 /**
  * 
  */
@@ -27,6 +40,7 @@ public:
 	void DisplayLoadingScreen();
 
 
+
 	/* function events bound to our button presses */
 	UFUNCTION()
 	void OnClickedHostButton();
@@ -38,9 +52,27 @@ public:
 	void OnClickedQuitButton();
 
 
-	/** Returns the player that owns the main menu. */
-	//ULocalPlayer* GetPlayerOwner() const;
 
+
+
+	void UpdateSearchStatus();
+
+	AFusionGameSession* GetGameSession() const;
+
+	/** Starts searching for servers */
+	void BeginServerSearch(bool bLANMatch, const FString& InMapFilterName);
+
+	/** Called when server search is finished */
+	void OnServerSearchFinished();
+
+	/** fill/update server list, should be called before showing this control */
+	void UpdateServerList();
+
+	/** connect to chosen server */
+	void ConnectToServer();
+
+
+	virtual void NativeTick(const FGeometry & MyGeometry,float InDeltaTime) override;
 
 protected:
 	
@@ -73,6 +105,25 @@ protected:
 	/** Settings and storage for quickmatch searching */
 	TSharedPtr<FOnlineSessionSearch> QuickMatchSearchSettings;
 
+	/** pointer to our owner PC */
+	TWeakObjectPtr<class ULocalPlayer> PlayerOwner;
+
+
+
+	/** Whether last searched for LAN (so spacebar works) */
+	bool bLANMatchSearch;
+
+	/** Whether we're searching for servers */
+	bool bSearchingForServers;
+
+	/** action bindings array */
+	TArray< TSharedPtr<FServerEntry> > ServerList;
+
+	/** Map filter name to use during server searches */
+	FString MapFilterName;
+
+	/** currently selected list item */
+	TSharedPtr<FServerEntry> SelectedItem;
 
 	/* TODO: Implement these.. they seem needed
 	// Start the check for whether the owner of the menu has online privileges 
