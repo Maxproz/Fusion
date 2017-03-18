@@ -1946,31 +1946,24 @@ void UFusionGameInstance::SendPlayTogetherInvites()
 
 
 
-//bool AFusionGameSession::HostSession(TSharedPtr<const FUniqueNetId> UserId, FName InSessionName, const FString& GameType, const FString& MapName, bool bIsLAN, bool bIsPresence, int32 MaxNumPlayers)
-//void UFusionGameInstance::StartOnlineGame(FString ServerName, int32 MaxNumPlayers, bool bIsLAN, bool bIsPresence, bool bIsPasswordProtected, FString SessionPassword)
+
 #define LOCTEXT_NAMESPACE "Fusion.HUD.Menu"
-void UFusionGameInstance::StartOnlineGame()
+
+void UFusionGameInstance::StartOnlineGame(FString ServerName, int32 MaxNumPlayers, bool bIsLAN, bool bIsPresence, bool bIsPasswordProtected, FString SessionPassword)
 {
 	// Creating a local player where we can get the UserID from
 	ULocalPlayer* const Player = GetFirstGamePlayer();
 
-	// Call our custom HostSession function. GameSessionName is a GameInstance variable
-	//FString ServerName = TEXT("MyGameName");
-	const FString& GameTypee = (LOCTEXT("TDM", "TDM").ToString());
-	const FString& Mapp = FString(TEXT("Downfall"));
-	bool bIsLAN = false;
-	bool bIsPresencee = false;
-	//FName MySessionName = FName("MySession");
 
-	GetGameSession()->HostSession(Player->GetPreferredUniqueNetId(), GameSessionName, GameTypee, Mapp, bIsLAN, bIsPresencee, 8);
+
+	//GetGameSession()->HostSession(Player->GetPreferredUniqueNetId(), GameSessionName, GameTypee, Mapp, bIsLAN, bIsPresencee, 8);
 }
 
 
-#undef LOCTEXT_NAMESPACE
 
 
-//void UFusionGameInstance::FindOnlineGames(bool bIsLAN, bool bIsPresence)
-void UFusionGameInstance::FindOnlineGames()
+
+/oid UFusionGameInstance::FindOnlineGames(bool bIsLAN, bool bIsPresence)
 {
 	ULocalPlayer* const Player = GetFirstGamePlayer();
 	
@@ -1980,23 +1973,20 @@ void UFusionGameInstance::FindOnlineGames()
 
 
 
-	FindSessions(Player, bIsLAN);
+	//FindSessions(Player, bIsLAN);
 
 
 	//GetGameSession()->FindSessions(Player->GetPreferredUniqueNetId(), GameSessionName, bIsLAN, bIsPresencee);
 }
 
 //void UFusionGameInstance::JoinOnlineGame(int32 SessionIndex)
-void UFusionGameInstance::JoinOnlineGame()
+void UFusionGameInstance::JoinOnlineGame(int32 SessionIndex)
 {
 	ULocalPlayer* const Player = GetFirstGamePlayer();
 
-	FOnlineSessionSearchResult SearchResult;
-	SearchResult = GetGameSession()->GetSearchResults()[0];
 
-	int32 MaxPlayersinSession = SearchResult.Session.SessionSettings.NumPublicConnections;
 
-	GetGameSession()->JoinSession(Player->GetPreferredUniqueNetId(), GameSessionName, SearchResult);
+	//GetGameSession()->JoinSession(Player, SessionIndex);
 
 }
 
@@ -2014,3 +2004,6 @@ void UFusionGameInstance::DestroySessionAndLeaveGame()
 		}
 	}
 }
+
+
+#undef LOCTEXT_NAMESPACE

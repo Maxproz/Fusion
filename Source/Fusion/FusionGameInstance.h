@@ -185,15 +185,15 @@ public:
 	
 	// Creating a Session
 	UFUNCTION(BlueprintCallable, Category = "Network|Test")
-	void StartOnlineGame();
+	void StartOnlineGame(FString ServerName, int32 MaxNumPlayers, bool bIsLAN, bool bIsPresence, bool bIsPasswordProtected, FString SessionPassword);
 
 	// Searching and Finding a Session
 	UFUNCTION(BlueprintCallable, Category = "Network|Test")
-	void FindOnlineGames();
+	void FindOnlineGames(bool bIsLAN, bool bIsPresence);
 
 	// Joining a Session
 	UFUNCTION(BlueprintCallable, Category = "Network|Test")
-	void JoinOnlineGame();
+	void JoinOnlineGame(int32 SessionIndex);
 
 	// Destroying a Session
 	UFUNCTION(BlueprintCallable, Category = "Network|Test")

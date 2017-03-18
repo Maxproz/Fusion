@@ -6,17 +6,11 @@
 #include "MainMenuUI.generated.h"
 
 
-struct FServerEntry
-{
-	FString ServerName;
-	FString CurrentPlayers;
-	FString MaxPlayers;
-	FString GameType;
-	FString MapName;
-	FString Ping;
-	int32 SearchResultsIndex;
-};
-
+class UEditableTextBox;
+class UCheckBox;
+class UButton;
+class UWidgetSwitcher;
+class USpinBox;
 
 /**
  * 
@@ -28,8 +22,11 @@ class FUSION_API UMainMenuUI : public UMasterWidget
 	
 	
 public:
-	/** Add the menu to the gameviewport so it becomes visible */
-	//void AddMenuToGameViewport();
+
+
+	/** pointer to our owner PC */
+	TWeakObjectPtr<class ULocalPlayer> PlayerOwner;
+
 	
 	virtual void NativeConstruct() override;
 
@@ -39,106 +36,105 @@ public:
 
 	void DisplayLoadingScreen();
 
-
+	void GetADefaultGameName(FText& OutName);
 
 	/* function events bound to our button presses */
 	UFUNCTION()
-	void OnClickedHostButton();
+	void OnClickedBackFromHostingButton();
 
 	UFUNCTION()
-	void OnClickedJoinButton();
+	void OnClickedFindGameButton();
+
+	UFUNCTION()
+	void OnClickedHostGameButton();
+
+	UFUNCTION()
+	void OnClickedStartHostingButton();
 
 	UFUNCTION()
 	void OnClickedQuitButton();
 
+	UFUNCTION()
+	void OnValueChangedMaxPlayersSlider(float InValue);
 
+	UFUNCTION()
+	void OnTextChangedRoomNameTextbox(const FText &Text);
 
+	UFUNCTION()
+	void OnTextCommittedRoomNameTextbox(const FText &Text, ETextCommit::Type Method);
 
+	UFUNCTION()
+	void OnCheckStateChangedPasswordCheckBox(bool IsChecked);
 
-	void UpdateSearchStatus();
+	UFUNCTION()
+	void OnTextChangedPasswordTextBox(const FText &Text);
 
-	AFusionGameSession* GetGameSession() const;
+	UFUNCTION()
+	void OnTextCommittedPasswordTextBox(const FText &Text, ETextCommit::Type Method);
 
-	/** Starts searching for servers */
-	void BeginServerSearch(bool bLANMatch, const FString& InMapFilterName);
-
-	/** Called when server search is finished */
-	void OnServerSearchFinished();
-
-	/** fill/update server list, should be called before showing this control */
-	void UpdateServerList();
-
-	/** connect to chosen server */
-	void ConnectToServer();
-
-
-	virtual void NativeTick(const FGeometry & MyGeometry,float InDeltaTime) override;
+	UFUNCTION()
+	void OnCheckStateChangedIsLanCheckBox(bool IsChecked);
 
 protected:
 	
 	UPROPERTY(meta = (BindWidget))
-	UButton* HostButton;
+	UButton* BackFromHostingButton;
 
 	UPROPERTY(meta = (BindWidget))
-	UButton* JoinButton;
+	UButton* FindGameButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* HostGameButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UCheckBox* IsLanCheckBox;
+	
+	UPROPERTY(meta = (BindWidget))
+	UWidgetSwitcher* MainMenuWidgetSwitcher;
+
+	UPROPERTY(meta = (BindWidget))
+	USpinBox* MaxPlayersSlider;
+
+	UPROPERTY(meta = (BindWidget))
+	UCheckBox* PasswordCheckBox;
+
+	UPROPERTY(meta = (BindWidget))
+	UEditableTextBox* PasswordTextBox;
+
+	UPROPERTY(meta = (BindWidget))
+	UEditableTextBox* RoomNameTextbox;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* SettingButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* StartHostingButton;
 
 	UPROPERTY(meta = (BindWidget))
 	UButton* QuitButton;
 
-	/** Delegate executed when matchmaking completes */
-	FOnMatchmakingCompleteDelegate OnMatchmakingCompleteDelegate;
+	class UFusionGameInstance* GameInstanceRef;
 
-	void OnMatchmakingComplete(FName SessionName, bool bWasSuccessful);
+	class AFusionHUD* PlayerHUDRef;
 
-	void HostGame(const FString& GameType);
+	FString LanPlayerCurrentName;
 
-	void HostFreeForAll();
+	bool bIsItLan;
 
-	void HostTeamDeathMatch();
+	int32 MaxNumOfPlayers;
 
-	void BeginQuickMatchSearch();
+	FString TheServerName;
 
-	void Quit();
+	int32 MinServerNameLength;
 
-	FDelegateHandle OnMatchmakingCompleteDelegateHandle;
+	int32 MaxServerNameLength;
 
-	/** Settings and storage for quickmatch searching */
-	TSharedPtr<FOnlineSessionSearch> QuickMatchSearchSettings;
+	bool bDoesServerHavePassword;
 
-	/** pointer to our owner PC */
-	TWeakObjectPtr<class ULocalPlayer> PlayerOwner;
+	FString TheSessionPassword;
 
+	int32 MaxPasswordSizeServer;
 
 
-	/** Whether last searched for LAN (so spacebar works) */
-	bool bLANMatchSearch;
 
-	/** Whether we're searching for servers */
-	bool bSearchingForServers;
-
-	/** action bindings array */
-	TArray< TSharedPtr<FServerEntry> > ServerList;
-
-	/** Map filter name to use during server searches */
-	FString MapFilterName;
-
-	/** currently selected list item */
-	TSharedPtr<FServerEntry> SelectedItem;
-
-	/* TODO: Implement these.. they seem needed
-	// Start the check for whether the owner of the menu has online privileges 
-	void StartOnlinePrivilegeTask(const IOnlineIdentity::FOnGetUserPrivilegeCompleteDelegate& Delegate);
-
-	// Common cleanup code for any Privilege task delegate 
-	void CleanupOnlinePrivilegeTask();
-
-	// Delegate function executed after checking privileges for hosting an online game 
-	void OnUserCanPlayOnlineHost(const FUniqueNetId& UserId, EUserPrivileges::Type Privilege, uint32 PrivilegeResults);
-
-	// Delegate function executed after checking privileges for joining an online game 
-	void OnUserCanPlayOnlineJoin(const FUniqueNetId& UserId, EUserPrivileges::Type Privilege, uint32 PrivilegeResults);
-
-	// Delegate function executed after checking privileges for starting quick match 
-	void OnUserCanPlayOnlineQuickMatch(const FUniqueNetId& UserId, EUserPrivileges::Type Privilege, uint32 PrivilegeResults);
-	*/
 };
