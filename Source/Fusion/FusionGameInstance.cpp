@@ -6,11 +6,15 @@
 #include "FusionCharacter.h"
 #include "FusionPlayerController.h"
 #include "FusionPlayerController_Menu.h"
+#include "FusionPlayerController_Lobby.h"
 #include "FusionGameViewportClient.h"
 #include "FusionGameState.h"
 #include "FusionPlayerState.h"
 
 #include "Widgets/Menus/MainMenuUI.h"
+#include "Widgets/Menus/ServerMenu_Widget.h"
+#include "Widgets/Menus/Lobby/LobbyMenu_Widget.h"
+#include "Widgets/Menus/OkErrorMessage_Widget.h"
 
 #include "Online/FusionOnlineSessionClient.h"
 
@@ -20,6 +24,8 @@
 
 #include "FusionGameInstance.h"
 
+
+
 //we include the steam api here to be able to get the steam avatar
 //refresh your visual studio files from editor after adding this to avoid weird redline errors
 #if PLATFORM_WINDOWS || PLATFORM_MAC || PLATFORM_LINUX
@@ -28,7 +34,10 @@
 #undef ARRAY_COUNT
 
 //#include <steam/steam_api.h>
-#include "ThirdParty/Steamworks/Steamv132/sdk/public/steam/steam_api.h"
+//#include "ThirdParty/Steamworks/Steamv132/sdk/public/steam/steam_api.h"
+//#include "ThirdParty/Steamworks/Steamv132/sdk/public/steam/isteamfriends.h"
+//#include "ThirdParty/Steamworks/Steamv132/sdk/public/steam/isteamutils.h"
+
 #pragma pop_macro("ARRAY_COUNT")
 
 #endif
@@ -51,6 +60,7 @@ UFusionGameInstance::UFusionGameInstance(const FObjectInitializer& ObjectInitial
 	, bIsLicensed(true) // Default to licensed (should have been checked by OS on boot)
 {
 	CurrentState = FusionGameInstanceState::None;
+	LanPlayerName = "Player";
 }
 
 void UFusionGameInstance::Init()
@@ -98,6 +108,14 @@ void UFusionGameInstance::Init()
 	SessionInterface->AddOnSessionFailureDelegate_Handle(FOnSessionFailureDelegate::CreateUObject(this, &UFusionGameInstance::HandleSessionFailure));
 
 	OnEndSessionCompleteDelegate = FOnEndSessionCompleteDelegate::CreateUObject(this, &UFusionGameInstance::OnEndSessionComplete);
+
+	OnFoundSessionsCompleteUMG().AddUObject(this, &UFusionGameInstance::OnFoundSessionsCompleteUMG);
+	OnGetSteamFriendRequestCompleteUMG().AddUObject(this, &UFusionGameInstance::OnGetSteamFriendRequestCompleteUMG);
+	OnShowErrorMessageUMG().AddUObject(this, &UFusionGameInstance::OnShowErrorMessageUMG);
+
+	/** Bind the function for completing the friend list request*/
+	FriendListReadCompleteDelegate = FOnReadFriendsListComplete::CreateUObject(this, &UFusionGameInstance::OnReadFriendsListCompleted);
+
 
 	// Register delegate for ticker callback
 	TickDelegate = FTickerDelegate::CreateUObject(this, &UFusionGameInstance::Tick);
@@ -670,7 +688,7 @@ void UFusionGameInstance::BeginMainMenuState()
 	MainMenuUI->Construct(this, Player);
 	*/
 	
-	MainMenuUI = Cast<AFusionPlayerController_Menu>(Player->GetPlayerController(GetWorld()))->GetFusionHUD()->GetMainMenuUIWidget();
+	//MainMenuUI = Cast<AFusionPlayerController_Menu>(Player->GetPlayerController(GetWorld()))->GetFusionHUD()->GetMainMenuUIWidget();
 	
 	//AFusionPlayerController* FPC = Cast<AFusionPlayerController>(Player->GetPlayerController(GetWorld()));
 	//MainMenuUI = FPC->GetFusionHUD()->GetMainMenuUIWidget();
@@ -684,7 +702,7 @@ void UFusionGameInstance::BeginMainMenuState()
 		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Emerald, FString::Printf(TEXT("Trying to show main menu")));
 
 		//MainMenuUI->AddMenuToGameViewport();
-		MainMenuUI.Get()->ShowMainMenu();
+		//MainMenuUI.Get()->ShowMainMenu();
 	}
 	
 	// It's possible that a play together event was sent by the system while the player was in-game or didn't
@@ -719,7 +737,7 @@ void UFusionGameInstance::EndMainMenuState()
 
 	if (MainMenuUI.IsValid())
 	{
-		MainMenuUI.Get()->HideMainMenu();
+		//MainMenuUI.Get()->HideMainMenu();
 		MainMenuUI = nullptr;
 	}
 }
@@ -1963,18 +1981,10 @@ void UFusionGameInstance::StartOnlineGame(FString ServerName, int32 MaxNumPlayer
 
 
 
-/oid UFusionGameInstance::FindOnlineGames(bool bIsLAN, bool bIsPresence)
+void UFusionGameInstance::FindOnlineGames(bool bIsLAN, bool bIsPresence)
 {
 	ULocalPlayer* const Player = GetFirstGamePlayer();
 	
-	//FName MySessionName = FName("MySession");
-	bool bIsLAN = false;
-	bool bIsPresencee = false;
-
-
-
-	//FindSessions(Player, bIsLAN);
-
 
 	//GetGameSession()->FindSessions(Player->GetPreferredUniqueNetId(), GameSessionName, bIsLAN, bIsPresencee);
 }
@@ -2006,4 +2016,244 @@ void UFusionGameInstance::DestroySessionAndLeaveGame()
 }
 
 
+bool UFusionGameInstance::IsOnlineSubsystemSteam() const
+{
+	//get the steam online subsystem
+	IOnlineSubsystem* const OnlineSub = IOnlineSubsystem::Get(FName("Steam"));
+
+	if (OnlineSub)
+		return true;
+	else
+		return false;
+}
+
+FString UFusionGameInstance::GetPlayerName() const
+{
+	//if steam is running, return an empty string
+	if (IsOnlineSubsystemSteam())
+		return "";
+	//else retrun the saved player lan name
+	else
+		return LanPlayerName;
+}
+
+
 #undef LOCTEXT_NAMESPACE
+
+// call the ServerMenu UMG and pass the array of Session Results when yhe session finding is over
+void UFusionGameInstance::OnFoundSessionsCompleteUMG(const TArray<FCustomBlueprintSessionResult>& CustomSessionResults)
+{
+	// player 0 gets to own the UI
+	ULocalPlayer* const Player = GetFirstGamePlayer();
+	AFusionPlayerController_Lobby* LPC = Cast<AFusionPlayerController_Lobby>(Player->GetPlayerController(GetWorld()));
+
+	UServerMenu_Widget* ServerWidget = LPC->GetFusionHUD()->GetServerMenuWidget();
+
+	if (ServerWidget)
+	{
+		ServerWidget->OnSessionSearchCompleated().Broadcast(CustomSessionResults);
+	}
+}
+
+// called from code when it finishes getting the friendlist and passes it to blueprint
+void UFusionGameInstance::OnGetSteamFriendRequestCompleteUMG(const TArray<FSteamFriendInfo>& BPFriendsLists)
+{
+	// player 0 gets to own the UI
+	ULocalPlayer* const Player = GetFirstGamePlayer();
+	AFusionPlayerController_Lobby* LPC = Cast<AFusionPlayerController_Lobby>(Player->GetPlayerController(GetWorld()));
+
+	ULobbyMenu_Widget* LobbyWidget = LPC->GetFusionHUD()->GetLobbyMenuWidget();
+
+	if (LobbyWidget)
+	{
+		LobbyWidget->GetSteamFriendRequestCompleted().Broadcast(BPFriendsLists);
+	}
+	
+}
+
+void UFusionGameInstance::OnShowErrorMessageUMG(const FText & ErrorMessage)
+{
+	ULocalPlayer* const Player = GetFirstGamePlayer();
+	AFusionPlayerController_Lobby* LPC = Cast<AFusionPlayerController_Lobby>(Player->GetPlayerController(GetWorld()));
+
+	UOkErrorMessage_Widget* OkErrorMessage_Widget = LPC->GetFusionHUD()->GetErrorMessageWidget();
+
+	// if the widget was created already, change the error text and display it
+	OkErrorMessage_Widget->ErrorText = ErrorMessage;
+	OkErrorMessage_Widget->ShowWidget();
+
+	// TODO: if the widget was not created before, create it, set the error text and then show it to the player
+	// Note: It should always be created here so I might not need to do the TODO: here
+}
+
+
+// when reading friend list from the online subsystem is finished, get it and store it then call blueprint to show it on UMG
+void UFusionGameInstance::OnReadFriendsListCompleted(int32 LocalUserNum, bool bWasSuccessful, const FString & ListName, const FString & ErrorString)
+{
+	if (bWasSuccessful)
+	{
+		//get the steam online subsystem
+		IOnlineSubsystem* const OnlineSub = IOnlineSubsystem::Get(FName("Steam"));
+
+		//check if the online subsystem is valid
+		if (OnlineSub)
+		{
+			//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Emerald, TEXT("Found Steam Online"));
+			//get Friends interface
+			IOnlineFriendsPtr FriendsInterface = OnlineSub->GetFriendsInterface();
+
+			//if the Friends Interface is valid
+			if (FriendsInterface.IsValid())
+			{
+
+				TArray< TSharedRef<FOnlineFriend> > FriendList;
+				//get a list on all online players and store them in the FriendList
+				FriendsInterface->GetFriendsList(LocalUserNum, ListName/*EFriendsLists::ToString((EFriendsLists::Default)),*/, FriendList);
+
+				//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Emerald, *FString::Printf(TEXT("Number of friends found is: %d"), FriendList.Num()));
+
+				TArray<FSteamFriendInfo> BPFriendsList;
+				//for each loop to convert the FOnlineFriend array into the cuteom BP struct
+				for (TSharedRef<FOnlineFriend> Friend : FriendList)
+				{
+					//temp FSteamFriendInfo variable to add to the array
+					FSteamFriendInfo TempSteamFriendInfo;
+					//get the friend's User ID
+					TempSteamFriendInfo.PlayerUniqueNetID.SetUniqueNetId(Friend->GetUserId());
+					//get the friend's avatar as texture 2D and store it
+					TempSteamFriendInfo.PlayerAvatar = GetSteamAvatar(TempSteamFriendInfo.PlayerUniqueNetID);
+					//get the friend's display name
+					TempSteamFriendInfo.PlayerName = Friend->GetDisplayName();
+					//add the temp variable to the 
+					BPFriendsList.Add(TempSteamFriendInfo);
+				}
+
+				//call blueprint to show the info on UMG
+				OnGetSteamFriendRequestCompleteUMG().Broadcast(BPFriendsList);
+			}
+		}
+	}
+	else
+		OnShowErrorMessageUMG().Broadcast(FText::FromString(ErrorString));
+}
+
+void UFusionGameInstance::GetSteamFriendsList(APlayerController *PlayerController)
+{
+	//check if the player controller is valid
+	if (PlayerController)
+	{
+
+		//get the steam online subsystem
+		IOnlineSubsystem* const OnlineSub = IOnlineSubsystem::Get(FName("Steam"));
+
+		//check if the online subsystem is valid
+		if (OnlineSub)
+		{
+			//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Emerald, TEXT("Found Steam Online"));
+			//get Friends interface
+			IOnlineFriendsPtr FriendsInterface = OnlineSub->GetFriendsInterface();
+
+			//if the Friends Interface is valid
+			if (FriendsInterface.IsValid())
+			{
+
+				//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("Found friend interface"));
+				// get the local player from the player controller
+				ULocalPlayer* LocalPlayer = Cast<ULocalPlayer>(PlayerController->Player);
+
+				//chaeck if the local player exists
+				if (LocalPlayer)
+				{
+					//read the friend list from the online subsystem then call the delagate when completed
+					FriendsInterface->ReadFriendsList(LocalPlayer->GetControllerId(), EFriendsLists::ToString((EFriendsLists::InGamePlayers)), FriendListReadCompleteDelegate);
+				}
+			}
+		}
+	}
+}
+
+// TODO: Wtf....
+UTexture2D* UFusionGameInstance::GetSteamAvatar(const FBPUniqueNetId UniqueNetId)
+{
+	/*
+	if (UniqueNetId.IsValid())
+	{
+		uint32 Width = 0;
+		uint32 Height = 0;
+
+		//get the player iID
+		uint64 id = *((uint64*)UniqueNetId.UniqueNetId->GetBytes());
+
+		int Picture = 0;
+
+		// get the Avatar ID using the player ID
+		Picture = SteamFriends()->GetMediumFriendAvatar(id);
+	
+		//if the Avatar ID is not valid retrun null
+		if (Picture == -1)
+			return nullptr;
+
+		//get the image size from steam
+		SteamUtils()->GetImageSize(Picture, &Width, &Height);
+
+		// if the image size is valid (most of this is from the Advanced Seesion Plugin as well, mordentral, THANK YOU!
+		if (Width > 0 && Height > 0)
+		{
+			//Creating the buffer "oAvatarRGBA" and then filling it with the RGBA Stream from the Steam Avatar
+			uint8 *oAvatarRGBA = new uint8[Width * Height * 4];
+
+
+			//Filling the buffer with the RGBA Stream from the Steam Avatar and creating a UTextur2D to parse the RGBA Steam in
+			SteamUtils()->GetImageRGBA(Picture, (uint8*)oAvatarRGBA, 4 * Height * Width * sizeof(char));
+
+			UTexture2D* Avatar = UTexture2D::CreateTransient(Width, Height, PF_R8G8B8A8);
+
+			// Switched to a Memcpy instead of byte by byte transer
+			uint8* MipData = (uint8*)Avatar->PlatformData->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
+			FMemory::Memcpy(MipData, (void*)oAvatarRGBA, Height * Width * 4);
+			Avatar->PlatformData->Mips[0].BulkData.Unlock();
+
+			// Original implementation was missing this!!
+			// the hell man......
+			// deallocating the memory used to get the avatar data
+			delete[] oAvatarRGBA;
+
+			//Setting some Parameters for the Texture and finally returning it
+			Avatar->PlatformData->NumSlices = 1;
+			Avatar->NeverStream = true;
+			//Avatar->CompressionSettings = TC_EditorIcon;
+
+			Avatar->UpdateResource();
+
+			return Avatar;
+		}
+
+	}
+	*/
+	return nullptr;
+}
+
+void UFusionGameInstance::ShowErrorMessage(const FText & ErrorMessage)
+{
+	//Show the message on UMG 
+	OnShowErrorMessageUMG().Broadcast(ErrorMessage);
+}
+
+
+void UFusionGameInstance::SendSessionInviteToFriend(APlayerController* InvitingPlayer, const FBPUniqueNetId & Friend)
+{
+	IOnlineSubsystem* OnlineSub = IOnlineSubsystem::Get();
+	if (OnlineSub)
+	{
+		ULocalPlayer* LocalPlayer = Cast<ULocalPlayer>(InvitingPlayer->GetLocalPlayer());
+		if (LocalPlayer)
+		{
+			// Get SessionInterface from the OnlineSubsystem
+			IOnlineSessionPtr Sessions = OnlineSub->GetSessionInterface();
+			if (Sessions.IsValid() && LocalPlayer->GetPreferredUniqueNetId().IsValid() && Friend.IsValid())
+			{
+				Sessions->SendSessionInviteToFriend(*LocalPlayer->GetPreferredUniqueNetId(), GameSessionName, *Friend.GetUniqueNetId());
+			}
+		}
+	}
+}

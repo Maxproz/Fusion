@@ -43,6 +43,6 @@ AFusionHUD* AFusionPlayerController_Menu::GetFusionHUD() const
 
 void AFusionPlayerController_Menu::ClientShowMainMenu_Implementation()
 {
-	GetFusionHUD()->GetMainMenuUIWidget()->ShowMainMenu();
+	GetFusionHUD()->GetMainMenuUIWidget()->ShowWidget();
 	//Widget->SetVisibility(ESlateVisibility::Visible);
 }

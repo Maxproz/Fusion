@@ -20,4 +20,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Anims)
 	TArray<UWidgetAnimation*> WidgetAnimations;
 	
+	void ShowWidget()
+	{
+		SetVisibility(ESlateVisibility::Visible);
+	}
+
+	void HideWidget()
+	{
+		SetVisibility(ESlateVisibility::Hidden);
+	}
+
 };

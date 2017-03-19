@@ -5,8 +5,18 @@
 
 #include "Widgets/Gameplay/InGameHUD.h"
 #include "Widgets/Menus/MainMenuUI.h"
+#include "Widgets/Menus/OkErrorMessage_Widget.h"
+#include "Widgets/Menus/ServerMenu_Widget.h"
+#include "Widgets/Menus/Lobby/LobbyMenu_Widget.h"
 
 #include "FusionPlayerController_Menu.h"
+
+#include "Widgets/Menus/Lobby/ChatEntry_Widget.h"
+#include "Widgets/Menus/Lobby/PlayerInfoEntry_Widget.h"
+#include "Widgets/Menus/Lobby/InviteSteamFriend_Widget.h"
+#include "Widgets/Menus/PasswordEnterPopup_Widget.h"
+#include "Widgets/Menus/ServerMenuStats_Widget.h"
+
 
 #include "Engine/Canvas.h"
 #include "TextureResource.h"
@@ -22,53 +32,69 @@ AFusionHUD::AFusionHUD()
 
 void AFusionHUD::CreateMainMenuUIWidget()
 {
-	//check(ActiveMainMenuUIWidget == nullptr, TEXT("MainMenuUI Widget Already Initialized"));
-	
-	if (ActiveMainMenuUIWidget != nullptr) return; // maybe later, return here if its already initalized
-
+	if (ActiveMainMenuUIWidget != nullptr) return;
 	ActiveMainMenuUIWidget = CreateWidget<UMainMenuUI>(GetOwningPlayerController(), MainMenuUIWidget.LoadSynchronous());
-	//check(ActiveMainMenuUIWidget != nullptr, TEXT("Unable to Create MainMenuUI Widget Widget"));
 
 	ActiveMainMenuUIWidget->AddToViewport(0);
-
 	ActiveMainMenuUIWidget->SetVisibility(ESlateVisibility::Hidden);
-
-	/*
-	ActiveMainMenuUIWidget->SetPositionInViewport(FVector2D(0.f, 0.f));
-	ActiveMainMenuUIWidget->SetDesiredSizeInViewport(FVector2D(0.f, 174.f));
-	ActiveMainMenuUIWidget->SetAlignmentInViewport(FVector2D(0.f, 1.f));
-	ActiveMainMenuUIWidget->SetAnchorsInViewport(FAnchors(0.f, 1.f, 1.f, 1.f));
-	*/
-
-	// Creates all Children etc.
-	//ActiveMainMenuUIWidget->OnAddedToViewport();
 }
 
 void AFusionHUD::CreateInGameHUDWidget()
 {
-	//check(ActiveInGameHUDWidget == nullptr, TEXT("InGameHUD Widget Already Initialized"));
 	if (ActiveInGameHUDWidget != nullptr) return;
-
 	ActiveInGameHUDWidget = CreateWidget<UInGameHUD>(GetOwningPlayerController(), InGameHUDWidget.LoadSynchronous());
-	//check(ActiveInGameHUDWidget != nullptr, TEXT("Unable to Create InGameHUD Widget"));
-
-	ActiveInGameHUDWidget->AddToViewport(1);
-
-	//ActiveInfoWidget->SetPositionInViewport(FVector2D(0.f, 0.f));
+	ActiveInGameHUDWidget->AddToViewport(0);
 	ActiveInGameHUDWidget->SetVisibility(ESlateVisibility::Hidden);
+}
 
+void AFusionHUD::CreateServerMenuWidget()
+{
+	if (ActiveServerMenuWidget != nullptr) return;
+	ActiveServerMenuWidget = CreateWidget<UServerMenu_Widget>(GetOwningPlayerController(), ServerMenuWidget.LoadSynchronous());
+	ActiveServerMenuWidget->AddToViewport(0);
+	ActiveServerMenuWidget->SetVisibility(ESlateVisibility::Hidden);
+}
+
+void AFusionHUD::CreateErrorMessageWidget()
+{
+	if (ActiveErrorMessageWidget != nullptr) return;
+	ActiveErrorMessageWidget = CreateWidget<UOkErrorMessage_Widget>(GetOwningPlayerController(), ErrorMessageWidget.LoadSynchronous());
+	ActiveErrorMessageWidget->AddToViewport(0);
+	ActiveErrorMessageWidget->SetVisibility(ESlateVisibility::Hidden);
+}
+
+void AFusionHUD::CreateLobbyMenuWidget()
+{
+	if (ActiveLobbyMenuWidget != nullptr) return;
+	ActiveLobbyMenuWidget = CreateWidget<ULobbyMenu_Widget>(GetOwningPlayerController(), LobbyMenuWidget.LoadSynchronous());
+	ActiveLobbyMenuWidget->AddToViewport(0);
+	ActiveLobbyMenuWidget->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void AFusionHUD::CreateGameWidgets()
 {
 	CreateInGameHUDWidget();
 	CreateMainMenuUIWidget();
+	CreateServerMenuWidget();
+	CreateErrorMessageWidget();
+	CreateLobbyMenuWidget();
 }
+
 
 void AFusionHUD::RemoveGameWidgets()
 {
 	
 }
+
+
+void AFusionHUD::ShowMainMenu() { GetMainMenuUIWidget()->ShowWidget(); }
+void AFusionHUD::HideMainMenu() { GetMainMenuUIWidget()->HideWidget(); }
+
+void AFusionHUD::ShowServerMenu() { GetServerMenuWidget()->ShowWidget(); }
+void AFusionHUD::HideServerMenu() { GetServerMenuWidget()->HideWidget(); }
+
+void AFusionHUD::ShowLobbyMenu() { GetLobbyMenuWidget()->ShowWidget(); }
+void AFusionHUD::HideLobbyMenu() { GetLobbyMenuWidget()->HideWidget(); }
 
 
 void AFusionHUD::DrawHUD()

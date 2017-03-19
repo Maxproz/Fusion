@@ -6,6 +6,10 @@
 
 class UInGameHUD;
 class UMainMenuUI;
+class UServerMenu_Widget;
+class UOkErrorMessage_Widget;
+class ULobbyMenu_Widget;
+
 
 UENUM(BlueprintType)
 enum class EHUDState : uint8
@@ -23,9 +27,24 @@ class AFusionHUD : public AHUD
 public:
 	AFusionHUD();
 
-	
+	// Used By the lobby widgets 
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class UPlayerInfoEntry_Widget> PlayerInfoEntry_WidgetTemplate;
+	UPROPERTY(EditDefaultsOnly, Category = "Chat Widgets")
+	TSubclassOf<class UChatEntry_Widget> ChatEntry_WidgetTemplate;
+	UPROPERTY(EditDefaultsOnly, Category = "Lobby Widgets")
+	TSubclassOf<class UInviteSteamFriend_Widget> InviteSteamFriend_WidgetTemplate;
+	UPROPERTY(EditDefaultsOnly, Category = "Lobby Widgets")
+	TSubclassOf<class UPasswordEnterPopup_Widget> PasswordEnterPopup_WidgetTemplate;
+	UPROPERTY(EditDefaultsOnly, Category = "Lobby Widgets")
+	TSubclassOf<class UServerMenuStats_Widget> ServerMenuStats_WidgetTemplate;
+
+
 	FORCEINLINE UInGameHUD* GetInGameHUDWidget() const { return ActiveInGameHUDWidget; }
 	FORCEINLINE UMainMenuUI* GetMainMenuUIWidget() const { return ActiveMainMenuUIWidget; }
+	FORCEINLINE UServerMenu_Widget* GetServerMenuWidget() const { return ActiveServerMenuWidget; }
+	FORCEINLINE UOkErrorMessage_Widget* GetErrorMessageWidget() const { return ActiveErrorMessageWidget; }
+	FORCEINLINE ULobbyMenu_Widget* GetLobbyMenuWidget() const { return ActiveLobbyMenuWidget; }
 
 protected:
 	//////////////////////////////////
@@ -37,13 +56,27 @@ protected:
 	TAssetSubclassOf<UInGameHUD> InGameHUDWidget;
 	UPROPERTY(EditDefaultsOnly, Category = "Menu Widgets")
 	TAssetSubclassOf<UMainMenuUI> MainMenuUIWidget;
+	UPROPERTY(EditDefaultsOnly, Category = "Menu Widgets")
+	TAssetSubclassOf<UServerMenu_Widget> ServerMenuWidget;
+	UPROPERTY(EditDefaultsOnly, Category = "Menu Widgets")
+	TAssetSubclassOf<UOkErrorMessage_Widget> ErrorMessageWidget;
+	UPROPERTY(EditDefaultsOnly, Category = "Menu Widgets")
+	TAssetSubclassOf<ULobbyMenu_Widget> LobbyMenuWidget;
+
 
 	// Active Widgets
 	UInGameHUD* ActiveInGameHUDWidget;
 	UMainMenuUI* ActiveMainMenuUIWidget;
+	UServerMenu_Widget* ActiveServerMenuWidget;
+	UOkErrorMessage_Widget* ActiveErrorMessageWidget;
+	ULobbyMenu_Widget* ActiveLobbyMenuWidget;
+
 
 	void CreateInGameHUDWidget();
 	void CreateMainMenuUIWidget();
+	void CreateServerMenuWidget();
+	void CreateErrorMessageWidget();
+	void CreateLobbyMenuWidget();
 
 
 public:
@@ -51,6 +84,17 @@ public:
 	// Functions
 	void CreateGameWidgets();
 	void RemoveGameWidgets();
+
+	void ShowMainMenu(); 
+	void HideMainMenu();
+
+	void ShowServerMenu();
+	void HideServerMenu();
+
+	void ShowLobbyMenu();
+	void HideLobbyMenu();
+
+
 
 
 	/** Primary draw call for the HUD */

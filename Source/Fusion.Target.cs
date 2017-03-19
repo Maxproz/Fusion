@@ -9,6 +9,7 @@ public class FusionTarget : TargetRules
 	{
         Type = TargetType.Game;
         bUsesSteam = true;
+   
     }
 
 	//

@@ -30,13 +30,19 @@ public:
 	
 	virtual void NativeConstruct() override;
 
-	void ShowMainMenu();
-
-	void HideMainMenu();
-
 	void DisplayLoadingScreen();
 
 	void GetADefaultGameName(FText& OutName);
+
+	void LimitTextBoxText(const FText InText, const int32 MaxTextSize, FString& OutString);
+
+	void SetIsPasswordProtected(const bool bHasPassword) { bDoesServerHavePassword = bHasPassword; }
+
+	FORCEINLINE bool GetIsPasswordProtected() const { return bDoesServerHavePassword; }
+
+	void SetIsLan(const bool bIsLan) { bIsItLan = bIsLan; }
+
+	FORCEINLINE bool GetIsLan() const { return bIsItLan; }
 
 	/* function events bound to our button presses */
 	UFUNCTION()
@@ -135,6 +141,6 @@ protected:
 
 	int32 MaxPasswordSizeServer;
 
-
+	
 
 };

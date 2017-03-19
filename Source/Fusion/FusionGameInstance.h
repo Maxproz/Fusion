@@ -54,28 +54,115 @@ struct FFusionPlayTogetherInfo
 	TArray<TSharedPtr<const FUniqueNetId>> UserIdList;
 };
 
-/*
-class SShooterWaitDialog : public SCompoundWidget
+//A custom struct to be able to access the Session results in blueprint
+USTRUCT(BlueprintType)
+struct FCustomBlueprintSessionResult
 {
-public:
-	SLATE_BEGIN_ARGS(SShooterWaitDialog)
-	{}
-	SLATE_ARGUMENT(FText, MessageText)
-	SLATE_END_ARGS()
+	GENERATED_USTRUCT_BODY()
 
-	void Construct(const FArguments& InArgs);
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Custom Blueprint Session Result")
+	FString SessionName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Custom Blueprint Session Result")
+	bool bIsLan;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Custom Blueprint Session Result")
+	int32 CurrentNumberOfPlayers;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Custom Blueprint Session Result")
+	int32 MaxNumberOfPlayers;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Custom Blueprint Session Result")
+	bool bIsPasswordProtected;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Custom Blueprint Session Result")
+	FString SessionPassword;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Custom Blueprint Session Result")
+	int32 Ping;
+};
+
+
+//stolen from Advanced Session Plugin cuz I can't find any other way to put FUniqueNetId in a struct
+USTRUCT(BlueprintType)
+struct FBPUniqueNetId
+{
+	GENERATED_USTRUCT_BODY()
 
 private:
+	bool bUseDirectPointer;
 
-	// our curve sequence and the related handles 
-	FCurveSequence WidgetAnimation;
 
-	// used for animating the text color. 
-	FCurveHandle TextColorCurve;
+public:
+	TSharedPtr<const FUniqueNetId> UniqueNetId;
+	const FUniqueNetId * UniqueNetIdPtr;
 
-	// Gets the animated text color 
-	FSlateColor GetTextColor() const;
-};*/
+	void SetUniqueNetId(const TSharedPtr<const FUniqueNetId> &ID)
+	{
+		bUseDirectPointer = false;
+		UniqueNetIdPtr = nullptr;
+		UniqueNetId = ID;
+	}
+
+	void SetUniqueNetId(const FUniqueNetId *ID)
+	{
+		bUseDirectPointer = true;
+		UniqueNetIdPtr = ID;
+	}
+
+	bool IsValid() const
+	{
+		if (bUseDirectPointer && UniqueNetIdPtr != nullptr)
+		{
+			return true;
+		}
+		else if (UniqueNetId.IsValid())
+		{
+			return true;
+		}
+		else
+			return false;
+
+	}
+
+	const FUniqueNetId* GetUniqueNetId() const
+	{
+		if (bUseDirectPointer && UniqueNetIdPtr != nullptr)
+		{
+			// No longer converting to non const as all functions now pass const UniqueNetIds
+			return /*const_cast<FUniqueNetId*>*/(UniqueNetIdPtr);
+		}
+		else if (UniqueNetId.IsValid())
+		{
+			return UniqueNetId.Get();
+		}
+		else
+			return nullptr;
+	}
+
+	FBPUniqueNetId()
+	{
+		bUseDirectPointer = false;
+		UniqueNetIdPtr = nullptr;
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FSteamFriendInfo
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steam Friend Info")
+	UTexture2D* PlayerAvatar;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steam Friend Info")
+	FString PlayerName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Steam Friend Info")
+	FBPUniqueNetId PlayerUniqueNetID;
+
+};
+
 
 
 /**
@@ -199,7 +286,110 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Network|Test")
 	void DestroySessionAndLeaveGame();
 	
+	/**
+	* called from the player state to get the player name
+	* @retrun		returns empty string if the player is on steam and retruns the LanPlayerName if he is on Lan
+	*/
+	FString GetPlayerName() const;
+
+	bool IsOnlineSubsystemSteam() const;
+
+	//Lan player name to not use the Computer Name
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Lan")
+	FString LanPlayerName;
+
+	/**
+	* gets the max number of players in the session
+	* @return	max number of players in the session
+	*/
+	UFUNCTION()
+	FORCEINLINE int32 GetSessionMaxPlayers() const { return MaxPlayersinSession; }
+
+
+
+	UFUNCTION(BlueprintCallable, Category = "Network|Friends")
+	void SendSessionInviteToFriend(APlayerController* InvitingPlayer, const FBPUniqueNetId & Friend);
+
+
+
+	/**
+	*	called to show an error message in UMG
+	*	@Param	ErrorMessage The Error meaage you want to show
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Network|Errors")
+	void ShowErrorMessage(const FText & ErrorMessage);
+
+
+
+	/**
+	* gets the steam avatar of a player based on his UniqueNetId
+	* @Param		UniqueNetId		the UniqueNetId of the player you want to get his avatar
+	*/
+	UTexture2D* GetSteamAvatar(const FBPUniqueNetId UniqueNetId);
+
+	/**
+	* called to get the list of steam friends a player has
+	* @Param		PlayerController		the player controller of the player asking for the friend list
+	* @Param		FriendsList				list of friends' info in  bluepritn wrapper structure
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Network|Friends")
+	void GetSteamFriendsList(APlayerController *PlayerController);
+
+
+	/** Delegate for reading the friendlist*/
+	FOnReadFriendsListComplete FriendListReadCompleteDelegate;
+
+	/**
+	* Delegate fired when the friend list request has been processed
+	* @param	LocalUserNum		The local user id (UniqueNetId) of the requesting player
+	* @param	bWasSuccessful		true if the async action completed without error, false if there was an error
+	* @param	ListName			the friend list name
+	* @param	ErrorString			if there is any errors
+	*/
+	void OnReadFriendsListCompleted(int32 LocalUserNum, bool bWasSuccessful, const FString& ListName, const FString& ErrorString);
+
+protected:
+	/**
+	*	called when the session search is complete to show the results in UMG
+	*/
+	DECLARE_EVENT_OneParam(AFusionGameInstance, FOnFoundSessionsCompleteUMG, const TArray<FCustomBlueprintSessionResult>&);
+	FOnFoundSessionsCompleteUMG FoundSessionsCompleteUMGEvent;
+
+	void OnFoundSessionsCompleteUMG(const TArray<FCustomBlueprintSessionResult>& CustomSessionResults);
+
+
+	/**
+	* Called from the delegate when getting the friend list request in completed
+	*/
+	DECLARE_EVENT_OneParam(AFusionGameInstance, FOnGetSteamFriendRequestCompleteUMG, const TArray<FSteamFriendInfo>&);
+	FOnGetSteamFriendRequestCompleteUMG OnGetSteamFriendRequestCompleteUMGEvent;
+
+	void OnGetSteamFriendRequestCompleteUMG(const TArray<FSteamFriendInfo>& BPFriendsLists);
+
+
+
+	/**
+	* Called to show an error message in UMG
+	*/
+	DECLARE_EVENT_OneParam(AFusionGameInstance, FOnShowErrorMessageUMG, const FText&);
+	FOnShowErrorMessageUMG OnShowErrorMessageUMGEvent;
+
+	void OnShowErrorMessageUMG(const FText & ErrorMessage);
+
+public:
+	
+	FOnFoundSessionsCompleteUMG& OnFoundSessionsCompleteUMG() { return FoundSessionsCompleteUMGEvent; }
+	
+	FOnGetSteamFriendRequestCompleteUMG& OnGetSteamFriendRequestCompleteUMG() { return OnGetSteamFriendRequestCompleteUMGEvent; }
+
+	FOnShowErrorMessageUMG& OnShowErrorMessageUMG() { return OnShowErrorMessageUMGEvent; }
+
 private:
+
+	//store the max number of players in a session whenever we create of join a session
+	int32 MaxPlayersinSession;
+
+
 
 	UPROPERTY(config)
 	FString WelcomeScreenMap;
