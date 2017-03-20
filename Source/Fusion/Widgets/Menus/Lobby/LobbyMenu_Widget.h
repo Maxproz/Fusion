@@ -49,6 +49,7 @@ public:
 	/* Helper Functions */
 	void IsSessionFull(bool& bOutResult);
 
+	UFUNCTION(BlueprintPure, Category = BlueprintBindings)
 	void NumberOfPlayersBinding(FText& OutReturnText);
 
 protected:
