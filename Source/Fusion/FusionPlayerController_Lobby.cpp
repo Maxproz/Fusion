@@ -11,6 +11,8 @@
 
 #include "Widgets/Menus/ServerMenu_Widget.h" // TODO: is this needed?
 
+#include "Widgets/Menus/Lobby/LobbyMenu_Widget.h"
+
 #include "FusionPlayerController_Lobby.h"
 
 
@@ -19,12 +21,34 @@ void AFusionPlayerController_Lobby::BeginPlay()
 {
 	Super::BeginPlay();
 
+	bShowMouseCursor = true;
+
+
+	GetFusionHUD()->CreateGameWidgets();
+
+
+	// show the lobby and view it as soon as the player gets in
+	
+	// Should never be nullptr here as far as I know.
+	UFusionGameInstance* GameInst = Cast<UFusionGameInstance>(GetGameInstance());
+
+	GetFusionHUD()->GetLobbyMenuWidget()->SetGameInstanceRef(GameInst);
+	GetFusionHUD()->GetLobbyMenuWidget()->SetLobbyPlayerControllerRef(this);
+	GetFusionHUD()->ShowLobbyMenu(); // This might be nullptr? since the widgets load async.. we will see
+
+
+
 	// Timer handle to call the RequestServerPlayerListUpdate() later
 	// the reason I use a timer is to give the PlayerState enough time to set up the player name
 	FTimerHandle RequestServerPlayerListUpdateHanndle;
 
 	//Call the server to request PlayerList Update after 0.01s
 	GetWorld()->GetTimerManager().SetTimer(RequestServerPlayerListUpdateHanndle, this, &AFusionPlayerController_Lobby::RequestServerPlayerListUpdate, 0.05f, false);
+
+
+	OnUpdateUMGPlayerList().AddUObject(this, &AFusionPlayerController_Lobby::OnUpdateUMGPlayerList);
+	OnReceiveChatMessage().AddUObject(this, &AFusionPlayerController_Lobby::OnReceiveChatMessage);
+
 }
 
 AFusionHUD* AFusionPlayerController_Lobby::GetFusionHUD() const
@@ -61,8 +85,9 @@ void AFusionPlayerController_Lobby::Server_SendChatMessage_Implementation(const 
 void AFusionPlayerController_Lobby::Client_ReceiveChatMessage_Implementation(const FText & ChatMessage)
 {
 	//call the Recive message function to show it on UMG
-	ReceiveChatMessage(ChatMessage);
+	OnReceiveChatMessage().Broadcast(ChatMessage);
 }
+
 
 void AFusionPlayerController_Lobby::KickPlayer(int32 PlayerIndex)
 {
@@ -83,7 +108,7 @@ void AFusionPlayerController_Lobby::Client_GotKicked_Implementation()
 	if (NetworkedGameInstance)
 	{
 		//show the player that he got kicked in message in UMG
-		//NetworkedGameInstance->ShowErrorMessage(FText::FromString("You got kicked from the server"));
+		NetworkedGameInstance->ShowErrorMessage(FText::FromString("You got kicked from the server"));
 		//make the player call the game Instance to destroy his session
 		NetworkedGameInstance->DestroySessionAndLeaveGame();
 	}
@@ -92,7 +117,7 @@ void AFusionPlayerController_Lobby::Client_GotKicked_Implementation()
 //called from server and passes in an array of player infos
 void AFusionPlayerController_Lobby::Client_UpdatePlayerList_Implementation(const TArray<FLobbyPlayerInfo>& PlayerInfoArray)
 {
-	UpdateUMGPlayerList(PlayerInfoArray);
+	OnUpdateUMGPlayerList().Broadcast(PlayerInfoArray);
 }
 
 //called fro mthe palyer on begin play to request the player info array fro mthe server
@@ -159,4 +184,16 @@ void AFusionPlayerController_Lobby::StartGame()
 		if (GM)
 			GM->StartGameFromLobby();
 	}
+}
+
+void AFusionPlayerController_Lobby::OnReceiveChatMessage(const FText& ChatMessage)
+{
+	// pass the incoming chat message to UMG
+	GetFusionHUD()->GetLobbyMenuWidget()->OnReceiveChatMessageComplete().Broadcast(ChatMessage);
+}
+
+void AFusionPlayerController_Lobby::OnUpdateUMGPlayerList(const TArray<struct FLobbyPlayerInfo>& PlayerInfoArray)
+{
+	// passes in the array that the server sent to UMG so the player can see it
+	GetFusionHUD()->GetLobbyMenuWidget()->OnUpdatePlayerList().Broadcast(PlayerInfoArray);
 }

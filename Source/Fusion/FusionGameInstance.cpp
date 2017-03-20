@@ -33,10 +33,7 @@
 #pragma push_macro("ARRAY_COUNT")
 #undef ARRAY_COUNT
 
-//#include <steam/steam_api.h>
-//#include "ThirdParty/Steamworks/Steamv132/sdk/public/steam/steam_api.h"
-//#include "ThirdParty/Steamworks/Steamv132/sdk/public/steam/isteamfriends.h"
-//#include "ThirdParty/Steamworks/Steamv132/sdk/public/steam/isteamutils.h"
+#include <steam/steam_api.h>
 
 #pragma pop_macro("ARRAY_COUNT")
 
@@ -61,6 +58,10 @@ UFusionGameInstance::UFusionGameInstance(const FObjectInitializer& ObjectInitial
 {
 	CurrentState = FusionGameInstanceState::None;
 	LanPlayerName = "Player";
+
+
+	/**Bind Function for aceppting an invite*/
+	OnSessionUserInviteAcceptedDelegate = FOnSessionUserInviteAcceptedDelegate::CreateUObject(this, &UFusionGameInstance::OnSessionUserInviteAccepted);
 }
 
 void UFusionGameInstance::Init()
@@ -70,9 +71,27 @@ void UFusionGameInstance::Init()
 	IgnorePairingChangeForControllerId = -1;
 	CurrentConnectionStatus = EOnlineServerConnectionStatus::Connected;
 
+
+
 	// game requires the ability to ID users.
 	const auto OnlineSub = IOnlineSubsystem::Get();
 	check(OnlineSub);
+
+
+	if (OnlineSub)
+	{
+		// Get the Session Interface, so we can bind the accept delegate to it
+		IOnlineSessionPtr Sessions = OnlineSub->GetSessionInterface();
+		if (Sessions.IsValid())
+		{
+			//OnSessionInviteReceivedDelegateHandle = Sessions->AddOnSessionInviteReceivedDelegate_Handle(OnSessionInviteReceivedDelegate);
+			
+			//we bind the delagate for accepting an invite to the session interface so when you accept an invite, you can join the game.
+			OnSessionUserInviteAcceptedDelegateHandle = Sessions->AddOnSessionUserInviteAcceptedDelegate_Handle(OnSessionUserInviteAcceptedDelegate);
+		}
+	}
+
+
 	const auto IdentityInterface = OnlineSub->GetIdentityInterface();
 	check(IdentityInterface.IsValid());
 
@@ -925,6 +944,8 @@ TSubclassOf<UOnlineSession> UFusionGameInstance::GetOnlineSessionClass()
 // starts playing a game as the host
 bool UFusionGameInstance::HostGame(ULocalPlayer* LocalPlayer, const FString& GameType, const FString& InTravelURL)
 {
+	/*
+
 	if (!GetIsOnline())
 	{
 		//
@@ -974,14 +995,16 @@ bool UFusionGameInstance::HostGame(ULocalPlayer* LocalPlayer, const FString& Gam
 			}
 		}
 	}
+	*/
 
 	return false;
 }
 
 bool UFusionGameInstance::JoinSession(ULocalPlayer* LocalPlayer, int32 SessionIndexInSearchResults)
 {
-	// needs to tear anything down based on current state?
+	/*
 
+	// needs to tear anything down based on current state?
 	AFusionGameSession* const GameSession = GetGameSession();
 	if (GameSession)
 	{
@@ -1001,12 +1024,13 @@ bool UFusionGameInstance::JoinSession(ULocalPlayer* LocalPlayer, int32 SessionIn
 			}
 		}
 	}
-
+	*/
 	return false;
 }
 
 bool UFusionGameInstance::JoinSession(ULocalPlayer* LocalPlayer, const FOnlineSessionSearchResult& SearchResult)
 {
+	/*
 	// needs to tear anything down based on current state?
 	AFusionGameSession* const GameSession = GetGameSession();
 	if (GameSession)
@@ -1027,7 +1051,7 @@ bool UFusionGameInstance::JoinSession(ULocalPlayer* LocalPlayer, const FOnlineSe
 			}
 		}
 	}
-
+	*/
 	return false;
 }
 
@@ -1972,31 +1996,29 @@ void UFusionGameInstance::StartOnlineGame(FString ServerName, int32 MaxNumPlayer
 	// Creating a local player where we can get the UserID from
 	ULocalPlayer* const Player = GetFirstGamePlayer();
 
-
-
-	//GetGameSession()->HostSession(Player->GetPreferredUniqueNetId(), GameSessionName, GameTypee, Mapp, bIsLAN, bIsPresencee, 8);
+	// Call our custom HostSession function. GameSessionName is a GameInstance variable
+	GetGameSession()->HostSession(Player->GetPreferredUniqueNetId(), GameSessionName, ServerName, bIsLAN, bIsPresence, MaxNumPlayers, bIsPasswordProtected, SessionPassword);
 }
-
-
-
 
 
 void UFusionGameInstance::FindOnlineGames(bool bIsLAN, bool bIsPresence)
 {
 	ULocalPlayer* const Player = GetFirstGamePlayer();
-	
 
-	//GetGameSession()->FindSessions(Player->GetPreferredUniqueNetId(), GameSessionName, bIsLAN, bIsPresencee);
+	GetGameSession()->FindSessions(Player->GetPreferredUniqueNetId(), GameSessionName, bIsLAN, bIsPresence);
+
 }
 
-//void UFusionGameInstance::JoinOnlineGame(int32 SessionIndex)
 void UFusionGameInstance::JoinOnlineGame(int32 SessionIndex)
 {
 	ULocalPlayer* const Player = GetFirstGamePlayer();
 
+	FOnlineSessionSearchResult SearchResult;
+	SearchResult = GetGameSession()->SessionSearch->SearchResults[SessionIndex];
 
+	GetGameSession()->MaxPlayersinSession = SearchResult.Session.SessionSettings.NumPublicConnections;
 
-	//GetGameSession()->JoinSession(Player, SessionIndex);
+	GetGameSession()->JoinASession(Player->GetPreferredUniqueNetId(), GameSessionName, SearchResult);
 
 }
 
@@ -2037,7 +2059,6 @@ FString UFusionGameInstance::GetPlayerName() const
 		return LanPlayerName;
 }
 
-
 #undef LOCTEXT_NAMESPACE
 
 // call the ServerMenu UMG and pass the array of Session Results when yhe session finding is over
@@ -2045,9 +2066,9 @@ void UFusionGameInstance::OnFoundSessionsCompleteUMG(const TArray<FCustomBluepri
 {
 	// player 0 gets to own the UI
 	ULocalPlayer* const Player = GetFirstGamePlayer();
-	AFusionPlayerController_Lobby* LPC = Cast<AFusionPlayerController_Lobby>(Player->GetPlayerController(GetWorld()));
+	AFusionPlayerController_Menu* MPC = Cast<AFusionPlayerController_Menu>(Player->GetPlayerController(GetWorld()));
 
-	UServerMenu_Widget* ServerWidget = LPC->GetFusionHUD()->GetServerMenuWidget();
+	UServerMenu_Widget* ServerWidget = MPC->GetFusionHUD()->GetServerMenuWidget();
 
 	if (ServerWidget)
 	{
@@ -2074,13 +2095,26 @@ void UFusionGameInstance::OnGetSteamFriendRequestCompleteUMG(const TArray<FSteam
 void UFusionGameInstance::OnShowErrorMessageUMG(const FText & ErrorMessage)
 {
 	ULocalPlayer* const Player = GetFirstGamePlayer();
+
 	AFusionPlayerController_Lobby* LPC = Cast<AFusionPlayerController_Lobby>(Player->GetPlayerController(GetWorld()));
+	if (LPC)
+	{
+		UOkErrorMessage_Widget* OkErrorMessage_Widget = LPC->GetFusionHUD()->GetErrorMessageWidget();
+		// if the widget was created already, change the error text and display it
+		OkErrorMessage_Widget->ErrorText = ErrorMessage;
+		OkErrorMessage_Widget->ShowWidget();
+	}
 
-	UOkErrorMessage_Widget* OkErrorMessage_Widget = LPC->GetFusionHUD()->GetErrorMessageWidget();
 
-	// if the widget was created already, change the error text and display it
-	OkErrorMessage_Widget->ErrorText = ErrorMessage;
-	OkErrorMessage_Widget->ShowWidget();
+	AFusionPlayerController_Menu* MPC = Cast<AFusionPlayerController_Menu>(Player->GetPlayerController(GetWorld()));
+	if (MPC)
+	{
+		UOkErrorMessage_Widget* OkErrorMessage_Widget = LPC->GetFusionHUD()->GetErrorMessageWidget();
+		// if the widget was created already, change the error text and display it
+		OkErrorMessage_Widget->ErrorText = ErrorMessage;
+		OkErrorMessage_Widget->ShowWidget();
+	}
+
 
 	// TODO: if the widget was not created before, create it, set the error text and then show it to the player
 	// Note: It should always be created here so I might not need to do the TODO: here
@@ -2172,10 +2206,10 @@ void UFusionGameInstance::GetSteamFriendsList(APlayerController *PlayerControlle
 	}
 }
 
-// TODO: Wtf....
+
 UTexture2D* UFusionGameInstance::GetSteamAvatar(const FBPUniqueNetId UniqueNetId)
 {
-	/*
+	
 	if (UniqueNetId.IsValid())
 	{
 		uint32 Width = 0;
@@ -2229,7 +2263,7 @@ UTexture2D* UFusionGameInstance::GetSteamAvatar(const FBPUniqueNetId UniqueNetId
 		}
 
 	}
-	*/
+	
 	return nullptr;
 }
 
@@ -2254,6 +2288,17 @@ void UFusionGameInstance::SendSessionInviteToFriend(APlayerController* InvitingP
 			{
 				Sessions->SendSessionInviteToFriend(*LocalPlayer->GetPreferredUniqueNetId(), GameSessionName, *Friend.GetUniqueNetId());
 			}
+		}
+	}
+}
+
+void UFusionGameInstance::OnSessionUserInviteAccepted(bool bWasSuccessful, int32 LocalUserNum, TSharedPtr<const FUniqueNetId> InvitingPlayer, const FOnlineSessionSearchResult & TheSessionInvitedTo)
+{
+	if (bWasSuccessful)
+	{
+		if (TheSessionInvitedTo.IsValid())
+		{
+			GetGameSession()->JoinASession(LocalUserNum, GameSessionName, TheSessionInvitedTo);
 		}
 	}
 }

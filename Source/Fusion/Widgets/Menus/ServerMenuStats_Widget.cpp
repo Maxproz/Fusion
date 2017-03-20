@@ -4,7 +4,7 @@
 
 #include "FusionHUD.h"
 
-#include "FusionPlayerController_Lobby.h"
+#include "FusionPlayerController_Menu.h"
 
 #include "Widgets/Menus/PasswordEnterPopup_Widget.h"
 
@@ -66,10 +66,10 @@ void UServerMenuStats_Widget::OnClickedServerBrowserITemButton()
 {
 	if (CustomResult.bIsPasswordProtected)
 	{
-		AFusionPlayerController_Lobby* LPC = Cast<AFusionPlayerController_Lobby>(GetOwningPlayer());
-		if (LPC)
+		AFusionPlayerController_Menu* MPC = Cast<AFusionPlayerController_Menu>(GetOwningPlayer());
+		if (MPC)
 		{
-			UPasswordEnterPopup_Widget* PasswordEnterPopup_Widget = CreateWidget<UPasswordEnterPopup_Widget>(LPC, LPC->GetFusionHUD()->PasswordEnterPopup_WidgetTemplate);
+			UPasswordEnterPopup_Widget* PasswordEnterPopup_Widget = CreateWidget<UPasswordEnterPopup_Widget>(MPC, MPC->GetFusionHUD()->PasswordEnterPopup_WidgetTemplate);
 			PasswordEnterPopup_Widget->SetMaxPasswordLength(50);
 			PasswordEnterPopup_Widget->SetPassword(CustomResult.SessionPassword);
 			PasswordEnterPopup_Widget->SetGameInstanceRef(GameInstanceRef);

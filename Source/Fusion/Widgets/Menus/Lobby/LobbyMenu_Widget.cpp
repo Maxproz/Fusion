@@ -5,6 +5,7 @@
 #include "FusionPlayerController_Lobby.h"
 #include "FusionHUD.h"
 #include "FusionGameInstance.h"
+#include "FusionGameSession.h"
 
 #include "ChatEntry_Widget.h"
 #include "PlayerInfoEntry_Widget.h"
@@ -27,6 +28,12 @@ void ULobbyMenu_Widget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
+
+	if (!LobbyPlayerControllerRef)
+	{
+		return;
+	}
+
 	bool IsThisServer = UKismetSystemLibrary::IsServer(GetWorld());
 	
 	KickPlayerButton->SetIsEnabled(IsThisServer);
@@ -37,9 +44,7 @@ void ULobbyMenu_Widget::NativeConstruct()
 
 	if (IsThisServer)
 	{
-		// if the server show the start game button
-		ReadyAndStartGameWidgetSwitcher_0->SetActiveWidgetIndex(0);
-		
+		// if the server, show the start game button
 		LobbyPlayerControllerRef->SetIsReadyState(IsThisServer);
 	}
 	else
@@ -96,21 +101,21 @@ void ULobbyMenu_Widget::OnUpdatePlayerList(TArray<FLobbyPlayerInfo> PlayerInfoAr
 	for (const auto& LobbyPlayerInfo : PlayerInfoArray)
 	{
 		UPlayerInfoEntry_Widget* PlayerInfoEntry_Widget = CreateWidget<UPlayerInfoEntry_Widget>(LobbyPlayerControllerRef, LobbyPlayerControllerRef->GetFusionHUD()->PlayerInfoEntry_WidgetTemplate);
-		//PlayerInfoEntry_Widget->LobbyPlayerInfo = LobbyPlayerInfo;
-		//PlayerInfoEntry_Widget->PlayerIndex = ArrayIndex;
+		PlayerInfoEntry_Widget->SetLobbyPlayerInfo(LobbyPlayerInfo);
+		PlayerInfoEntry_Widget->SetPlayerIndex(ArrayIndex);
 
 		PlayerListScrollBox->AddChild(PlayerInfoEntry_Widget);
 		
 		if (ArrayIndex == 0)
 		{
-			//PlayerInfoEntry_Widget->KickButton->SetVisibility(ESlateVisibility::Hidden);
+			PlayerInfoEntry_Widget->KickButton->SetVisibility(ESlateVisibility::Hidden);
 		}
 		else
 		{
-			//PlayerInfoEntry_Widget->KickButton->SetVisibility(KickingPlayers);
+			PlayerInfoEntry_Widget->KickButton->SetVisibility(KickingPlayers);
 		}
 
-		//KickButtons.Add(PlayerInfoEntry_Widget->KickButton);
+		KickButtons.Add(PlayerInfoEntry_Widget->KickButton);
 
 		ArrayIndex = ArrayIndex + 1;
 	}
@@ -137,13 +142,13 @@ void ULobbyMenu_Widget::OnClickedInvitePlayerButton()
 		InviteSteamFreindsListScrollBox->ClearChildren();
 		
 		// Call the Game instance to get friend list
-		//GameInstanceRef->GetSteamFriendsList(LobbyPlayerControllerRef);
+		GameInstanceRef->GetSteamFriendsList(LobbyPlayerControllerRef);
 	}
 	else
 	{
 		// don't let the player invite any more players if the room is full
 		FText ErrorText = FText::FromString(TEXT("Room is full can't invite anymore players"));
-		//GameInstanceRef->ShowErrorMessage(ErrorText);
+		GameInstanceRef->ShowErrorMessage(ErrorText);
 	}
 }
 
@@ -181,7 +186,7 @@ void ULobbyMenu_Widget::OnClickedStartGameButton()
 	else
 	{
 		FText ErrorMsg = FText::FromString(TEXT("Some Players Are not ready"));
-		//GameInstanceRef->ShowErrorMessage(ErrorMsg);
+		GameInstanceRef->ShowErrorMessage(ErrorMsg);
 	}
 }
 
@@ -222,14 +227,14 @@ void ULobbyMenu_Widget::OnGetSteamFriendRequestCompleted(TArray<FSteamFriendInfo
 
 void ULobbyMenu_Widget::IsSessionFull(bool& bOutResult)
 {
-	bOutResult = PlayerListScrollBox->GetChildrenCount() >= GameInstanceRef->GetSessionMaxPlayers();
+	bOutResult = PlayerListScrollBox->GetChildrenCount() >= GameInstanceRef->GetGameSession()->GetSessionMaxPlayers();
 }
 
 void ULobbyMenu_Widget::NumberOfPlayersBinding(FText& OutReturnText)
 {
 	FFormatNamedArguments Arguments;
 	Arguments.Add(TEXT("CurrentNumberofPlayers"), FText::AsNumber(PlayerListScrollBox->GetChildrenCount()));
-	Arguments.Add(TEXT("MaxNumberOfPlayers"), FText::AsNumber(GameInstanceRef->GetSessionMaxPlayers()));
+	Arguments.Add(TEXT("MaxNumberOfPlayers"), FText::AsNumber(GameInstanceRef->GetGameSession()->GetSessionMaxPlayers()));
 	OutReturnText = FText::Format(LOCTEXT("Fusion.HUD.Menu", "{CurrentNumberofPlayers}/{MaxNumberOfPlayers} Players"), Arguments);
 }
 

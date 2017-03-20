@@ -81,6 +81,14 @@ public:
 	UFUNCTION()
 	void OnCheckStateChangedIsLanCheckBox(bool IsChecked);
 
+	int32 MinServerNameLength;
+
+	int32 MaxServerNameLength;
+
+	int32 MaxPasswordSizeServer;
+
+	class UFusionGameInstance* GameInstanceRef;
+
 protected:
 	
 	UPROPERTY(meta = (BindWidget))
@@ -119,7 +127,6 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UButton* QuitButton;
 
-	class UFusionGameInstance* GameInstanceRef;
 
 	class AFusionHUD* PlayerHUDRef;
 
@@ -131,15 +138,13 @@ protected:
 
 	FString TheServerName;
 
-	int32 MinServerNameLength;
 
-	int32 MaxServerNameLength;
 
 	bool bDoesServerHavePassword;
 
 	FString TheSessionPassword;
 
-	int32 MaxPasswordSizeServer;
+	
 
 	
 

@@ -21,6 +21,7 @@ public:
 
 	virtual void NativeConstruct() override;
 	
+	class UFusionGameInstance* GameInstanceRef;
 
 	UFUNCTION()
 	void OnTextChangedLanPlayerNameTextbox(const FText &Text);
@@ -56,8 +57,6 @@ protected:
 	TArray<FCustomBlueprintSessionResult> CustomSessionResults;
 
 	bool bIsLan;
-
-	class UFusionGameInstance* GameInstanceRef;
 
 	UPROPERTY(meta = (BindWidget))
 	UButton* BackButton;

@@ -28,6 +28,13 @@ void UMainMenuUI::NativeConstruct()
 {
 	Super::NativeConstruct();
 
+	AFusionPlayerController_Menu* MPC = Cast<AFusionPlayerController_Menu>(GetOwningPlayer());
+
+	if (!MPC)
+	{
+		return;
+	}
+
 	BackFromHostingButton->OnClicked.AddDynamic(this, &UMainMenuUI::OnClickedBackFromHostingButton);
 	FindGameButton->OnClicked.AddDynamic(this, &UMainMenuUI::OnClickedFindGameButton);
 	HostGameButton->OnClicked.AddDynamic(this, &UMainMenuUI::OnClickedHostGameButton);
@@ -42,9 +49,11 @@ void UMainMenuUI::NativeConstruct()
 	IsLanCheckBox->OnCheckStateChanged.AddDynamic(this, &UMainMenuUI::OnCheckStateChangedIsLanCheckBox);
 	
 
-	PlayerOwner = GetOwningLocalPlayer();
-	PlayerHUDRef = Cast<AFusionPlayerController_Menu>(PlayerOwner->GetPlayerController(GetWorld()))->GetFusionHUD();
 
+
+	PlayerHUDRef = MPC->GetFusionHUD();
+	
+	//PlayerHUDRef->ShowMainMenu(); Pretty sure doing this from the player controller
 }
 
 void UMainMenuUI::DisplayLoadingScreen()
@@ -94,8 +103,8 @@ void UMainMenuUI::OnClickedBackFromHostingButton()
 void UMainMenuUI::OnClickedFindGameButton()
 {
 	MainMenuWidgetSwitcher->SetActiveWidgetIndex(0);
-	//GameInstanceRef->ShowServerMenu();
-	//PlayerHUDRef->GetMainMenuWidget()->HideMainMenu();
+	PlayerHUDRef->ShowServerMenu();
+	PlayerHUDRef->HideMainMenu();
 }
 
 void UMainMenuUI::OnClickedHostGameButton()

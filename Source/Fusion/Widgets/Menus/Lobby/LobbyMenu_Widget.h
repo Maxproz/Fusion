@@ -21,13 +21,6 @@ public:
 	UFUNCTION()
 	void OnTextCommittedChatBoxEditableTextbox(const FText &Text, ETextCommit::Type Method);
 
-	// creates a chat entry and adds it to the scrollbox
-	DECLARE_EVENT_OneParam(ULobbyMenu_Widget, FOnUpdatePlayerList, TArray<FLobbyPlayerInfo> /*Result*/);
-	FOnUpdatePlayerList OnUpdatePlayerListEvent;
-
-	// Delegate fired when updating player list
-	void OnUpdatePlayerList(TArray<FLobbyPlayerInfo> PlayerInfoArray);
-
 	/* function events bound to our button presses */
 	UFUNCTION()
 	void OnClickedLeaveButton();
@@ -47,8 +40,11 @@ public:
 	UFUNCTION()
 	void OnClickedReadyButton();
 
+	// This is currently being set after creating the game widgets inside of the LobbyPlayerController.
+	void SetLobbyPlayerControllerRef(AFusionPlayerController_Lobby* InPlayerController) { LobbyPlayerControllerRef = InPlayerController; }
 
-
+	// same as player controller
+	void SetGameInstanceRef(class UFusionGameInstance* InGameInstance) { GameInstanceRef = InGameInstance; }
 
 	/* Helper Functions */
 	void IsSessionFull(bool& bOutResult);
@@ -56,6 +52,13 @@ public:
 	void NumberOfPlayersBinding(FText& OutReturnText);
 
 protected:
+
+	// creates a chat entry and adds it to the scrollbox
+	DECLARE_EVENT_OneParam(ULobbyMenu_Widget, FOnUpdatePlayerList, TArray<FLobbyPlayerInfo> /*Result*/);
+	FOnUpdatePlayerList OnUpdatePlayerListEvent;
+
+	// Delegate fired when updating player list
+	void OnUpdatePlayerList(TArray<FLobbyPlayerInfo> PlayerInfoArray);
 
 	// creates a chat entry and adds it to the scrollbox
 	DECLARE_EVENT_OneParam(ULobbyMenu_Widget, FOnReceiveChatMessageComplete, FText /*Result*/);
@@ -70,7 +73,6 @@ protected:
 
 	// Delegate fired when recieving a chat msg has completed
 	void OnGetSteamFriendRequestCompleted(TArray<FSteamFriendInfo> FriendsList);
-
 
 
 	

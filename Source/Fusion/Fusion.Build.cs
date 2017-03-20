@@ -10,9 +10,11 @@ public class Fusion : ModuleRules
 
        // DynamicallyLoadedModuleNames.Add("OnlineSubsystemNull");
         DynamicallyLoadedModuleNames.Add("OnlineSubsystemSteam");
+  
+        PrivateDependencyModuleNames.Add("Steamworks");
+        AddThirdPartyPrivateStaticDependencies(Target, "Steamworks");
 
         // TODO: Implement the string below once I am ready to get the loading screen stuff working.
-        /*"ShooterGameLoadingScreen",*/
         PrivateDependencyModuleNames.AddRange(new string[] { "InputCore", "Slate", "SlateCore", "Json", "FusionGameLoadingScreen" });
 
 

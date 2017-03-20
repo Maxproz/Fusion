@@ -37,6 +37,10 @@
 		{
 			"Name": "OnlineSubsystemSteam",
 			"Enabled": true
+		},
+		{
+			"Name": "OnlineFramework",
+			"Enabled": true
 		}
 	]
 }

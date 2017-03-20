@@ -112,6 +112,7 @@ void AFusionPlayerController::BeginPlay()
 	if (IsLocalPlayerController())
 	{
 		GetFusionHUD()->CreateGameWidgets();
+
 		ClientShowInGameHUD();
 	}
 }
@@ -617,7 +618,7 @@ void AFusionPlayerController::ClientGameEnded_Implementation(class AActor* EndGa
 	AFusionHUD* FusionHUD = GetFusionHUD();
 	if (FusionHUD)
 	{
-		//Fusion->SetMatchState(bIsWinner ? EFusionMatchState::Won : EFusionMatchState::Lost);
+		//FusionHUD->SetMatchState(bIsWinner ? EFusionMatchState::Won : EFusionMatchState::Lost);
 	}
 
 	UpdateSaveFileOnGameEnd(bIsWinner);

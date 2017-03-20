@@ -53,12 +53,18 @@ protected:
 	/** Delegate after joining a session */
 	FOnJoinSessionCompleteDelegate OnJoinSessionCompleteDelegate;
 
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Online")
+	int32 MinServerNameLength = 4;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Online")
+	int32 MaxServerNameLength = 30;
+
+
 	/** Transient properties of a session during game creation/matchmaking */
 	FFusionGameSessionParams CurrentSessionParams;
-	/** Current host settings */
-	TSharedPtr<class FFusionOnlineSessionSettings> HostSettings;
-	/** Current search settings */
-	TSharedPtr<class FFusionOnlineSearchSettings> SearchSettings;
+
+
 
 	/**
 	* Delegate fired when a session create request has completed
@@ -99,30 +105,7 @@ protected:
 	*/
 	virtual void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
 
-	/**
-	* Reset the variables the are keeping track of session join attempts
-	*/
-	void ResetBestSessionVars();
 
-	/**
-	* Choose the best session from a list of search results based on game criteria
-	*/
-	void ChooseBestSession();
-
-	/**
-	* Entry point for matchmaking after search results are returned
-	*/
-	void StartMatchmaking();
-
-	/**
-	* Return point after each attempt to join a search result
-	*/
-	void ContinueMatchmaking();
-
-	/**
-	* Delegate triggered when no more search results are available
-	*/
-	void OnNoMatchesAvailable();
 
 	/*
 	* Event triggered when a presence session is created
@@ -150,54 +133,46 @@ protected:
 	DECLARE_EVENT_OneParam(AFusionGameSession, FOnFindSessionsComplete, bool /*bWasSuccessful*/);
 	FOnFindSessionsComplete FindSessionsCompleteEvent;
 
+
+
+
 public:
 
 	/** Default number of players allowed in a game */
 	static const int32 DEFAULT_NUM_PLAYERS = 8;
+	
+	//store the max number of players in a session whenever we create of join a session
+	int32 MaxPlayersinSession;
+
+
+	TSharedPtr<class FOnlineSessionSettings> SessionSettings;
+
+	TSharedPtr<class FOnlineSessionSearch> SessionSearch;
+
+	//store the chosen search result for later use
+	FOnlineSessionSearchResult ChosenSearchResult;
+
 
 	/**
-	* Host a new online session
-	*
-	* @param UserId user that initiated the request
-	* @param SessionName name of session
-	* @param bIsLAN is this going to hosted over LAN
-	* @param bIsPresence is the session to create a presence session
-	* @param MaxNumPlayers Maximum number of players to allow in the session
-	*
-	* @return bool true if successful, false otherwise
+	* gets the max number of players in the session
+	* @return	max number of players in the session
 	*/
-	bool HostSession(TSharedPtr<const FUniqueNetId> UserId, FName SessionName, const FString& GameType, const FString& MapName, bool bIsLAN, bool bIsPresence, int32 MaxNumPlayers);
+	UFUNCTION()
+	FORCEINLINE int32 GetSessionMaxPlayers() const { return MaxPlayersinSession; }
 
-	/**
-	* Find an online session
-	*
-	* @param UserId user that initiated the request
-	* @param SessionName name of session this search will generate
-	* @param bIsLAN are we searching LAN matches
-	* @param bIsPresence are we searching presence sessions
-	*/
+
+	bool HostSession(TSharedPtr<const FUniqueNetId> UserId, FName SessionName, FString ServerName, bool bIsLAN, bool bIsPresence, int32 MaxNumPlayers, bool bIsPasswordProtected, FString SessionPassword);
+
+
 	void FindSessions(TSharedPtr<const FUniqueNetId> UserId, FName SessionName, bool bIsLAN, bool bIsPresence);
 
-	/**
-	* Joins one of the session in search results
-	*
-	* @param UserId user that initiated the request
-	* @param SessionName name of session
-	* @param SessionIndexInSearchResults Index of the session in search results
-	*
-	* @return bool true if successful, false otherwise
-	*/
-	bool JoinSession(TSharedPtr<const FUniqueNetId> UserId, FName SessionName, int32 SessionIndexInSearchResults);
+	// New
+	bool JoinASession(TSharedPtr<const FUniqueNetId> UserId, FName SessionName, const FOnlineSessionSearchResult& SearchResult);
+	bool JoinASession(int32 LocalUserNum, FName SessionName, const FOnlineSessionSearchResult& SearchResult);
+	
 
-	/**
-	* Joins a session via a search result
-	*
-	* @param SessionName name of session
-	* @param SearchResult Session to join
-	*
-	* @return bool true if successful, false otherwise
-	*/
-	bool JoinSession(TSharedPtr<const FUniqueNetId> UserId, FName SessionName, const FOnlineSessionSearchResult& SearchResult);
+
+
 
 	/** @return true if any online async work is in progress, false otherwise */
 	bool IsBusy() const;
@@ -228,21 +203,10 @@ public:
 	/** @return the delegate fired when search of session completes */
 	FOnFindSessionsComplete& OnFindSessionsComplete() { return FindSessionsCompleteEvent; }
 
-	/** Handle starting the match */
-	virtual void HandleMatchHasStarted() override;
 
 	/** Handles when the match has ended */
 	virtual void HandleMatchHasEnded() override;
 
-	/**
-	* Travel to a session URL (as client) for a given session
-	*
-	* @param ControllerId controller initiating the session travel
-	* @param SessionName name of session to travel to
-	*
-	* @return true if successful, false otherwise
-	*/
-	bool TravelToSession(int32 ControllerId, FName SessionName);
 
 	/** Handles to various registered delegates */
 	FDelegateHandle OnStartSessionCompleteDelegateHandle;
@@ -250,27 +214,13 @@ public:
 	FDelegateHandle OnDestroySessionCompleteDelegateHandle;
 	FDelegateHandle OnFindSessionsCompleteDelegateHandle;
 	FDelegateHandle OnJoinSessionCompleteDelegateHandle;
+	
+	UPROPERTY()
+	FName LobbyMapName = "/Game/Maps/Lobby";
 
+	
+	UPROPERTY()
+	FName MainMenuMap = "/Game/Maps/FusionEntry";
 
-
-	/* TODO: Move prototypes of these function to the game instance and test functionality.
-	// BlueprintCallable Functions to test this Setup (moved from game instane to game session)
-
-	// Creating a Session
-	UFUNCTION(BlueprintCallable, Category = "Network|Test")
-	void StartOnlineGame();
-
-	// Searching and Finding a Session
-	UFUNCTION(BlueprintCallable, Category = "Network|Test")
-	void FindOnlineGames();
-
-	// Joining a Session
-	UFUNCTION(BlueprintCallable, Category = "Network|Test")
-	void JoinOnlineGame();
-
-	// Destroying a Session
-	UFUNCTION(BlueprintCallable, Category = "Network|Test")
-	void DestroySessionAndLeaveGame();
-	*/
 };
 

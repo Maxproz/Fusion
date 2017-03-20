@@ -7,7 +7,7 @@
 #include "FusionHUD.h"
 #include "ServerMenuStats_Widget.h"
 
-#include "FusionPlayerController_Lobby.h"
+#include "FusionPlayerController_Menu.h"
 
 #include "Runtime/Engine/Classes/Kismet/KismetTextLibrary.h"
 
@@ -31,6 +31,9 @@ void UServerMenu_Widget::NativeConstruct()
 	BackButton->OnClicked.AddDynamic(this, &UServerMenu_Widget::OnClickedBackButton);
 	BackButton2->OnClicked.AddDynamic(this, &UServerMenu_Widget::OnClickedBackButton2);
 	RefreshButton->OnClicked.AddDynamic(this, &UServerMenu_Widget::OnClickedRefreshButton);
+
+
+
 }
 
 void UServerMenu_Widget::OnSessionSearchCompleated(TArray<FCustomBlueprintSessionResult> Results)
@@ -42,12 +45,12 @@ void UServerMenu_Widget::OnSessionSearchCompleated(TArray<FCustomBlueprintSessio
 
 	if (CustomSessionResults.Num() > 0)
 	{
-		AFusionPlayerController_Lobby* LPC = Cast<AFusionPlayerController_Lobby>(GetOwningPlayer());
+		AFusionPlayerController_Menu* MPC = Cast<AFusionPlayerController_Menu>(GetOwningPlayer());
 
 		int32 CurrentIndex = 0;
 		for (const auto& Session : CustomSessionResults)
 		{
-			UServerMenuStats_Widget* ServerMenuStats_Widget = CreateWidget<UServerMenuStats_Widget>(LPC, LPC->GetFusionHUD()->ServerMenuStats_WidgetTemplate);
+			UServerMenuStats_Widget* ServerMenuStats_Widget = CreateWidget<UServerMenuStats_Widget>(MPC, MPC->GetFusionHUD()->ServerMenuStats_WidgetTemplate);
 			ServerMenuStats_Widget->SetIndex(CurrentIndex);
 			ServerMenuStats_Widget->SetCustomResult(Session);
 			ServerMenuStats_Widget->SetGameInstanceRef(GameInstanceRef);
@@ -114,6 +117,8 @@ void UServerMenu_Widget::OnClickedSearchButton()
 void UServerMenu_Widget::OnClickedBackButton()
 {
 	//GameInstanceRef->ShowMainMenu();
+	AFusionPlayerController_Menu* MPC = Cast<AFusionPlayerController_Menu>(GetOwningPlayer());
+	MPC->GetFusionHUD()->ShowMainMenu();
 	RemoveFromParent();
 }
 

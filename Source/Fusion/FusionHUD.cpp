@@ -10,6 +10,7 @@
 #include "Widgets/Menus/Lobby/LobbyMenu_Widget.h"
 
 #include "FusionPlayerController_Menu.h"
+#include "FusionPlayerController_Lobby.h"
 
 #include "Widgets/Menus/Lobby/ChatEntry_Widget.h"
 #include "Widgets/Menus/Lobby/PlayerInfoEntry_Widget.h"
@@ -35,6 +36,12 @@ void AFusionHUD::CreateMainMenuUIWidget()
 	if (ActiveMainMenuUIWidget != nullptr) return;
 	ActiveMainMenuUIWidget = CreateWidget<UMainMenuUI>(GetOwningPlayerController(), MainMenuUIWidget.LoadSynchronous());
 
+	APlayerController* PC = Cast<APlayerController>(GetOwningPlayerController());
+
+	ActiveMainMenuUIWidget->GameInstanceRef = Cast<UFusionGameInstance>(PC->GetGameInstance());
+	ActiveMainMenuUIWidget->MinServerNameLength = 4;
+	ActiveMainMenuUIWidget->MaxServerNameLength = 30;
+	ActiveMainMenuUIWidget->MaxPasswordSizeServer = 50;
 	ActiveMainMenuUIWidget->AddToViewport(0);
 	ActiveMainMenuUIWidget->SetVisibility(ESlateVisibility::Hidden);
 }
@@ -42,6 +49,7 @@ void AFusionHUD::CreateMainMenuUIWidget()
 void AFusionHUD::CreateInGameHUDWidget()
 {
 	if (ActiveInGameHUDWidget != nullptr) return;
+	
 	ActiveInGameHUDWidget = CreateWidget<UInGameHUD>(GetOwningPlayerController(), InGameHUDWidget.LoadSynchronous());
 	ActiveInGameHUDWidget->AddToViewport(0);
 	ActiveInGameHUDWidget->SetVisibility(ESlateVisibility::Hidden);
@@ -51,6 +59,10 @@ void AFusionHUD::CreateServerMenuWidget()
 {
 	if (ActiveServerMenuWidget != nullptr) return;
 	ActiveServerMenuWidget = CreateWidget<UServerMenu_Widget>(GetOwningPlayerController(), ServerMenuWidget.LoadSynchronous());
+	
+	APlayerController* PC = Cast<APlayerController>(GetOwningPlayerController());
+
+	ActiveServerMenuWidget->GameInstanceRef = Cast<UFusionGameInstance>(PC->GetGameInstance());
 	ActiveServerMenuWidget->AddToViewport(0);
 	ActiveServerMenuWidget->SetVisibility(ESlateVisibility::Hidden);
 }
@@ -58,6 +70,7 @@ void AFusionHUD::CreateServerMenuWidget()
 void AFusionHUD::CreateErrorMessageWidget()
 {
 	if (ActiveErrorMessageWidget != nullptr) return;
+	
 	ActiveErrorMessageWidget = CreateWidget<UOkErrorMessage_Widget>(GetOwningPlayerController(), ErrorMessageWidget.LoadSynchronous());
 	ActiveErrorMessageWidget->AddToViewport(0);
 	ActiveErrorMessageWidget->SetVisibility(ESlateVisibility::Hidden);
@@ -66,6 +79,7 @@ void AFusionHUD::CreateErrorMessageWidget()
 void AFusionHUD::CreateLobbyMenuWidget()
 {
 	if (ActiveLobbyMenuWidget != nullptr) return;
+	
 	ActiveLobbyMenuWidget = CreateWidget<ULobbyMenu_Widget>(GetOwningPlayerController(), LobbyMenuWidget.LoadSynchronous());
 	ActiveLobbyMenuWidget->AddToViewport(0);
 	ActiveLobbyMenuWidget->SetVisibility(ESlateVisibility::Hidden);

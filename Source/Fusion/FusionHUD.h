@@ -60,7 +60,7 @@ protected:
 	TAssetSubclassOf<UServerMenu_Widget> ServerMenuWidget;
 	UPROPERTY(EditDefaultsOnly, Category = "Menu Widgets")
 	TAssetSubclassOf<UOkErrorMessage_Widget> ErrorMessageWidget;
-	UPROPERTY(EditDefaultsOnly, Category = "Menu Widgets")
+	UPROPERTY(EditDefaultsOnly, Category = "Lobby Widgets")
 	TAssetSubclassOf<ULobbyMenu_Widget> LobbyMenuWidget;
 
 

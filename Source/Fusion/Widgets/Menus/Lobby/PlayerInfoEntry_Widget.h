@@ -27,17 +27,22 @@ public:
 	UFUNCTION()
 	void OnClickedKickButton();
 
-protected:
+	void SetLobbyPlayerInfo(FLobbyPlayerInfo InPlayerLobbyInfo) { PlayerLobbyInfo = InPlayerLobbyInfo; }
+
+	void SetPlayerIndex(int32 InPlayerIndex) { PlayerIndex = InPlayerIndex; }
 
 	UPROPERTY(meta = (BindWidget))
 	UCheckBox* IdsReadyCheckBox;
-		
+
 	UPROPERTY(meta = (BindWidget))
 	UButton* KickButton;
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* PlayerNameTextBlock;
 
+protected:
+
+	UPROPERTY(BlueprintReadWrite, Category = BlueprintBinding)
 	FLobbyPlayerInfo PlayerLobbyInfo;
 
 	int32 PlayerIndex;

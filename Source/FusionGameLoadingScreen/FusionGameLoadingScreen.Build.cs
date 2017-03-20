@@ -10,6 +10,8 @@ public class FusionGameLoadingScreen : ModuleRules
     {
         PrivateIncludePaths.Add("../../Fusion/Source/FusionGameLoadingScreen/Private");
 
+       DynamicallyLoadedModuleNames.Add("OnlineSubsystemSteam");
+
         PrivateDependencyModuleNames.AddRange(
             new string[] {
                 "Core",
@@ -17,7 +19,7 @@ public class FusionGameLoadingScreen : ModuleRules
                 "MoviePlayer",
                 "Slate",
                 "SlateCore",
-                "InputCore"
+                "InputCore",
             }
         );
     }

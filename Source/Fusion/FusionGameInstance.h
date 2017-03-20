@@ -7,6 +7,9 @@
 #include "OnlineSessionInterface.h"
 #include "FusionGameInstance.generated.h"
 
+#define SETTING_SERVER_NAME FName(TEXT("SERVERNAMEKEY"))
+#define SETTING_SERVER_IS_PROTECTED FName(TEXT("SERVERSERVERISPASSWORDPROTECTEDKEY"))
+#define SETTING_SERVER_PROTECT_PASSWORD FName(TEXT("SERVERPROTECTPASSWORDKEY"))
 
 namespace FusionGameInstanceState
 {
@@ -298,12 +301,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Lan")
 	FString LanPlayerName;
 
-	/**
-	* gets the max number of players in the session
-	* @return	max number of players in the session
-	*/
-	UFUNCTION()
-	FORCEINLINE int32 GetSessionMaxPlayers() const { return MaxPlayersinSession; }
+
 
 
 
@@ -348,6 +346,20 @@ public:
 	*/
 	void OnReadFriendsListCompleted(int32 LocalUserNum, bool bWasSuccessful, const FString& ListName, const FString& ErrorString);
 
+
+	/**
+	* Delegate function fired when a session invite is accepted to join the session
+	* @param    bWasSuccessful true if the async action completed without error, false if there was an error
+	* @param	LocalUserNum	The Local user Number of the player who recived the invite
+	* @param	InvitingPlayer	The inviting player
+	* @param	TheSessionInvitedTo		the session invited to
+	*/
+	void OnSessionUserInviteAccepted(bool bWasSuccessful, int32 LocalUserNum, TSharedPtr<const FUniqueNetId> InvitingPlayer, const FOnlineSessionSearchResult& TheSessionInvitedTo);
+
+	/** Handle to registered delegate for accepting an invite */
+	FDelegateHandle OnSessionUserInviteAcceptedDelegateHandle;
+	/** Delegate for accepting invite */
+	FOnSessionUserInviteAcceptedDelegate OnSessionUserInviteAcceptedDelegate;
 protected:
 	/**
 	*	called when the session search is complete to show the results in UMG
@@ -386,9 +398,6 @@ public:
 
 private:
 
-	//store the max number of players in a session whenever we create of join a session
-	int32 MaxPlayersinSession;
-
 
 
 	UPROPERTY(config)
@@ -396,6 +405,7 @@ private:
 
 	UPROPERTY(config)
 	FString MainMenuMap;
+
 
 
 	FName CurrentState;

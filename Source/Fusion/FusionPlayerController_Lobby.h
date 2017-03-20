@@ -41,7 +41,6 @@ public:
 	FORCEINLINE bool Server_SendChatMessage_Validate(const FText & ChatMessage) { return true; }
 
 
-
 	/**
 	*	called from GameMode when it prodcasts all the chat messages to all players
 	*	@Param	ChatMessage		The passed chat message
@@ -50,12 +49,32 @@ public:
 	void Client_ReceiveChatMessage(const FText &ChatMessage);
 	void Client_ReceiveChatMessage_Implementation(const FText &ChatMessage);
 
+
+protected:
+
 	/**
-	*	calls UMG to add the incoming text message to the Chatbox
-	*	@Param	ChatMessage		The passed chat message
+	* Called to recieve chat messsage
 	*/
-	UFUNCTION(BlueprintImplementableEvent, Category = "Network|Chat")
-	void ReceiveChatMessage(const FText &ChatMessage);
+	DECLARE_EVENT_OneParam(AFusionPlayerController_Lobby, FOnReceiveChatMessage, const FText&);
+	FOnReceiveChatMessage OnReceiveChatMessageEvent;
+
+	void OnReceiveChatMessage(const FText& ChatMessage);
+
+
+	/**
+	* Called to update umg player list
+	*/
+	DECLARE_EVENT_OneParam(AFusionPlayerController_Lobby, FOnUpdateUMGPlayerList, const TArray<struct FLobbyPlayerInfo>&);
+	FOnUpdateUMGPlayerList OnUpdateUMGPlayerListEvent;
+
+	void OnUpdateUMGPlayerList(const TArray<struct FLobbyPlayerInfo>& PlayerInfoArray);
+
+public:
+
+	FOnReceiveChatMessage& OnReceiveChatMessage() { return OnReceiveChatMessageEvent; }
+
+	FOnUpdateUMGPlayerList& OnUpdateUMGPlayerList() { return OnUpdateUMGPlayerListEvent; }
+
 
 	/**
 	*	called to kick a certain player by their index in the GameMode ConnectedPlayers Array
@@ -79,12 +98,7 @@ public:
 	void Client_UpdatePlayerList(const TArray<FLobbyPlayerInfo>& PlayerInfoArray);
 	void Client_UpdatePlayerList_Implementation(const TArray<FLobbyPlayerInfo>& PlayerInfoArray);
 
-	/**
-	*	Calls UMG to update the PlayerList
-	*	@Param	PlayerInfoArray		the player info array passed in from the server
-	*/
-	UFUNCTION(BlueprintImplementableEvent, Category = "Network|PlayerList")
-	void UpdateUMGPlayerList(const TArray<struct FLobbyPlayerInfo>& PlayerInfoArray);
+
 
 
 	/**
