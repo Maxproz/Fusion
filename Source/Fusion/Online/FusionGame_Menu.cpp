@@ -22,7 +22,7 @@ AFusionGame_Menu::AFusionGame_Menu(const FObjectInitializer& ObjectInitializer) 
 void AFusionGame_Menu::RestartPlayer(class AController* NewPlayer)
 {
 	// don't restart
-	Super::RestartPlayer(NewPlayer);
+	//Super::RestartPlayer(NewPlayer);
 
 
 }

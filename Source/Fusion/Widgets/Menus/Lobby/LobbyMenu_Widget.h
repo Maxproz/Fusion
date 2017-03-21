@@ -50,7 +50,15 @@ public:
 	void IsSessionFull(bool& bOutResult);
 
 	UFUNCTION(BlueprintPure, Category = BlueprintBindings)
-	void NumberOfPlayersBinding(FText& OutReturnText);
+	FText NumberOfPlayersBinding() const;
+
+
+	// Moved these so I could easily grab them in blueprint for the binding fix
+	UPROPERTY(BlueprintReadOnly, Category = Debug)
+	class UFusionGameInstance* GameInstanceRef;
+	
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, Category = Debug)
+	UScrollBox* PlayerListScrollBox;
 
 protected:
 
@@ -101,8 +109,7 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UButton* LeaveButton;
 
-	UPROPERTY(meta = (BindWidget))
-	UScrollBox* PlayerListScrollBox;
+
 
 	UPROPERTY(meta = (BindWidget))
 	UWidgetSwitcher* ReadyAndStartGameWidgetSwitcher_0;
@@ -121,7 +128,7 @@ protected:
 	
 	class AFusionPlayerController_Lobby* LobbyPlayerControllerRef;
 
-	class UFusionGameInstance* GameInstanceRef;
+
 
 	ESlateVisibility KickingPlayers;
 

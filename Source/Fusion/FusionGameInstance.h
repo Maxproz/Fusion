@@ -396,6 +396,18 @@ public:
 
 	FOnShowErrorMessageUMG& OnShowErrorMessageUMG() { return OnShowErrorMessageUMGEvent; }
 
+
+	/**
+	* gets the max number of players in the session
+	* @return	max number of players in the session
+	*/
+
+	UFUNCTION()
+	FORCEINLINE int32 GetSessionMaxPlayers() const { return MaxPlayersinSession; }
+
+	//store the max number of players in a session whenever we create of join a session
+	int32 MaxPlayersinSession;
+
 private:
 
 

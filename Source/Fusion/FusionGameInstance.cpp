@@ -1914,11 +1914,11 @@ void UFusionGameInstance::FinishSessionCreation(EOnJoinSessionCompleteResult::Ty
 
 void UFusionGameInstance::BeginHostingQuickMatch()
 {
-	ShowLoadingScreen();
-	GotoState(FusionGameInstanceState::Playing);
+	//ShowLoadingScreen();
+	//GotoState(FusionGameInstanceState::Playing);
 
 	// Travel to the specified match URL
-	GetWorld()->ServerTravel(TEXT("/Game/Maps/Downfall?game=TDM?listen"));
+	//GetWorld()->ServerTravel(TEXT("/Game/Maps/Downfall?game=TDM?listen"));
 	
 }
 
@@ -2016,7 +2016,9 @@ void UFusionGameInstance::JoinOnlineGame(int32 SessionIndex)
 	FOnlineSessionSearchResult SearchResult;
 	SearchResult = GetGameSession()->SessionSearch->SearchResults[SessionIndex];
 
-	GetGameSession()->MaxPlayersinSession = SearchResult.Session.SessionSettings.NumPublicConnections;
+	//GetGameSession()->MaxPlayersinSession = SearchResult.Session.SessionSettings.NumPublicConnections;
+	MaxPlayersinSession = SearchResult.Session.SessionSettings.NumPublicConnections;
+
 
 	GetGameSession()->JoinASession(Player->GetPreferredUniqueNetId(), GameSessionName, SearchResult);
 
@@ -2081,6 +2083,7 @@ void UFusionGameInstance::OnGetSteamFriendRequestCompleteUMG(const TArray<FSteam
 {
 	// player 0 gets to own the UI
 	ULocalPlayer* const Player = GetFirstGamePlayer();
+
 	AFusionPlayerController_Lobby* LPC = Cast<AFusionPlayerController_Lobby>(Player->GetPlayerController(GetWorld()));
 
 	ULobbyMenu_Widget* LobbyWidget = LPC->GetFusionHUD()->GetLobbyMenuWidget();
@@ -2302,3 +2305,19 @@ void UFusionGameInstance::OnSessionUserInviteAccepted(bool bWasSuccessful, int32
 		}
 	}
 }
+
+/*
+int32 UFusionGameInstance::GetSessionMaxPlayers() const
+{ 
+	AFusionGameSession* IsValidSession = GetGameSession();
+
+	if (IsValidSession)
+	{
+		return GetGameSession()->GetSessionMaxPlayers();
+	}
+	else
+	{
+		return 1;
+	}
+}
+*/

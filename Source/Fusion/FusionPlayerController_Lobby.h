@@ -20,6 +20,8 @@ public:
 
 	virtual void BeginPlay() override;
 
+	virtual void PreClientTravel(const FString& PendingURL, ETravelType TravelType, bool bIsSeamlessTravel) override;
+
 	/** Returns a pointer to the Fusion game hud. May return NULL. */
 	class AFusionHUD* GetFusionHUD() const;
 

@@ -44,7 +44,8 @@ AFusionGameSession::AFusionGameSession(const FObjectInitializer& ObjectInitializ
 
 void AFusionGameSession::HandleMatchHasEnded()
 {
-	/*
+	
+	
 	IOnlineSubsystem* OnlineSub = IOnlineSubsystem::Get();
 	if (OnlineSub)
 	{
@@ -66,11 +67,35 @@ void AFusionGameSession::HandleMatchHasEnded()
 			Sessions->EndSession(GameSessionName);
 		}
 	}
-
-	*/
 }
 
 
+void AFusionGameSession::HandleMatchHasStarted()
+{
+
+	
+	IOnlineSubsystem* OnlineSub = IOnlineSubsystem::Get();
+	if (OnlineSub)
+	{
+		IOnlineSessionPtr Sessions = OnlineSub->GetSessionInterface();
+		if (Sessions.IsValid())
+		{
+			for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+			{
+				AFusionPlayerController* PC = Cast<AFusionPlayerController>(*It);
+				if (PC && !PC->IsLocalPlayerController())
+				{
+					PC->ClientStartOnlineGame();
+				}
+			}
+
+			UE_LOG(LogOnlineGame, Log, TEXT("Starting session %s on server"), *GameSessionName.ToString());
+			OnStartSessionCompleteDelegateHandle = Sessions->AddOnStartSessionCompleteDelegate_Handle(OnStartSessionCompleteDelegate);
+			Sessions->StartSession(GameSessionName);
+		}
+	}
+	
+}
 
 
 
@@ -181,7 +206,9 @@ bool AFusionGameSession::HostSession(TSharedPtr<const FUniqueNetId> UserId, FNam
 			SessionSettings->bIsLANMatch = bIsLAN;
 			SessionSettings->bUsesPresence = bIsPresence;
 			SessionSettings->NumPublicConnections = MaxNumPlayers;
-			MaxPlayersinSession = MaxNumPlayers;
+			
+			Cast<UFusionGameInstance>(GetGameInstance())->MaxPlayersinSession = MaxNumPlayers;
+			//MaxPlayersinSession = MaxNumPlayers;
 			SessionSettings->NumPrivateConnections = 0;
 			SessionSettings->bAllowInvites = true;
 			SessionSettings->bAllowJoinInProgress = true;
@@ -257,8 +284,9 @@ void AFusionGameSession::OnCreateSessionComplete(FName SessionName, bool bWasSuc
 
 			if (bWasSuccessful)
 			{
-				// This was HandleMatchHasStarted
+				// This was in HandleMatchHasStarted
 
+				// Should I remove this since I have it inside of handle match has started?
 				UE_LOG(LogOnlineGame, Log, TEXT("Starting session %s on server"), *GameSessionName.ToString());
 				OnStartSessionCompleteDelegateHandle = Sessions->AddOnStartSessionCompleteDelegate_Handle(OnStartSessionCompleteDelegate);
 				Sessions->StartSession(SessionName);
@@ -288,7 +316,9 @@ void AFusionGameSession::OnStartOnlineGameComplete(FName SessionName, bool bWasS
 	
 	if (bWasSuccessful)
 	{
-		/*
+
+		
+		// This should only be called if we are starting a gamemode related to acutal gameplay. (outside lobby and main menu)
 		// tell non-local players to start online game
 		for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 		{
@@ -298,7 +328,9 @@ void AFusionGameSession::OnStartOnlineGameComplete(FName SessionName, bool bWasS
 				PC->ClientStartOnlineGame();
 			}
 		}
-		*/
+		
+
+
 		// If the start was successful, we can open a NewMap if we want. Make sure to use "listen" as a parameter!
 		UGameplayStatics::OpenLevel(GetWorld(), LobbyMapName, true, "listen");
 	}
@@ -514,7 +546,8 @@ void AFusionGameSession::OnDestroySessionComplete(FName SessionName, bool bWasSu
 			// If it was successful, we just load another level (could be a MainMenu!)
 			if (bWasSuccessful)
 			{
-				/* Was doing this inside "Handle Match Has Ended I think */
+
+				// Was doing this inside "Handle Match Has Ended I think 
 				UGameplayStatics::OpenLevel(GetWorld(), MainMenuMap, true);
 			}
 		}

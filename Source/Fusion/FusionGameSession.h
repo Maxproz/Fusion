@@ -141,8 +141,7 @@ public:
 	/** Default number of players allowed in a game */
 	static const int32 DEFAULT_NUM_PLAYERS = 8;
 	
-	//store the max number of players in a session whenever we create of join a session
-	int32 MaxPlayersinSession;
+
 
 
 	TSharedPtr<class FOnlineSessionSettings> SessionSettings;
@@ -153,12 +152,6 @@ public:
 	FOnlineSessionSearchResult ChosenSearchResult;
 
 
-	/**
-	* gets the max number of players in the session
-	* @return	max number of players in the session
-	*/
-	UFUNCTION()
-	FORCEINLINE int32 GetSessionMaxPlayers() const { return MaxPlayersinSession; }
 
 
 	bool HostSession(TSharedPtr<const FUniqueNetId> UserId, FName SessionName, FString ServerName, bool bIsLAN, bool bIsPresence, int32 MaxNumPlayers, bool bIsPasswordProtected, FString SessionPassword);
@@ -207,6 +200,7 @@ public:
 	/** Handles when the match has ended */
 	virtual void HandleMatchHasEnded() override;
 
+	virtual void HandleMatchHasStarted() override;
 
 	/** Handles to various registered delegates */
 	FDelegateHandle OnStartSessionCompleteDelegateHandle;

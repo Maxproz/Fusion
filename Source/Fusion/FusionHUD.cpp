@@ -11,6 +11,7 @@
 
 #include "FusionPlayerController_Menu.h"
 #include "FusionPlayerController_Lobby.h"
+#include "FusionPlayerController.h"
 
 #include "Widgets/Menus/Lobby/ChatEntry_Widget.h"
 #include "Widgets/Menus/Lobby/PlayerInfoEntry_Widget.h"
@@ -33,12 +34,14 @@ AFusionHUD::AFusionHUD()
 
 void AFusionHUD::CreateMainMenuUIWidget()
 {
+	AFusionPlayerController_Menu* MPC = Cast<AFusionPlayerController_Menu>(GetOwningPlayerController());
+	if (!MPC) return;
+
 	if (ActiveMainMenuUIWidget != nullptr) return;
 	ActiveMainMenuUIWidget = CreateWidget<UMainMenuUI>(GetOwningPlayerController(), MainMenuUIWidget.LoadSynchronous());
 
-	APlayerController* PC = Cast<APlayerController>(GetOwningPlayerController());
 
-	ActiveMainMenuUIWidget->GameInstanceRef = Cast<UFusionGameInstance>(PC->GetGameInstance());
+	ActiveMainMenuUIWidget->GameInstanceRef = Cast<UFusionGameInstance>(MPC->GetGameInstance());
 	ActiveMainMenuUIWidget->MinServerNameLength = 4;
 	ActiveMainMenuUIWidget->MaxServerNameLength = 30;
 	ActiveMainMenuUIWidget->MaxPasswordSizeServer = 50;
@@ -48,21 +51,27 @@ void AFusionHUD::CreateMainMenuUIWidget()
 
 void AFusionHUD::CreateInGameHUDWidget()
 {
+	AFusionPlayerController*  FPC = Cast<AFusionPlayerController>(GetOwningPlayerController());
+	if (!FPC) return;
+
 	if (ActiveInGameHUDWidget != nullptr) return;
-	
 	ActiveInGameHUDWidget = CreateWidget<UInGameHUD>(GetOwningPlayerController(), InGameHUDWidget.LoadSynchronous());
+
 	ActiveInGameHUDWidget->AddToViewport(0);
 	ActiveInGameHUDWidget->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void AFusionHUD::CreateServerMenuWidget()
 {
+	AFusionPlayerController_Menu* MPC = Cast<AFusionPlayerController_Menu>(GetOwningPlayerController());
+	if (!MPC) return;
+
 	if (ActiveServerMenuWidget != nullptr) return;
 	ActiveServerMenuWidget = CreateWidget<UServerMenu_Widget>(GetOwningPlayerController(), ServerMenuWidget.LoadSynchronous());
 	
 	APlayerController* PC = Cast<APlayerController>(GetOwningPlayerController());
 
-	ActiveServerMenuWidget->GameInstanceRef = Cast<UFusionGameInstance>(PC->GetGameInstance());
+	ActiveServerMenuWidget->GameInstanceRef = Cast<UFusionGameInstance>(PC->GetGameInstance()); // doing this inside of NativeConstructNow
 	ActiveServerMenuWidget->AddToViewport(0);
 	ActiveServerMenuWidget->SetVisibility(ESlateVisibility::Hidden);
 }
@@ -78,6 +87,9 @@ void AFusionHUD::CreateErrorMessageWidget()
 
 void AFusionHUD::CreateLobbyMenuWidget()
 {
+	AFusionPlayerController_Lobby* LPC = Cast<AFusionPlayerController_Lobby>(GetOwningPlayerController());
+	if (!LPC) return;
+
 	if (ActiveLobbyMenuWidget != nullptr) return;
 	
 	ActiveLobbyMenuWidget = CreateWidget<ULobbyMenu_Widget>(GetOwningPlayerController(), LobbyMenuWidget.LoadSynchronous());
@@ -115,8 +127,12 @@ void AFusionHUD::DrawHUD()
 {
 	Super::DrawHUD();
 
-	AFusionPlayerController_Menu* PC = Cast<AFusionPlayerController_Menu>(GetOwningPlayerController());
-	if (PC) return; // Don't draw crosshair inside of Main Menu
+	AFusionPlayerController_Menu* MPC = Cast<AFusionPlayerController_Menu>(GetOwningPlayerController());
+	if (MPC) return; // Don't draw crosshair inside of Main Menu
+
+	AFusionPlayerController_Lobby* LPC = Cast<AFusionPlayerController_Lobby>(GetOwningPlayerController());
+	if (LPC) return; // Don't draw crosshair inside of Lobby
+
 
 	// Draw very simple crosshair
 

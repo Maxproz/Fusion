@@ -7,6 +7,8 @@
 #include "FusionGameInstance.h"
 #include "FusionHUD.h"
 
+#include "FusionGameViewportClient.h"
+
 #include "Online/NetworkLobbyPlayerState.h"
 
 #include "Widgets/Menus/ServerMenu_Widget.h" // TODO: is this needed?
@@ -23,19 +25,20 @@ void AFusionPlayerController_Lobby::BeginPlay()
 
 	bShowMouseCursor = true;
 
-
-	GetFusionHUD()->CreateGameWidgets();
+	if (IsLocalPlayerController())
+	{
+		GetFusionHUD()->CreateGameWidgets();
+		GetFusionHUD()->ShowLobbyMenu(); // This might be nullptr? since the widgets load async.. we will see
+	}
 
 
 	// show the lobby and view it as soon as the player gets in
 	
 	// Should never be nullptr here as far as I know.
-	UFusionGameInstance* GameInst = Cast<UFusionGameInstance>(GetGameInstance());
-
-	GetFusionHUD()->GetLobbyMenuWidget()->SetGameInstanceRef(GameInst);
-	GetFusionHUD()->GetLobbyMenuWidget()->SetLobbyPlayerControllerRef(this);
-	GetFusionHUD()->ShowLobbyMenu(); // This might be nullptr? since the widgets load async.. we will see
-
+	// NOTE: pretty sure this is being done inside of native construct on the widget
+	//UFusionGameInstance* GameInst = Cast<UFusionGameInstance>(GetGameInstance());
+	//GetFusionHUD()->GetLobbyMenuWidget()->SetGameInstanceRef(GameInst);
+	//GetFusionHUD()->GetLobbyMenuWidget()->SetLobbyPlayerControllerRef(this);
 
 
 	// Timer handle to call the RequestServerPlayerListUpdate() later
@@ -196,4 +199,27 @@ void AFusionPlayerController_Lobby::OnUpdateUMGPlayerList(const TArray<struct FL
 {
 	// passes in the array that the server sent to UMG so the player can see it
 	GetFusionHUD()->GetLobbyMenuWidget()->OnUpdatePlayerList().Broadcast(PlayerInfoArray);
+}
+
+
+void AFusionPlayerController_Lobby::PreClientTravel(const FString& PendingURL, ETravelType TravelType, bool bIsSeamlessTravel)
+{
+	Super::PreClientTravel(PendingURL, TravelType, bIsSeamlessTravel);
+
+	if (GetWorld() != NULL)
+	{
+		UFusionGameViewportClient* FusionViewport = Cast<UFusionGameViewportClient>(GetWorld()->GetGameViewport());
+
+		if (FusionViewport != NULL)
+		{
+			FusionViewport->ShowLoadingScreen();
+		}
+
+		AFusionHUD* FusionHUD = Cast<AFusionHUD>(GetHUD());
+		if (FusionHUD != nullptr)
+		{
+			// Passing true to bFocus here ensures that focus is returned to the game viewport.
+			//FusionHUD->HideLobbyMenu();
+		}
+	}
 }

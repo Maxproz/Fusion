@@ -43,12 +43,15 @@ void UInviteSteamFriend_Widget::OnClickedSteamFriendInfoButton()
 	bool bOutIsFull;
 	LobbyMenu_WidgetRef->IsSessionFull(bOutIsFull);
 
+
 	if (bOutIsFull)
 	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Silver, TEXT("Is UMG Error Showing??? Room is full can't invite anymore players!"));
 		GameInstanceRef->ShowErrorMessage(ErrorMsg);
 	}
 	else
 	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Emerald, TEXT("Sending Steam Friend Game Invite!"));
 		GameInstanceRef->SendSessionInviteToFriend(GetOwningPlayer(), SteamFriendInfo.PlayerUniqueNetID);
 	}
 

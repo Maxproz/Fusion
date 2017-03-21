@@ -28,11 +28,9 @@ void ULobbyMenu_Widget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
+	LobbyPlayerControllerRef = Cast<AFusionPlayerController_Lobby>(GetOwningPlayer());
+	GameInstanceRef = Cast<UFusionGameInstance>(LobbyPlayerControllerRef->GetGameInstance());
 
-	if (!LobbyPlayerControllerRef)
-	{
-		return;
-	}
 
 	bool IsThisServer = UKismetSystemLibrary::IsServer(GetWorld());
 	
@@ -74,7 +72,6 @@ void ULobbyMenu_Widget::NativeConstruct()
 void ULobbyMenu_Widget::OnReceiveChatMessageComplete(FText ChatMessage)
 {
 	UChatEntry_Widget* EntryWidget = CreateWidget<UChatEntry_Widget>(LobbyPlayerControllerRef, LobbyPlayerControllerRef->GetFusionHUD()->ChatEntry_WidgetTemplate);
-
 	ChatEntriesScrollBox->AddChild(EntryWidget);
 	ChatEntriesScrollBox->ScrollToEnd();
 }
@@ -227,15 +224,17 @@ void ULobbyMenu_Widget::OnGetSteamFriendRequestCompleted(TArray<FSteamFriendInfo
 
 void ULobbyMenu_Widget::IsSessionFull(bool& bOutResult)
 {
-	bOutResult = PlayerListScrollBox->GetChildrenCount() >= GameInstanceRef->GetGameSession()->GetSessionMaxPlayers();
+	bOutResult = PlayerListScrollBox->GetChildrenCount() >= GameInstanceRef->GetSessionMaxPlayers();
 }
 
-void ULobbyMenu_Widget::NumberOfPlayersBinding(FText& OutReturnText)
+// This shit didnt work
+FText ULobbyMenu_Widget::NumberOfPlayersBinding() const
 {
+	// Setting the Current/Max Number of Players
 	FFormatNamedArguments Arguments;
-	Arguments.Add(TEXT("CurrentNumberofPlayers"), FText::AsNumber(PlayerListScrollBox->GetChildrenCount()));
-	Arguments.Add(TEXT("MaxNumberOfPlayers"), FText::AsNumber(GameInstanceRef->GetGameSession()->GetSessionMaxPlayers()));
-	OutReturnText = FText::Format(LOCTEXT("Fusion.HUD.Menu", "{CurrentNumberofPlayers}/{MaxNumberOfPlayers} Players"), Arguments);
+	Arguments.Add(TEXT("CurrentNumberOfPlayers"), FText::AsNumber(PlayerListScrollBox->GetChildrenCount()));
+	Arguments.Add(TEXT("MaxNumberOfPlayers"), FText::AsNumber(GameInstanceRef->GetSessionMaxPlayers()));
+	return FText::Format(LOCTEXT("Fusion.HUD.Menu", "{CurrentNumberOfPlayers}/{MaxNumberOfPlayers}"), Arguments);
 }
 
 
