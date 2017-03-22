@@ -24,7 +24,7 @@ AFusionGameSession::AFusionGameSession(const FObjectInitializer& ObjectInitializ
 	if (!HasAnyFlags(RF_ClassDefaultObject))
 	{
 		OnCreateSessionCompleteDelegate = FOnCreateSessionCompleteDelegate::CreateUObject(this, &AFusionGameSession::OnCreateSessionComplete);
-		OnDestroySessionCompleteDelegate = FOnDestroySessionCompleteDelegate::CreateUObject(this, &AFusionGameSession::OnDestroySessionComplete);
+	
 
 		OnFindSessionsCompleteDelegate = FOnFindSessionsCompleteDelegate::CreateUObject(this, &AFusionGameSession::OnFindSessionsComplete);
 		OnJoinSessionCompleteDelegate = FOnJoinSessionCompleteDelegate::CreateUObject(this, &AFusionGameSession::OnJoinSessionComplete);
@@ -62,9 +62,10 @@ void AFusionGameSession::HandleMatchHasEnded()
 				}
 			}
 
+			/*
 			// server is handled here
 			UE_LOG(LogOnlineGame, Log, TEXT("Ending session %s on server"), *GameSessionName.ToString());
-			Sessions->EndSession(GameSessionName);
+			Sessions->EndSession(GameSessionName);*/
 		}
 	}
 }
@@ -88,10 +89,11 @@ void AFusionGameSession::HandleMatchHasStarted()
 					PC->ClientStartOnlineGame();
 				}
 			}
-
+			/*
 			UE_LOG(LogOnlineGame, Log, TEXT("Starting session %s on server"), *GameSessionName.ToString());
 			OnStartSessionCompleteDelegateHandle = Sessions->AddOnStartSessionCompleteDelegate_Handle(OnStartSessionCompleteDelegate);
 			Sessions->StartSession(GameSessionName);
+			*/
 		}
 	}
 	
@@ -293,7 +295,7 @@ void AFusionGameSession::OnCreateSessionComplete(FName SessionName, bool bWasSuc
 			}
 		}
 	}
-	OnCreatePresenceSessionComplete().Broadcast(SessionName, bWasSuccessful);
+	//OnCreatePresenceSessionComplete().Broadcast(SessionName, bWasSuccessful);
 }
 
 
@@ -316,20 +318,6 @@ void AFusionGameSession::OnStartOnlineGameComplete(FName SessionName, bool bWasS
 	
 	if (bWasSuccessful)
 	{
-
-		
-		// This should only be called if we are starting a gamemode related to acutal gameplay. (outside lobby and main menu)
-		// tell non-local players to start online game
-		for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-		{
-			AFusionPlayerController* PC = Cast<AFusionPlayerController>(*It);
-			if (PC && !PC->IsLocalPlayerController())
-			{
-				PC->ClientStartOnlineGame();
-			}
-		}
-		
-
 
 		// If the start was successful, we can open a NewMap if we want. Make sure to use "listen" as a parameter!
 		UGameplayStatics::OpenLevel(GetWorld(), LobbyMapName, true, "listen");
@@ -527,30 +515,4 @@ void AFusionGameSession::OnJoinSessionComplete(FName SessionName, EOnJoinSession
 }
 
 
-void AFusionGameSession::OnDestroySessionComplete(FName SessionName, bool bWasSuccessful)
-{
-	//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, FString::Printf(TEXT("OnDestroySessionComplete %s, %d"), *SessionName.ToString(), bWasSuccessful));
-	// Get the OnlineSubsystem we want to work with
-	IOnlineSubsystem* OnlineSub = IOnlineSubsystem::Get();
-	if (OnlineSub)
-	{
-		// Get the SessionInterface from the OnlineSubsystem
-		IOnlineSessionPtr Sessions = OnlineSub->GetSessionInterface();
-		if (Sessions.IsValid())
-		{
-			// Clear the Delegate
-			Sessions->ClearOnDestroySessionCompleteDelegate_Handle(OnDestroySessionCompleteDelegateHandle);
-
-			//HostSettings = NULL;
-
-			// If it was successful, we just load another level (could be a MainMenu!)
-			if (bWasSuccessful)
-			{
-
-				// Was doing this inside "Handle Match Has Ended I think 
-				UGameplayStatics::OpenLevel(GetWorld(), MainMenuMap, true);
-			}
-		}
-	}
-}
 

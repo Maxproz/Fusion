@@ -396,6 +396,21 @@ public:
 
 	FOnShowErrorMessageUMG& OnShowErrorMessageUMG() { return OnShowErrorMessageUMGEvent; }
 
+	UFUNCTION(Exec)
+	void TestErrorMsg(FText Msg);
+
+
+	/** Delegate for destroying a session */
+	FOnDestroySessionCompleteDelegate OnDestroySessionCompleteDelegate;
+	/**
+	* Delegate fired when a destroying an online session has completed
+	*
+	* @param SessionName the name of the session this callback is for
+	* @param bWasSuccessful true if the async action completed without error, false if there was an error
+	*/
+	virtual void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
+
+	FDelegateHandle OnDestroySessionCompleteDelegateHandle;
 
 	/**
 	* gets the max number of players in the session
@@ -417,7 +432,9 @@ private:
 
 	UPROPERTY(config)
 	FString MainMenuMap;
-
+	
+	UPROPERTY()
+	FName MainMenuMapp = "/Game/Maps/FusionEntry";
 
 
 	FName CurrentState;
@@ -468,7 +485,7 @@ private:
 	FDelegateHandle OnSearchSessionsCompleteDelegateHandle;
 	FDelegateHandle OnStartSessionCompleteDelegateHandle;
 	FDelegateHandle OnEndSessionCompleteDelegateHandle;
-	FDelegateHandle OnDestroySessionCompleteDelegateHandle;
+	//FDelegateHandle OnDestroySessionCompleteDelegateHandle;
 	FDelegateHandle OnCreatePresenceSessionCompleteDelegateHandle;
 
 	/** Play Together on PS4 system event info */

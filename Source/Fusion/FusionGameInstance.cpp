@@ -127,6 +127,9 @@ void UFusionGameInstance::Init()
 	SessionInterface->AddOnSessionFailureDelegate_Handle(FOnSessionFailureDelegate::CreateUObject(this, &UFusionGameInstance::HandleSessionFailure));
 
 	OnEndSessionCompleteDelegate = FOnEndSessionCompleteDelegate::CreateUObject(this, &UFusionGameInstance::OnEndSessionComplete);
+	
+	OnDestroySessionCompleteDelegate = FOnDestroySessionCompleteDelegate::CreateUObject(this, &UFusionGameInstance::OnDestroySessionComplete);
+
 
 	OnFoundSessionsCompleteUMG().AddUObject(this, &UFusionGameInstance::OnFoundSessionsCompleteUMG);
 	OnGetSteamFriendRequestCompleteUMG().AddUObject(this, &UFusionGameInstance::OnGetSteamFriendRequestCompleteUMG);
@@ -151,6 +154,8 @@ void UFusionGameInstance::Shutdown()
 
 void UFusionGameInstance::HandleNetworkConnectionStatusChanged(EOnlineServerConnectionStatus::Type LastConnectionStatus, EOnlineServerConnectionStatus::Type ConnectionStatus)
 {
+	/*
+
 	UE_LOG(LogOnlineGame, Warning, TEXT("UFusionGameInstance::HandleNetworkConnectionStatusChanged: %s"), EOnlineServerConnectionStatus::ToString(ConnectionStatus));
 
 #if FUSION_CONSOLE_UI
@@ -178,6 +183,8 @@ void UFusionGameInstance::HandleNetworkConnectionStatusChanged(EOnlineServerConn
 
 	CurrentConnectionStatus = ConnectionStatus;
 #endif
+
+*/
 }
 
 void UFusionGameInstance::HandleSessionFailure(const FUniqueNetId& NetId, ESessionFailure::Type FailureType)
@@ -357,6 +364,8 @@ void UFusionGameInstance::GotoInitialState()
 
 void UFusionGameInstance::ShowMessageThenGotoState(const FText& Message, const FText& OKButtonString, const FText& CancelButtonString, const FName& NewState, const bool OverrideExisting, TWeakObjectPtr< ULocalPlayer > PlayerOwner)
 {
+
+
 	UE_LOG(LogOnline, Log, TEXT("ShowMessageThenGotoState: Message: %s, NewState: %s"), *Message.ToString(), *NewState.ToString());
 
 	const bool bAtWelcomeScreen = PendingState == FusionGameInstanceState::WelcomeScreen || CurrentState == FusionGameInstanceState::WelcomeScreen;
@@ -842,72 +851,6 @@ void UFusionGameInstance::EndPlayingState()
 	}
 }
 
-void UFusionGameInstance::OnEndSessionComplete(FName SessionName, bool bWasSuccessful)
-{
-	UE_LOG(LogOnline, Log, TEXT("UFusionGameInstance::OnEndSessionComplete: Session=%s bWasSuccessful=%s"), *SessionName.ToString(), bWasSuccessful ? TEXT("true") : TEXT("false"));
-
-	IOnlineSubsystem* OnlineSub = IOnlineSubsystem::Get();
-	if (OnlineSub)
-	{
-		IOnlineSessionPtr Sessions = OnlineSub->GetSessionInterface();
-		if (Sessions.IsValid())
-		{
-			Sessions->ClearOnStartSessionCompleteDelegate_Handle(OnStartSessionCompleteDelegateHandle);
-			Sessions->ClearOnEndSessionCompleteDelegate_Handle(OnEndSessionCompleteDelegateHandle);
-			Sessions->ClearOnDestroySessionCompleteDelegate_Handle(OnDestroySessionCompleteDelegateHandle);
-		}
-	}
-
-	// continue
-	CleanupSessionOnReturnToMenu();
-}
-
-void UFusionGameInstance::CleanupSessionOnReturnToMenu()
-{
-	bool bPendingOnlineOp = false;
-
-	// end online game and then destroy it
-	IOnlineSubsystem * OnlineSub = IOnlineSubsystem::Get();
-	IOnlineSessionPtr Sessions = (OnlineSub != NULL) ? OnlineSub->GetSessionInterface() : NULL;
-
-	if (Sessions.IsValid())
-	{
-		EOnlineSessionState::Type SessionState = Sessions->GetSessionState(GameSessionName);
-		UE_LOG(LogOnline, Log, TEXT("Session %s is '%s'"), *GameSessionName.ToString(), EOnlineSessionState::ToString(SessionState));
-
-		if (EOnlineSessionState::InProgress == SessionState)
-		{
-			UE_LOG(LogOnline, Log, TEXT("Ending session %s on return to main menu"), *GameSessionName.ToString());
-			OnEndSessionCompleteDelegateHandle = Sessions->AddOnEndSessionCompleteDelegate_Handle(OnEndSessionCompleteDelegate);
-			Sessions->EndSession(GameSessionName);
-			bPendingOnlineOp = true;
-		}
-		else if (EOnlineSessionState::Ending == SessionState)
-		{
-			UE_LOG(LogOnline, Log, TEXT("Waiting for session %s to end on return to main menu"), *GameSessionName.ToString());
-			OnEndSessionCompleteDelegateHandle = Sessions->AddOnEndSessionCompleteDelegate_Handle(OnEndSessionCompleteDelegate);
-			bPendingOnlineOp = true;
-		}
-		else if (EOnlineSessionState::Ended == SessionState || EOnlineSessionState::Pending == SessionState)
-		{
-			UE_LOG(LogOnline, Log, TEXT("Destroying session %s on return to main menu"), *GameSessionName.ToString());
-			OnDestroySessionCompleteDelegateHandle = Sessions->AddOnDestroySessionCompleteDelegate_Handle(OnEndSessionCompleteDelegate);
-			Sessions->DestroySession(GameSessionName);
-			bPendingOnlineOp = true;
-		}
-		else if (EOnlineSessionState::Starting == SessionState)
-		{
-			UE_LOG(LogOnline, Log, TEXT("Waiting for session %s to start, and then we will end it to return to main menu"), *GameSessionName.ToString());
-			OnStartSessionCompleteDelegateHandle = Sessions->AddOnStartSessionCompleteDelegate_Handle(OnEndSessionCompleteDelegate);
-			bPendingOnlineOp = true;
-		}
-	}
-
-	if (!bPendingOnlineOp)
-	{
-		//GEngine->HandleDisconnect( GetWorld(), GetWorld()->GetNetDriver() );
-	}
-}
 
 void UFusionGameInstance::LabelPlayerAsQuitter(ULocalPlayer* LocalPlayer) const
 {
@@ -938,7 +881,7 @@ void UFusionGameInstance::AddNetworkFailureHandlers()
 
 TSubclassOf<UOnlineSession> UFusionGameInstance::GetOnlineSessionClass()
 {
-	return UFusionOnlineSessionClient::StaticClass();
+	return UOnlineSessionClient::StaticClass();
 }
 
 // starts playing a game as the host
@@ -1068,6 +1011,7 @@ bool UFusionGameInstance::PlayDemo(ULocalPlayer* LocalPlayer, const FString& Dem
 /** Callback which is intended to be called upon finding sessions */
 void UFusionGameInstance::OnJoinSessionComplete(EOnJoinSessionCompleteResult::Type Result)
 {
+	/*
 	// unhook the delegate
 	AFusionGameSession* const GameSession = GetGameSession();
 	if (GameSession)
@@ -1090,10 +1034,12 @@ void UFusionGameInstance::OnJoinSessionComplete(EOnJoinSessionCompleteResult::Ty
 		// We either failed or there is only a single local user
 		FinishJoinSession(Result);
 	}
+	*/
 }
 
 void UFusionGameInstance::FinishJoinSession(EOnJoinSessionCompleteResult::Type Result)
 {
+	/*
 	if (Result != EOnJoinSessionCompleteResult::Success)
 	{
 		FText ReturnReason;
@@ -1117,15 +1063,18 @@ void UFusionGameInstance::FinishJoinSession(EOnJoinSessionCompleteResult::Type R
 	}
 
 	InternalTravelToSession(GameSessionName);
+
+	*/
 }
 
 void UFusionGameInstance::OnRegisterJoiningLocalPlayerComplete(const FUniqueNetId& PlayerId, EOnJoinSessionCompleteResult::Type Result)
 {
-	FinishJoinSession(Result);
+	//FinishJoinSession(Result);
 }
 
 void UFusionGameInstance::InternalTravelToSession(const FName& SessionName)
 {
+	/*
 	APlayerController * const PlayerController = GetFirstLocalPlayerController();
 
 	if (PlayerController == nullptr)
@@ -1162,11 +1111,13 @@ void UFusionGameInstance::InternalTravelToSession(const FName& SessionName)
 	}
 
 	PlayerController->ClientTravel(URL, TRAVEL_Absolute);
+	*/
 }
 
 /** Callback which is intended to be called upon session creation */
 void UFusionGameInstance::OnCreatePresenceSessionComplete(FName SessionName, bool bWasSuccessful)
 {
+	/*
 	AFusionGameSession* const GameSession = GetGameSession();
 	if (GameSession)
 	{
@@ -1188,12 +1139,15 @@ void UFusionGameInstance::OnCreatePresenceSessionComplete(FName SessionName, boo
 			FinishSessionCreation(bWasSuccessful ? EOnJoinSessionCompleteResult::Success : EOnJoinSessionCompleteResult::UnknownError);
 		}
 	}
+	*/
 }
 
 /** Initiates the session searching */
 bool UFusionGameInstance::FindSessions(ULocalPlayer* PlayerOwner, bool bFindLAN)
 {
+	
 	bool bResult = false;
+	/*
 
 	check(PlayerOwner != nullptr);
 	if (PlayerOwner)
@@ -1210,18 +1164,21 @@ bool UFusionGameInstance::FindSessions(ULocalPlayer* PlayerOwner, bool bFindLAN)
 			bResult = true;
 		}
 	}
-
+	*/
 	return bResult;
 }
 
 /** Callback which is intended to be called upon finding sessions */
 void UFusionGameInstance::OnSearchSessionsComplete(bool bWasSuccessful)
 {
+	/*
 	AFusionGameSession* const Session = GetGameSession();
 	if (Session)
 	{
 		Session->OnFindSessionsComplete().Remove(OnSearchSessionsCompleteDelegateHandle);
 	}
+	*/
+
 }
 
 bool UFusionGameInstance::Tick(float DeltaSeconds)
@@ -1891,11 +1848,12 @@ void UFusionGameInstance::DisplayOnlinePrivilegeFailureDialogs(const FUniqueNetI
 
 void UFusionGameInstance::OnRegisterLocalPlayerComplete(const FUniqueNetId& PlayerId, EOnJoinSessionCompleteResult::Type Result)
 {
-	FinishSessionCreation(Result);
+	//FinishSessionCreation(Result);
 }
 
 void UFusionGameInstance::FinishSessionCreation(EOnJoinSessionCompleteResult::Type Result)
 {
+	/*
 	if (Result == EOnJoinSessionCompleteResult::Success)
 	{
 		// This will send any Play Together invites if necessary, or do nothing.
@@ -1910,6 +1868,7 @@ void UFusionGameInstance::FinishSessionCreation(EOnJoinSessionCompleteResult::Ty
 		FText OKButton = NSLOCTEXT("DialogButtons", "OKAY", "OK");
 		ShowMessageThenGoMain(ReturnReason, OKButton, FText::GetEmpty());
 	}
+	*/
 }
 
 void UFusionGameInstance::BeginHostingQuickMatch()
@@ -2025,6 +1984,7 @@ void UFusionGameInstance::JoinOnlineGame(int32 SessionIndex)
 }
 
 
+
 void UFusionGameInstance::DestroySessionAndLeaveGame()
 {
 	IOnlineSubsystem* OnlineSub = IOnlineSubsystem::Get();
@@ -2033,11 +1993,38 @@ void UFusionGameInstance::DestroySessionAndLeaveGame()
 		IOnlineSessionPtr Sessions = OnlineSub->GetSessionInterface();
 		if (Sessions.IsValid())
 		{
-			Sessions->AddOnDestroySessionCompleteDelegate_Handle(GetGameSession()->OnDestroySessionCompleteDelegate);
+			Sessions->AddOnDestroySessionCompleteDelegate_Handle(OnDestroySessionCompleteDelegate);
 			Sessions->DestroySession(GameSessionName);
 		}
 	}
 }
+
+void UFusionGameInstance::OnDestroySessionComplete(FName SessionName, bool bWasSuccessful)
+{
+	//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, FString::Printf(TEXT("OnDestroySessionComplete %s, %d"), *SessionName.ToString(), bWasSuccessful));
+	// Get the OnlineSubsystem we want to work with
+	IOnlineSubsystem* OnlineSub = IOnlineSubsystem::Get();
+	if (OnlineSub)
+	{
+		// Get the SessionInterface from the OnlineSubsystem
+		IOnlineSessionPtr Sessions = OnlineSub->GetSessionInterface();
+		if (Sessions.IsValid())
+		{
+			// Clear the Delegate
+			Sessions->ClearOnDestroySessionCompleteDelegate_Handle(OnDestroySessionCompleteDelegateHandle);
+
+			//HostSettings = NULL;
+
+			// If it was successful, we just load another level (could be a MainMenu!)
+			if (bWasSuccessful)
+			{
+				// Was doing this inside "Handle Match Has Ended I think 
+				UGameplayStatics::OpenLevel(GetWorld(), MainMenuMapp, true);
+			}
+		}
+	}
+}
+
 
 
 bool UFusionGameInstance::IsOnlineSubsystemSteam() const
@@ -2095,6 +2082,11 @@ void UFusionGameInstance::OnGetSteamFriendRequestCompleteUMG(const TArray<FSteam
 	
 }
 
+void UFusionGameInstance::TestErrorMsg(FText Msg)
+{
+	OnShowErrorMessageUMG().Broadcast(Msg);
+}
+
 void UFusionGameInstance::OnShowErrorMessageUMG(const FText & ErrorMessage)
 {
 	ULocalPlayer* const Player = GetFirstGamePlayer();
@@ -2103,6 +2095,12 @@ void UFusionGameInstance::OnShowErrorMessageUMG(const FText & ErrorMessage)
 	if (LPC)
 	{
 		UOkErrorMessage_Widget* OkErrorMessage_Widget = LPC->GetFusionHUD()->GetErrorMessageWidget();
+		if (!OkErrorMessage_Widget)
+		{
+			UOkErrorMessage_Widget* OkErrorMessage_Widget = CreateWidget<UOkErrorMessage_Widget>(LPC, LPC->GetFusionHUD()->UOkErrorMessage_WidgetTemplate);
+			OkErrorMessage_Widget->AddToViewport(2);
+		}
+
 		// if the widget was created already, change the error text and display it
 		OkErrorMessage_Widget->ErrorText = ErrorMessage;
 		OkErrorMessage_Widget->ShowWidget();
@@ -2112,15 +2110,17 @@ void UFusionGameInstance::OnShowErrorMessageUMG(const FText & ErrorMessage)
 	AFusionPlayerController_Menu* MPC = Cast<AFusionPlayerController_Menu>(Player->GetPlayerController(GetWorld()));
 	if (MPC)
 	{
-		UOkErrorMessage_Widget* OkErrorMessage_Widget = LPC->GetFusionHUD()->GetErrorMessageWidget();
+		UOkErrorMessage_Widget* OkErrorMessage_Widget = MPC->GetFusionHUD()->GetErrorMessageWidget();
+		if (!OkErrorMessage_Widget)
+		{
+			UOkErrorMessage_Widget* OkErrorMessage_Widget = CreateWidget<UOkErrorMessage_Widget>(MPC, MPC->GetFusionHUD()->UOkErrorMessage_WidgetTemplate);
+			OkErrorMessage_Widget->AddToViewport(2);
+		}
 		// if the widget was created already, change the error text and display it
 		OkErrorMessage_Widget->ErrorText = ErrorMessage;
 		OkErrorMessage_Widget->ShowWidget();
 	}
 
-
-	// TODO: if the widget was not created before, create it, set the error text and then show it to the player
-	// Note: It should always be created here so I might not need to do the TODO: here
 }
 
 
@@ -2171,7 +2171,7 @@ void UFusionGameInstance::OnReadFriendsListCompleted(int32 LocalUserNum, bool bW
 		}
 	}
 	else
-		OnShowErrorMessageUMG().Broadcast(FText::FromString(ErrorString));
+		OnShowErrorMessageUMG().Broadcast(FText::FromString(TEXT("ErrorString")));
 }
 
 void UFusionGameInstance::GetSteamFriendsList(APlayerController *PlayerController)
@@ -2306,18 +2306,77 @@ void UFusionGameInstance::OnSessionUserInviteAccepted(bool bWasSuccessful, int32
 	}
 }
 
-/*
-int32 UFusionGameInstance::GetSessionMaxPlayers() const
-{ 
-	AFusionGameSession* IsValidSession = GetGameSession();
+void UFusionGameInstance::OnEndSessionComplete(FName SessionName, bool bWasSuccessful)
+{
+	/*
+	UE_LOG(LogOnline, Log, TEXT("UFusionGameInstance::OnEndSessionComplete: Session=%s bWasSuccessful=%s"), *SessionName.ToString(), bWasSuccessful ? TEXT("true") : TEXT("false"));
 
-	if (IsValidSession)
+	IOnlineSubsystem* OnlineSub = IOnlineSubsystem::Get();
+	if (OnlineSub)
 	{
-		return GetGameSession()->GetSessionMaxPlayers();
+		IOnlineSessionPtr Sessions = OnlineSub->GetSessionInterface();
+		if (Sessions.IsValid())
+		{
+			Sessions->ClearOnStartSessionCompleteDelegate_Handle(OnStartSessionCompleteDelegateHandle);
+			Sessions->ClearOnEndSessionCompleteDelegate_Handle(OnEndSessionCompleteDelegateHandle);
+			Sessions->ClearOnDestroySessionCompleteDelegate_Handle(OnDestroySessionCompleteDelegateHandle);
+
+		}
 	}
-	else
-	{
-		return 1;
-	}
+
+	// continue
+	CleanupSessionOnReturnToMenu();
+	*/
 }
-*/
+
+void UFusionGameInstance::CleanupSessionOnReturnToMenu()
+{
+	
+	/*
+	bool bPendingOnlineOp = false;
+
+	// end online game and then destroy it
+	IOnlineSubsystem * OnlineSub = IOnlineSubsystem::Get();
+	IOnlineSessionPtr Sessions = (OnlineSub != NULL) ? OnlineSub->GetSessionInterface() : NULL;
+
+	if (Sessions.IsValid())
+	{
+		EOnlineSessionState::Type SessionState = Sessions->GetSessionState(GameSessionName);
+		UE_LOG(LogOnline, Log, TEXT("Session %s is '%s'"), *GameSessionName.ToString(), EOnlineSessionState::ToString(SessionState));
+
+		if (EOnlineSessionState::InProgress == SessionState)
+		{
+			UE_LOG(LogOnline, Log, TEXT("Ending session %s on return to main menu"), *GameSessionName.ToString());
+			OnEndSessionCompleteDelegateHandle = Sessions->AddOnEndSessionCompleteDelegate_Handle(OnEndSessionCompleteDelegate);
+			Sessions->EndSession(GameSessionName);
+			bPendingOnlineOp = true;
+		}
+		else if (EOnlineSessionState::Ending == SessionState)
+		{
+			UE_LOG(LogOnline, Log, TEXT("Waiting for session %s to end on return to main menu"), *GameSessionName.ToString());
+			OnEndSessionCompleteDelegateHandle = Sessions->AddOnEndSessionCompleteDelegate_Handle(OnEndSessionCompleteDelegate);
+			bPendingOnlineOp = true;
+		}
+		else if (EOnlineSessionState::Ended == SessionState || EOnlineSessionState::Pending == SessionState)
+		{
+			UE_LOG(LogOnline, Log, TEXT("Destroying session %s on return to main menu"), *GameSessionName.ToString());
+			OnDestroySessionCompleteDelegateHandle = Sessions->AddOnDestroySessionCompleteDelegate_Handle(OnEndSessionCompleteDelegate);
+			Sessions->DestroySession(GameSessionName);
+			bPendingOnlineOp = true;
+		}
+		else if (EOnlineSessionState::Starting == SessionState)
+		{
+			UE_LOG(LogOnline, Log, TEXT("Waiting for session %s to start, and then we will end it to return to main menu"), *GameSessionName.ToString());
+			OnStartSessionCompleteDelegateHandle = Sessions->AddOnStartSessionCompleteDelegate_Handle(OnEndSessionCompleteDelegate);
+			bPendingOnlineOp = true;
+		}
+	}
+
+	if (!bPendingOnlineOp)
+	{
+		//GEngine->HandleDisconnect( GetWorld(), GetWorld()->GetNetDriver() );
+	}
+	*/
+	
+}
+

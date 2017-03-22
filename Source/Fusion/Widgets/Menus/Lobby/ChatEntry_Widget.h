@@ -19,6 +19,10 @@ public:
 
 	void SplitPlayerNameAndChatMessage(FText& PlayerName, FText& ChatMessage);
 
+	void SetChatEntryText(FText IncomingChatMessage) { ChatEntryText = IncomingChatMessage; }
+
+	void UpdateChatEntryAfterCreation();
+
 protected:
 	
 	UPROPERTY(meta = (BindWidget))

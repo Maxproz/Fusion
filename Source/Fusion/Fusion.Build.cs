@@ -8,7 +8,7 @@ public class Fusion : ModuleRules
     {
         PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "UMG", "Engine", "InputCore", "OnlineSubsystem", "OnlineSubsystemUtils" });
 
-       // DynamicallyLoadedModuleNames.Add("OnlineSubsystemNull");
+        DynamicallyLoadedModuleNames.Add("OnlineSubsystemNull");
         DynamicallyLoadedModuleNames.Add("OnlineSubsystemSteam");
   
         PrivateDependencyModuleNames.Add("Steamworks");

@@ -39,9 +39,11 @@ class FUSION_API AFusionGameSession : public AGameSession
 	GENERATED_UCLASS_BODY()
 
 public:
-	/** Delegate for destroying a session */
-	FOnDestroySessionCompleteDelegate OnDestroySessionCompleteDelegate;
-	
+
+
+
+	//void DestroySessionAndLeaveGame();
+
 protected:
 
 	/** Delegate for creating a new session */
@@ -96,15 +98,6 @@ protected:
 	* @param bWasSuccessful true if the async action completed without error, false if there was an error
 	*/
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
-
-	/**
-	* Delegate fired when a destroying an online session has completed
-	*
-	* @param SessionName the name of the session this callback is for
-	* @param bWasSuccessful true if the async action completed without error, false if there was an error
-	*/
-	virtual void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
-
 
 
 	/*
@@ -205,7 +198,7 @@ public:
 	/** Handles to various registered delegates */
 	FDelegateHandle OnStartSessionCompleteDelegateHandle;
 	FDelegateHandle OnCreateSessionCompleteDelegateHandle;
-	FDelegateHandle OnDestroySessionCompleteDelegateHandle;
+
 	FDelegateHandle OnFindSessionsCompleteDelegateHandle;
 	FDelegateHandle OnJoinSessionCompleteDelegateHandle;
 	

@@ -15,10 +15,18 @@ void UChatEntry_Widget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
+
+}
+
+void UChatEntry_Widget::UpdateChatEntryAfterCreation()
+{
 	FText OutPlayerNameText;
 	FText OutChatMessageText;
 
 	SplitPlayerNameAndChatMessage(OutPlayerNameText, OutChatMessageText);
+
+	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Emerald, *FString::Printf(TEXT("OutPlayerNameText: %s"), *OutPlayerNameText.ToString()));
+	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Emerald, *FString::Printf(TEXT("OutChatMessageText: %s"), *OutChatMessageText.ToString()));
 
 	PlayerNameTextBlock->SetText(OutPlayerNameText);
 	ChatEntryTextblock->SetText(OutChatMessageText);

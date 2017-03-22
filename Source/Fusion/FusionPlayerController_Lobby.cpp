@@ -107,11 +107,14 @@ void AFusionPlayerController_Lobby::KickPlayer(int32 PlayerIndex)
 void AFusionPlayerController_Lobby::Client_GotKicked_Implementation()
 {
 	//get the game Instance to make the player destroy his session and leave game
-	UFusionGameInstance* NetworkedGameInstance = Cast<UFusionGameInstance>(GetWorld()->GetGameInstance());
+
+	UFusionGameInstance* NetworkedGameInstance = Cast<UFusionGameInstance>(GetGameInstance());
+	
+
 	if (NetworkedGameInstance)
 	{
 		//show the player that he got kicked in message in UMG
-		NetworkedGameInstance->ShowErrorMessage(FText::FromString("You got kicked from the server"));
+		NetworkedGameInstance->ShowErrorMessage(FText::FromString(TEXT("You got kicked from the server")));
 		//make the player call the game Instance to destroy his session
 		NetworkedGameInstance->DestroySessionAndLeaveGame();
 	}

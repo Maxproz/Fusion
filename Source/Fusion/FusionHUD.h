@@ -38,6 +38,8 @@ public:
 	TSubclassOf<class UPasswordEnterPopup_Widget> PasswordEnterPopup_WidgetTemplate;
 	UPROPERTY(EditDefaultsOnly, Category = "Lobby Widgets")
 	TSubclassOf<class UServerMenuStats_Widget> ServerMenuStats_WidgetTemplate;
+	UPROPERTY(EditDefaultsOnly, Category = "Error Widgets")
+	TSubclassOf<class UOkErrorMessage_Widget> UOkErrorMessage_WidgetTemplate;
 
 
 	FORCEINLINE UInGameHUD* GetInGameHUDWidget() const { return ActiveInGameHUDWidget; }

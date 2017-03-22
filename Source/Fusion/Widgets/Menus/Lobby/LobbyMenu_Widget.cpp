@@ -34,6 +34,7 @@ void ULobbyMenu_Widget::NativeConstruct()
 
 	bool IsThisServer = UKismetSystemLibrary::IsServer(GetWorld());
 	
+
 	KickPlayerButton->SetIsEnabled(IsThisServer);
 	SettingsButton->SetIsEnabled(IsThisServer);
 	
@@ -72,6 +73,8 @@ void ULobbyMenu_Widget::NativeConstruct()
 void ULobbyMenu_Widget::OnReceiveChatMessageComplete(FText ChatMessage)
 {
 	UChatEntry_Widget* EntryWidget = CreateWidget<UChatEntry_Widget>(LobbyPlayerControllerRef, LobbyPlayerControllerRef->GetFusionHUD()->ChatEntry_WidgetTemplate);
+	EntryWidget->SetChatEntryText(ChatMessage);
+	EntryWidget->UpdateChatEntryAfterCreation();
 	ChatEntriesScrollBox->AddChild(EntryWidget);
 	ChatEntriesScrollBox->ScrollToEnd();
 }
