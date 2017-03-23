@@ -113,6 +113,7 @@ void AFusionPlayerController::BeginPlay()
 	{
 		GetFusionHUD()->CreateGameWidgets();
 
+		//GetFusionHUD()->GetInGameHUDWidget()->PlayerControllerRef = this;
 		ClientShowInGameHUD();
 	}
 }
@@ -251,8 +252,9 @@ void AFusionPlayerController::UnFreeze()
 	Super::UnFreeze();
 
 	ServerRestartPlayer();
+	
+	
 }
-
 
 void AFusionPlayerController::FailedToSpawnPawn()
 {
@@ -1357,7 +1359,7 @@ void AFusionPlayerController::PreClientTravel(const FString& PendingURL, ETravel
 		{
 			// Passing true to bFocus here ensures that focus is returned to the game viewport.
 			//FusionHUD->ShowScoreboard(false, true);
-			FusionHUD->GetInGameHUDWidget()->ShowInGameHUD();
+			//FusionHUD->GetInGameHUDWidget()->ShowInGameHUD();
 		}
 	}
 }

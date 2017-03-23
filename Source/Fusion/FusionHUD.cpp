@@ -69,9 +69,8 @@ void AFusionHUD::CreateServerMenuWidget()
 	if (ActiveServerMenuWidget != nullptr) return;
 	ActiveServerMenuWidget = CreateWidget<UServerMenu_Widget>(GetOwningPlayerController(), ServerMenuWidget.LoadSynchronous());
 	
-	APlayerController* PC = Cast<APlayerController>(GetOwningPlayerController());
 
-	ActiveServerMenuWidget->GameInstanceRef = Cast<UFusionGameInstance>(PC->GetGameInstance()); // doing this inside of NativeConstructNow
+	ActiveServerMenuWidget->GameInstanceRef = Cast<UFusionGameInstance>(MPC->GetGameInstance()); // doing this inside of NativeConstructNow
 	ActiveServerMenuWidget->AddToViewport(0);
 	ActiveServerMenuWidget->SetVisibility(ESlateVisibility::Hidden);
 }
@@ -79,8 +78,8 @@ void AFusionHUD::CreateServerMenuWidget()
 void AFusionHUD::CreateErrorMessageWidget()
 {
 	if (ActiveErrorMessageWidget != nullptr) return;
-	
 	ActiveErrorMessageWidget = CreateWidget<UOkErrorMessage_Widget>(GetOwningPlayerController(), ErrorMessageWidget.LoadSynchronous());
+	
 	ActiveErrorMessageWidget->AddToViewport(0);
 	ActiveErrorMessageWidget->SetVisibility(ESlateVisibility::Hidden);
 }

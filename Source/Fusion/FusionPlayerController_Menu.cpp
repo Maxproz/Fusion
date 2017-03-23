@@ -22,11 +22,11 @@ void AFusionPlayerController_Menu::BeginPlay()
 	{
 		GetFusionHUD()->CreateGameWidgets();
 		ClientShowMainMenu();
+
+		bShowMouseCursor = true;
+		ClientIgnoreLookInput(true);
+		ClientIgnoreMoveInput(true);
 	}
-	
-
-	bShowMouseCursor = true;
-
 }
 
 void AFusionPlayerController_Menu::PostInitializeComponents()

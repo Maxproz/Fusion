@@ -20,7 +20,6 @@ void UServerMenu_Widget::NativeConstruct()
 	Super::NativeConstruct();
 
 
-
 	SessionSearchCompleatedEvent.AddUObject(this, &UServerMenu_Widget::OnSessionSearchCompleated);
 
 	LanPlayerNameTextbox->OnTextChanged.AddDynamic(this, &UServerMenu_Widget::OnTextChangedLanPlayerNameTextbox);
@@ -31,8 +30,6 @@ void UServerMenu_Widget::NativeConstruct()
 	BackButton->OnClicked.AddDynamic(this, &UServerMenu_Widget::OnClickedBackButton);
 	BackButton2->OnClicked.AddDynamic(this, &UServerMenu_Widget::OnClickedBackButton2);
 	RefreshButton->OnClicked.AddDynamic(this, &UServerMenu_Widget::OnClickedRefreshButton);
-
-
 
 }
 

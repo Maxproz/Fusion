@@ -13,7 +13,7 @@
 
 AFusionGame_Menu::AFusionGame_Menu(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-	DefaultPawnClass = AMenu_Pawn::StaticClass();
+	
 	PlayerControllerClass = AFusionPlayerController_Menu::StaticClass();
 
 
@@ -26,6 +26,8 @@ void AFusionGame_Menu::RestartPlayer(class AController* NewPlayer)
 
 
 }
+
+
 
 /** Returns game session class to use */
 TSubclassOf<AGameSession> AFusionGame_Menu::GetGameSessionClass() const

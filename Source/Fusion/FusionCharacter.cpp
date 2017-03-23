@@ -118,27 +118,11 @@ void AFusionCharacter::BeginPlay()
 	// Initatite our OnTick Function for shield recharging behaviour
 	RechargeShields();
 
-
+	PlayerHUD = Cast<AFusionPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0))->GetFusionHUD();
 	
-	//PlayerHUD = Cast<AFusionPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0))->GetFusionHUD();
-	
-
 	//if (PlayerHUD)
-	//{
-		//PlayerHUD->CreateGameWidgets();
-		//PlayerHUD->GetMainMenuUIWidget()->ShowMainMenu();
-		//PlayerHUD->GetInGameHUDWidget()->ShowInGameHUD();
-	//}
-
-	/*
-	PlayerHUD = Cast<AFusionPlayerController_Menu>(UGameplayStatics::GetPlayerController(GetWorld(), 0))->GetFusionHUD();
-
-	if (PlayerHUD)
-	{
-		PlayerHUD->CreateGameWidgets();
-		PlayerHUD->GetMainMenuUIWidget()->ShowMainMenu();
-	}*/
-
+		//PlayerHUD->GetInGameHUDWidget()->PawnReference = this;
+	
 
 }
 
@@ -183,14 +167,15 @@ void AFusionCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	/*
-	if (PlayerHUD)
-	{
-		if (PlayerHUD->GetInGameHUDWidget()->IsHealthBarValid())
-		{
-			PlayerHUD->GetInGameHUDWidget()->UpdatePlayerHealthBar(GetHealth());
-		}
-	}*/
+
+	//if (PlayerHUD)
+	//{
+
+		//PlayerHUD->GetInGameHUDWidget()->UpdateDynamicInfo(DeltaTime, GetShields(), GetHealth());
+		//PlayerHUD->GetInGameHUDWidget()->UpdatePlayerHealthBar(GetHealth());
+		//PlayerHUD->GetInGameHUDWidget()->UpdatePlayerShieldBar(GetShields());
+	//}
+
 
 
 	if (bWantsToSprint && !IsSprinting())

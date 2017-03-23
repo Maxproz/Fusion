@@ -19,8 +19,8 @@ void ANetworkLobbyPlayerState::BeginPlay()
 
 	//change the player name to the name in the game insance if it is on lan
 	ChangePlayerName();
-
 }
+
 
 void ANetworkLobbyPlayerState::ChangePlayerName()
 {

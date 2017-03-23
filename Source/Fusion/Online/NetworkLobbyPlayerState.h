@@ -21,6 +21,7 @@ public:
 
 	virtual void BeginPlay() override;
 
+
 	UPROPERTY(Replicated)
 	bool bIsReady;
 
