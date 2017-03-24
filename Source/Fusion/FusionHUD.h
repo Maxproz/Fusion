@@ -9,7 +9,7 @@ class UMainMenuUI;
 class UServerMenu_Widget;
 class UOkErrorMessage_Widget;
 class ULobbyMenu_Widget;
-
+class UFusionMessageMenu_Widget;
 
 UENUM(BlueprintType)
 enum class EHUDState : uint8
@@ -40,13 +40,15 @@ public:
 	TSubclassOf<class UServerMenuStats_Widget> ServerMenuStats_WidgetTemplate;
 	UPROPERTY(EditDefaultsOnly, Category = "Error Widgets")
 	TSubclassOf<class UOkErrorMessage_Widget> UOkErrorMessage_WidgetTemplate;
-
+	UPROPERTY(EditDefaultsOnly, Category = "Error Widgets")
+	TSubclassOf<class UConfirmationDialog_Widget> ConfirmationDialog_WidgetTemplate;
 
 	FORCEINLINE UInGameHUD* GetInGameHUDWidget() const { return ActiveInGameHUDWidget; }
 	FORCEINLINE UMainMenuUI* GetMainMenuUIWidget() const { return ActiveMainMenuUIWidget; }
 	FORCEINLINE UServerMenu_Widget* GetServerMenuWidget() const { return ActiveServerMenuWidget; }
 	FORCEINLINE UOkErrorMessage_Widget* GetErrorMessageWidget() const { return ActiveErrorMessageWidget; }
 	FORCEINLINE ULobbyMenu_Widget* GetLobbyMenuWidget() const { return ActiveLobbyMenuWidget; }
+	FORCEINLINE UFusionMessageMenu_Widget* GetMessageMenuWidget() const { return ActiveFusionMessageMenu_Widget; }
 
 protected:
 	//////////////////////////////////
@@ -64,6 +66,8 @@ protected:
 	TAssetSubclassOf<UOkErrorMessage_Widget> ErrorMessageWidget;
 	UPROPERTY(EditDefaultsOnly, Category = "Lobby Widgets")
 	TAssetSubclassOf<ULobbyMenu_Widget> LobbyMenuWidget;
+	UPROPERTY(EditDefaultsOnly, Category = "Menu Widgets") // NOTE: Not being loaded from the HUD, its being loaded using the Confirmdialog widget
+	TAssetSubclassOf<UFusionMessageMenu_Widget> MessageMenuWidget;
 
 
 	// Active Widgets
@@ -72,14 +76,14 @@ protected:
 	UServerMenu_Widget* ActiveServerMenuWidget;
 	UOkErrorMessage_Widget* ActiveErrorMessageWidget;
 	ULobbyMenu_Widget* ActiveLobbyMenuWidget;
-
+	UFusionMessageMenu_Widget* ActiveFusionMessageMenu_Widget;
 
 	void CreateInGameHUDWidget();
 	void CreateMainMenuUIWidget();
 	void CreateServerMenuWidget();
 	void CreateErrorMessageWidget();
 	void CreateLobbyMenuWidget();
-
+	void CreateMessageMenuWidget();
 
 public:
 
@@ -96,6 +100,8 @@ public:
 	void ShowLobbyMenu();
 	void HideLobbyMenu();
 
+	void ShowMessageMenu();
+	void HideMessageMenu();
 
 
 

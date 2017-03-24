@@ -19,6 +19,8 @@
 #include "Widgets/Menus/PasswordEnterPopup_Widget.h"
 #include "Widgets/Menus/ServerMenuStats_Widget.h"
 
+#include "Widgets/Menus/FusionMessageMenu_Widget.h"
+#include "Widgets/Menus/ConfirmationDialog_Widget.h"
 
 #include "Engine/Canvas.h"
 #include "TextureResource.h"
@@ -96,6 +98,18 @@ void AFusionHUD::CreateLobbyMenuWidget()
 	ActiveLobbyMenuWidget->SetVisibility(ESlateVisibility::Hidden);
 }
 
+void AFusionHUD::CreateMessageMenuWidget()
+{
+	AFusionPlayerController_Menu* MPC = Cast<AFusionPlayerController_Menu>(GetOwningPlayerController());
+	if (!MPC) return;
+
+	if (ActiveFusionMessageMenu_Widget != nullptr) return;
+
+	ActiveFusionMessageMenu_Widget = CreateWidget<UFusionMessageMenu_Widget>(GetOwningPlayerController(), MessageMenuWidget.LoadSynchronous());
+	ActiveFusionMessageMenu_Widget->AddToViewport(2);
+	ActiveFusionMessageMenu_Widget->SetVisibility(ESlateVisibility::Hidden);
+}
+
 void AFusionHUD::CreateGameWidgets()
 {
 	CreateInGameHUDWidget();
@@ -103,6 +117,7 @@ void AFusionHUD::CreateGameWidgets()
 	CreateServerMenuWidget();
 	CreateErrorMessageWidget();
 	CreateLobbyMenuWidget();
+	CreateMessageMenuWidget();
 }
 
 
@@ -120,6 +135,9 @@ void AFusionHUD::HideServerMenu() { GetServerMenuWidget()->HideWidget(); }
 
 void AFusionHUD::ShowLobbyMenu() { GetLobbyMenuWidget()->ShowWidget(); }
 void AFusionHUD::HideLobbyMenu() { GetLobbyMenuWidget()->HideWidget(); }
+
+void AFusionHUD::ShowMessageMenu() { GetMessageMenuWidget()->ShowWidget(); }
+void AFusionHUD::HideMessageMenu() { GetMessageMenuWidget()->HideWidget(); }
 
 
 void AFusionHUD::DrawHUD()

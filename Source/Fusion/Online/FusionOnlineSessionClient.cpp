@@ -59,6 +59,6 @@ void UFusionOnlineSessionClient::OnPlayTogetherEventReceived(int32 UserIndex, TA
 {
 	if (UFusionGameInstance* const FusionGameInstance = Cast<UFusionGameInstance>(GetGameInstance()))
 	{
-		FusionGameInstance->OnPlayTogetherEventReceived(UserIndex, UserIdList);
+		//FusionGameInstance->OnPlayTogetherEventReceived(UserIndex, UserIdList);
 	}
 }

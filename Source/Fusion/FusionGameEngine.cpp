@@ -42,12 +42,10 @@ void UFusionGameEngine::HandleNetworkFailure(UWorld *World, UNetDriver *NetDrive
 					UFusionGameInstance* const FusionInstance = Cast<UFusionGameInstance>(GameInstance);
 					if (FusionInstance && NetDriver->GetNetMode() == NM_Client)
 					{
-						const FText OKButton = NSLOCTEXT("DialogButtons", "OKAY", "OK");
-
 						// NOTE - We pass in false here to not override the message if we are already going to the main menu
 						// We're going to make the assumption that someone else has a better message than "Lost connection to host" if
 						// this is the case
-						FusionInstance->ShowMessageThenGotoState(FText::FromString(ErrorString), OKButton, FText::GetEmpty(), FusionGameInstanceState::MainMenu, false);
+						FusionInstance->ShowMessageThenGotoState(FText::FromString(ErrorString), FusionGameInstanceState::MainMenu, false);
 					}
 					break;
 				}
@@ -56,12 +54,11 @@ void UFusionGameEngine::HandleNetworkFailure(UWorld *World, UNetDriver *NetDrive
 					UFusionGameInstance* const GI = Cast<UFusionGameInstance>(GameInstance);
 					if (GI && NetDriver->GetNetMode() == NM_Client)
 					{
-						const FText OKButton = NSLOCTEXT("DialogButtons", "OKAY", "OK");
 
 						// NOTE - We pass in false here to not override the message if we are already going to the main menu
 						// We're going to make the assumption that someone else has a better message than "Lost connection to host" if
 						// this is the case
-						GI->ShowMessageThenGotoState(FText::FromString(ErrorString), OKButton, FText::GetEmpty(), FusionGameInstanceState::MainMenu, false);
+						GI->ShowMessageThenGotoState(FText::FromString(ErrorString), FusionGameInstanceState::MainMenu, false);
 					}
 					break;
 				}
@@ -72,12 +69,11 @@ void UFusionGameEngine::HandleNetworkFailure(UWorld *World, UNetDriver *NetDrive
 					if (GI && NetDriver->GetNetMode() == NM_Client)
 					{
 						const FText ReturnReason = NSLOCTEXT("NetworkErrors", "HostDisconnect", "Lost connection to host.");
-						const FText OKButton = NSLOCTEXT("DialogButtons", "OKAY", "OK");
 
 						// NOTE - We pass in false here to not override the message if we are already going to the main menu
 						// We're going to make the assumption that someone else has a better message than "Lost connection to host" if
 						// this is the case
-						GI->ShowMessageThenGotoState(ReturnReason, OKButton, FText::GetEmpty(), FusionGameInstanceState::MainMenu, false);
+						GI->ShowMessageThenGotoState(ReturnReason, FusionGameInstanceState::MainMenu, false);
 					}
 					break;
 				}

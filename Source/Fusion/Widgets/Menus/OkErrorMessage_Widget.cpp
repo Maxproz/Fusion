@@ -33,5 +33,4 @@ void UOkErrorMessage_Widget::GetLifetimeReplicatedProps(TArray< FLifetimePropert
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(UOkErrorMessage_Widget, ErrorText);
-
 }

@@ -592,9 +592,8 @@ void AFusionPlayerController::ClientReturnToMainMenu_Implementation(const FStrin
 	if (GetNetMode() == NM_Client)
 	{
 		const FText ReturnReason = NSLOCTEXT("NetworkErrors", "HostQuit", "The host has quit the match.");
-		const FText OKButton = NSLOCTEXT("DialogButtons", "OKAY", "OK");
 
-		FGI->ShowMessageThenGotoState(ReturnReason, OKButton, FText::GetEmpty(), FusionGameInstanceState::MainMenu);
+		FGI->ShowMessageThenGotoState(ReturnReason, FusionGameInstanceState::MainMenu);
 	}
 	else
 	{

@@ -118,7 +118,7 @@ void AFusionCharacter::BeginPlay()
 	// Initatite our OnTick Function for shield recharging behaviour
 	RechargeShields();
 
-	PlayerHUD = Cast<AFusionPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0))->GetFusionHUD();
+	//PlayerHUD = Cast<AFusionPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0))->GetFusionHUD();
 	
 	//if (PlayerHUD)
 		//PlayerHUD->GetInGameHUDWidget()->PawnReference = this;

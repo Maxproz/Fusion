@@ -13,9 +13,7 @@
 
 AFusionGame_Menu::AFusionGame_Menu(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-	
 	PlayerControllerClass = AFusionPlayerController_Menu::StaticClass();
-
 
 }
 
@@ -23,8 +21,6 @@ void AFusionGame_Menu::RestartPlayer(class AController* NewPlayer)
 {
 	// don't restart
 	//Super::RestartPlayer(NewPlayer);
-
-
 }
 
 
@@ -35,28 +31,3 @@ TSubclassOf<AGameSession> AFusionGame_Menu::GetGameSessionClass() const
 	return AFusionGameSession::StaticClass();
 }
 
-
-
-/** Perform some final tasks before hosting/joining a session. Remove menus, set king state etc */
-/*
-void AFusionGame_Menu::BeginSession()
-{
-
-	for (FConstControllerIterator It = GetWorld()->GetControllerIterator(); It; ++It)
-	{
-		AFusionPlayerController_Menu* PC = Cast<AFusionPlayerController_Menu>(*It);
-		if (PC)
-		{
-			AFusionHUD* PlayerHUD = Cast<AFusionPlayerController_Menu>(PC)->GetFusionHUD();
-
-			if (PlayerHUD)
-			{
-				PlayerHUD->CreateGameWidgets();
-				PlayerHUD->GetMainMenuUIWidget()->ShowMainMenu();
-			}
-
-		}
-	}
-	
-}
-*/

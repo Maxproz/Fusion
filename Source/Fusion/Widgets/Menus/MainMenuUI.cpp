@@ -29,6 +29,8 @@ void UMainMenuUI::NativeConstruct()
 	Super::NativeConstruct();
 
 	AFusionPlayerController_Menu* MPC = Cast<AFusionPlayerController_Menu>(GetOwningPlayer());
+	PlayerHUDRef = MPC->GetFusionHUD();
+
 
 	if (!MPC)
 	{
@@ -47,13 +49,6 @@ void UMainMenuUI::NativeConstruct()
 	PasswordTextBox->OnTextCommitted.AddDynamic(this, &UMainMenuUI::OnTextCommittedPasswordTextBox);
 	PasswordCheckBox->OnCheckStateChanged.AddDynamic(this, &UMainMenuUI::OnCheckStateChangedPasswordCheckBox);
 	IsLanCheckBox->OnCheckStateChanged.AddDynamic(this, &UMainMenuUI::OnCheckStateChangedIsLanCheckBox);
-	
-
-
-
-	PlayerHUDRef = MPC->GetFusionHUD();
-	
-	//PlayerHUDRef->ShowMainMenu(); Pretty sure doing this from the player controller
 }
 
 void UMainMenuUI::DisplayLoadingScreen()

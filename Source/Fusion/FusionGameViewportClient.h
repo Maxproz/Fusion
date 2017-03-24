@@ -61,18 +61,20 @@ public:
 	void AddViewportWidgetContent(TSharedRef<class SWidget> ViewportContent, const int32 ZOrder = 0) override;
 	void RemoveViewportWidgetContent(TSharedRef<class SWidget> ViewportContent) override;
 
-	void ShowDialog(TWeakObjectPtr<ULocalPlayer> PlayerOwner, EFusionDialogType::Type DialogType, const FText& Message, const FText& Confirm, const FText& Cancel, const FOnClicked& OnConfirm, const FOnClicked& OnCancel);
+	void ShowDialog(TWeakObjectPtr<ULocalPlayer> InPlayerOwner, const FText& Message, EFusionDialogType::Type DialogType, TScriptDelegate<FWeakObjectPtr> OnConfirm, TScriptDelegate<FWeakObjectPtr> OnCancel);
 	void HideDialog();
 
 	void ShowLoadingScreen();
 	void HideLoadingScreen();
 
-	bool IsShowingDialog() const { return DialogWidget.IsValid(); }
+	bool IsShowingDialog() const { return DialogWidget != nullptr; }
+
+	class AFusionHUD* CurrentPlayersHUD;
 
 	EFusionDialogType::Type GetDialogType() const;
 	TWeakObjectPtr<ULocalPlayer> GetDialogOwner() const;
 
-	TSharedPtr<SFusionConfirmationDialog> GetDialogWidget() { return DialogWidget; }
+	TWeakObjectPtr<class UConfirmationDialog_Widget> GetDialogWidget() { return DialogWidget; }
 
 	//FTicker Funcs
 	virtual void Tick(float DeltaSeconds) override;
@@ -94,7 +96,7 @@ protected:
 	TSharedPtr<class SWidget>						OldFocusWidget;
 
 	/** Dialog widget to show temporary messages ("Controller disconnected", "Parental Controls don't allow you to play online", etc) */
-	TSharedPtr<SFusionConfirmationDialog>			DialogWidget;
+	class UConfirmationDialog_Widget*				DialogWidget;
 
 	TSharedPtr<SFusionLoadingScreen>				LoadingScreenWidget;
 

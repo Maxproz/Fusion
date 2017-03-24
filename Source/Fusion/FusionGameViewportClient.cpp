@@ -6,6 +6,11 @@
 
 #include "FusionBaseCharacter.h"
 
+#include "FusionHUD.h"
+#include "FusionPlayerController_Menu.h"
+
+#include "Widgets/Menus/ConfirmationDialog_Widget.h"
+
 #include "Player/FusionLocalPlayer.h"
 
 #include "FusionGameViewportClient.h"
@@ -18,79 +23,74 @@ UFusionGameViewportClient::UFusionGameViewportClient(const FObjectInitializer& O
 }
 
 
-void UFusionGameViewportClient::ShowDialog(TWeakObjectPtr<ULocalPlayer> PlayerOwner, EFusionDialogType::Type DialogType, const FText& Message, const FText& Confirm, const FText& Cancel, const FOnClicked& OnConfirm, const FOnClicked& OnCancel)
+void UFusionGameViewportClient::ShowDialog(TWeakObjectPtr<ULocalPlayer> InPlayerOwner, const FText& Message, EFusionDialogType::Type DialogType, TScriptDelegate<FWeakObjectPtr> OnConfirm, TScriptDelegate<FWeakObjectPtr> OnCancel)
 {
-
-	//UE_LOG(LogPlayerManagement, Log, TEXT("UFusionGameViewportClient::ShowDialog..."));
-	/*
-	if (DialogWidget.IsValid())
+	UE_LOG(LogPlayerManagement, Log, TEXT("UFusionGameViewportClient::ShowDialog..."));
+	
+	AFusionPlayerController_Menu* MPC = Cast<AFusionPlayerController_Menu>(InPlayerOwner->GetPlayerController(GetWorld()));
+	if (MPC)
 	{
-		return;	// Already showing a dialog box
+		CurrentPlayersHUD = Cast<AFusionHUD>(MPC->GetHUD());
+		if (CurrentPlayersHUD)
+		{
+			if (DialogWidget)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Emerald, FString::Printf(TEXT("Cannt show dialog ~~~ Already showing a dialog box")));
+				return;	// Already showing a dialog box
+			}
+
+			// Hide all existing widgets
+			if (!LoadingScreenWidget.IsValid())
+			{
+				//HideExistingWidgets();
+				CurrentPlayersHUD->HideMainMenu();
+			}
+			
+			
+
+			GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Emerald, FString::Printf(TEXT("Creating A DialogWidget")));
+
+			DialogWidget = CreateWidget<UConfirmationDialog_Widget>(MPC, CurrentPlayersHUD->ConfirmationDialog_WidgetTemplate);
+			DialogWidget->AddToViewport(2);
+
+			if (DialogWidget)
+			{
+				DialogWidget->FinishConstruct(InPlayerOwner, Message, DialogType, OnConfirm, OnCancel);
+				DialogWidget->OnRep_DisplayMessage();
+			}
+
+			if (LoadingScreenWidget.IsValid())
+			{
+				// Can't show dialog while loading screen is visible
+				DialogWidget->HideWidget();
+			}
+			else
+			{
+
+				DialogWidget->ShowWidget();
+			}
+		}
 	}
-
-	// Hide all existing widgets
-	if (!LoadingScreenWidget.IsValid())
-	{
-		HideExistingWidgets();
-	}
-
-	DialogWidget = SNew(SFusionConfirmationDialog)
-		.PlayerOwner(PlayerOwner)
-		.DialogType(DialogType)
-		.MessageText(Message)
-		.ConfirmText(Confirm)
-		.CancelText(Cancel)
-		.OnConfirmClicked(OnConfirm)
-		.OnCancelClicked(OnCancel);
-
-	if (LoadingScreenWidget.IsValid())
-	{
-		// Can't show dialog while loading screen is visible
-		HiddenViewportContentStack.Add(DialogWidget.ToSharedRef());
-	}
-	else
-	{
-		AddViewportWidgetContent(DialogWidget.ToSharedRef());
-
-		// Remember what widget currently has focus
-		OldFocusWidget = FSlateApplication::Get().GetKeyboardFocusedWidget();
-
-		// Force focus to the dialog widget
-		FSlateApplication::Get().SetKeyboardFocus(DialogWidget, EFocusCause::SetDirectly);
-	}
-	*/
-
 }
 
 void UFusionGameViewportClient::HideDialog()
 {
-	/*
-	UE_LOG(LogPlayerManagement, Log, TEXT("UFusionGameViewportClient::HideDialog. DialogWidget: %p, OldFocusWidget: %p"), DialogWidget.Get(), OldFocusWidget.Get());
+	UE_LOG(LogPlayerManagement, Log, TEXT("UFusionGameViewportClient::HideDialog. DialogWidget: %p, OldFocusWidget: %p"), DialogWidget, OldFocusWidget.Get());
 
-	if (DialogWidget.IsValid())
+	if (DialogWidget)
 	{
-		const bool bRestoreOldFocus = OldFocusWidget.IsValid() && FSlateApplication::Get().GetKeyboardFocusedWidget() == DialogWidget;
-
-		// Hide the dialog widget
-		RemoveViewportWidgetContent(DialogWidget.ToSharedRef());
-
 		// Destroy the dialog widget
-		DialogWidget = NULL;
+		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Emerald, FString::Printf(TEXT("Destroying A DialogWidget")));
+
+		DialogWidget->HideWidget();
+		DialogWidget = nullptr;
 
 		if (!LoadingScreenWidget.IsValid())
 		{
-			ShowExistingWidgets();
+			//ShowExistingWidgets();
+			CurrentPlayersHUD->ShowMainMenu();
 		}
-
-		// Restore focus to last widget (but only if the dialog currently has focus still)
-		if (bRestoreOldFocus)
-		{
-			FSlateApplication::Get().SetKeyboardFocus(OldFocusWidget, EFocusCause::SetDirectly);
-		}
-
-		OldFocusWidget = NULL;
 	}
-	*/
 }
 
 void UFusionGameViewportClient::ShowLoadingScreen()
@@ -100,24 +100,18 @@ void UFusionGameViewportClient::ShowLoadingScreen()
 	{
 		return;
 	}
-	/*
-	if (DialogWidget.IsValid())
+
+	
+	if (DialogWidget)
 	{
 		// Hide the dialog widget (loading screen takes priority)
-		check(!HiddenViewportContentStack.Contains(DialogWidget.ToSharedRef()));
-		check(ViewportContentStack.Contains(DialogWidget.ToSharedRef()));
-		//RemoveViewportWidgetContent(DialogWidget.ToSharedRef());
-		//HiddenViewportContentStack.Add(DialogWidget.ToSharedRef());
+		DialogWidget->HideWidget();
 	}
 	else
 	{
 		// Hide all existing widgets
 		HideExistingWidgets();
 	}
-	*/
-
-	// Hide all existing widgets
-	HideExistingWidgets();
 
 	LoadingScreenWidget = SNew(SFusionLoadingScreen);
 
@@ -137,22 +131,15 @@ void UFusionGameViewportClient::HideLoadingScreen()
 
 	LoadingScreenWidget = NULL;
 
-	/*
 	// Show the dialog widget if we need to
-	if (DialogWidget.IsValid())
+	if (DialogWidget)
 	{
-		check(HiddenViewportContentStack.Contains(DialogWidget.ToSharedRef()));
-		check(!ViewportContentStack.Contains(DialogWidget.ToSharedRef()));
-		HiddenViewportContentStack.Remove(DialogWidget.ToSharedRef());
-		AddViewportWidgetContent(DialogWidget.ToSharedRef());
+		DialogWidget->ShowWidget();
 	}
 	else
 	{
 		ShowExistingWidgets();
 	}
-	*/
-	ShowExistingWidgets();
-
 }
 
 
@@ -234,14 +221,12 @@ void UFusionGameViewportClient::ShowExistingWidgets()
 
 EFusionDialogType::Type UFusionGameViewportClient::GetDialogType() const
 {
-	//return (DialogWidget.IsValid() ? DialogWidget->DialogType : EFusionDialogType::None);
-	return EFusionDialogType::None;
+	return (DialogWidget) ? DialogWidget->DialogType : EFusionDialogType::None;
 }
 
 TWeakObjectPtr<ULocalPlayer> UFusionGameViewportClient::GetDialogOwner() const
 {
-	//return (DialogWidget.IsValid() ? DialogWidget->PlayerOwner : nullptr);
-	return nullptr;
+	return (DialogWidget) ? DialogWidget->PlayerOwner : nullptr;
 }
 
 void UFusionGameViewportClient::Tick(float DeltaSeconds)

@@ -44,18 +44,7 @@ public:
 	bool							 bPrivilegesCheckedAndAllowed;
 };
 
-struct FFusionPlayTogetherInfo
-{
-	FFusionPlayTogetherInfo() : UserIndex(-1) {}
-	FFusionPlayTogetherInfo(int32 InUserIndex, const TArray<TSharedPtr<const FUniqueNetId>>& InUserIdList)
-		: UserIndex(InUserIndex)
-	{
-		UserIdList.Append(InUserIdList);
-	}
 
-	int32 UserIndex;
-	TArray<TSharedPtr<const FUniqueNetId>> UserIdList;
-};
 
 //A custom struct to be able to access the Session results in blueprint
 USTRUCT(BlueprintType)
@@ -213,6 +202,18 @@ public:
 	/** Sends the game to the initial startup/frontend state  */
 	void GotoInitialState();
 
+	UFUNCTION()
+	void EmptyFunction();
+
+	UFUNCTION()
+	void HideDialogMenuTestFunc();
+
+	UFUNCTION(Exec)
+	void TestConfirmDialog();
+
+	UFUNCTION(Exec)
+	void TestMessageMenu();
+
 	/**
 	* Creates the message menu, clears other menus and sets the KingState to Message.
 	*
@@ -221,7 +222,7 @@ public:
 	* @param	CancelButtonString	String to use for 'Cancel' button
 	* @param	NewState			Final state to go to when message is discarded
 	*/
-	void ShowMessageThenGotoState(const FText& Message, const FText& OKButtonString, const FText& CancelButtonString, const FName& NewState, const bool OverrideExisting = true, TWeakObjectPtr< ULocalPlayer > PlayerOwner = nullptr);
+	void ShowMessageThenGotoState(const FText& Message, const FName& NewState, const bool OverrideExisting = true, TWeakObjectPtr< ULocalPlayer > PlayerOwner = nullptr);
 
 	void RemoveExistingLocalPlayer(ULocalPlayer* ExistingPlayer);
 
@@ -266,11 +267,6 @@ public:
 	/** @return OnlineSession class to use for this player */
 	TSubclassOf<class UOnlineSession> GetOnlineSessionClass() override;
 
-	/** Called when we receive a Play Together system event on PS4 */
-	void OnPlayTogetherEventReceived(const int32 UserIndex, const TArray<TSharedPtr<const FUniqueNetId>>& UserIdList);
-
-	/** Resets Play Together PS4 system event info after it's been handled */
-	void ResetPlayTogetherInfo() { PlayTogetherInfo = FFusionPlayTogetherInfo(); }
 
 	
 	// Creating a Session
@@ -461,7 +457,7 @@ private:
 	TWeakObjectPtr<class UMainMenuUI> MainMenuUI;
 
 	/** Message menu (Shown in the even of errors - unable to connect etc) */
-	//TSharedPtr<FShooterMessageMenu> MessageMenuUI;
+	TWeakObjectPtr<class UFusionMessageMenu_Widget> MessageMenuUI;
 
 	/** Welcome menu UI (for consoles) */
 	//TSharedPtr<FShooterWelcomeMenu> WelcomeMenuUI;
@@ -488,8 +484,6 @@ private:
 	//FDelegateHandle OnDestroySessionCompleteDelegateHandle;
 	FDelegateHandle OnCreatePresenceSessionCompleteDelegateHandle;
 
-	/** Play Together on PS4 system event info */
-	FFusionPlayTogetherInfo PlayTogetherInfo;
 
 	void HandleNetworkConnectionStatusChanged(EOnlineServerConnectionStatus::Type LastConnectionStatus, EOnlineServerConnectionStatus::Type ConnectionStatus);
 
@@ -504,8 +498,6 @@ private:
 	/** Delegate function executed after checking privileges for starting quick match */
 	void OnUserCanPlayInvite(const FUniqueNetId& UserId, EUserPrivileges::Type Privilege, uint32 PrivilegeResults);
 
-	/** Delegate function executed after checking privileges for Play Together on PS4 */
-	void OnUserCanPlayTogether(const FUniqueNetId& UserId, EUserPrivileges::Type Privilege, uint32 PrivilegeResults);
 
 	/** Delegate for ending a session */
 	FOnEndSessionCompleteDelegate OnEndSessionCompleteDelegate;
@@ -553,17 +545,13 @@ private:
 	/** Called after all the local players are registered in a session we're joining */
 	void FinishJoinSession(EOnJoinSessionCompleteResult::Type Result);
 
-	/** Send all invites for the current game session if we've created it because Play Together on PS4 was initiated*/
-	void SendPlayTogetherInvites();
 
 	/**
 	* Creates the message menu, clears other menus and sets the KingState to Message.
 	*
 	* @param	Message				Main message body
-	* @param	OKButtonString		String to use for 'OK' button
-	* @param	CancelButtonString	String to use for 'Cancel' button
 	*/
-	void ShowMessageThenGoMain(const FText& Message, const FText& OKButtonString, const FText& CancelButtonString);
+	void ShowMessageThenGoMain(const FText& Message);
 
 	/** Callback which is intended to be called upon finding sessions */
 	void OnSearchSessionsComplete(bool bWasSuccessful);
