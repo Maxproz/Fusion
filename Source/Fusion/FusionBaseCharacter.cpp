@@ -430,7 +430,7 @@ void AFusionBaseCharacter::ForceShieldsCap()
 		AFusionPlayerController* PC = Cast<AFusionPlayerController>(Controller);
 		if (PC)
 		{
-			PC->ClientHUDMessage(EHUDMessage::Character_Shields_Recharged);
+			//PC->ClientHUDMessage(EHUDMessage::Character_Shields_Recharged);
 		}
 		Shields = GetMaxShields();
 	}
@@ -447,3 +447,5 @@ void AFusionBaseCharacter::RestoreHealth(float HealthRestored)
 	// Restore Hitpoints
 	Health = FMath::Clamp(Health + HealthRestored, 0.0f, GetMaxHealth());
 }
+
+

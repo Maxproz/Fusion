@@ -1235,3 +1235,8 @@ FName AFusionCharacter::GetWeaponAttachPoint() const
 	return WeaponAttachPoint;
 }
 
+float AFusionCharacter::GetLowHealthPercentage() const
+{
+	return LowHealthPercentage;
+}
+

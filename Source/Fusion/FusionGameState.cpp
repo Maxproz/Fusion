@@ -57,20 +57,6 @@ void AFusionGameState::GetRankedMap(int32 TeamIndex, RankedPlayerMap& OutRankedM
 
 }
 
-
-/* As with Server side functions, NetMulticast functions have a _Implementation body */
-void AFusionGameState::BroadcastGameMessage_Implementation(EHUDMessage MessageID)
-{
-	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; It++)
-	{
-		AFusionPlayerController* MyController = Cast<AFusionPlayerController>(*It);
-		if (MyController && MyController->IsLocalController())
-		{
-			MyController->ClientHUDMessage(MessageID);
-		}
-	}
-}
-
 void AFusionGameState::RequestFinishAndExitToMainMenu()
 {
 	if (AuthorityGameMode)

@@ -54,11 +54,5 @@ public:
 
 
 
-
-	/* NetMulticast will send this event to all clients that know about this object, in the case of GameState that means every client. */
-	UFUNCTION(Reliable, NetMulticast)
-	void BroadcastGameMessage(EHUDMessage NewMessage);
-	void BroadcastGameMessage_Implementation(EHUDMessage MessageID);
-
 	
 };

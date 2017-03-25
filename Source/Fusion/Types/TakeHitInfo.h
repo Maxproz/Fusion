@@ -6,6 +6,45 @@
 #include "TakeHitInfo.generated.h"
 
 
+
+namespace EFusionMatchState
+{
+	enum Type
+	{
+		Warmup,
+		Playing,
+		Won,
+		Lost,
+	};
+}
+
+namespace EFusionCrosshairDirection
+{
+	enum Type
+	{
+		Left = 0,
+		Right = 1,
+		Top = 2,
+		Bottom = 3,
+		Center = 4
+	};
+}
+
+namespace EFusionHudPosition
+{
+	enum Type
+	{
+		Left = 0,
+		FrontLeft = 1,
+		Front = 2,
+		FrontRight = 3,
+		Right = 4,
+		BackRight = 5,
+		Back = 6,
+		BackLeft = 7,
+	};
+}
+
 #define FUSION_SURFACE_Default		SurfaceType_Default
 #define FUSION_SURFACE_Concrete		SurfaceType1
 #define FUSION_SURFACE_Dirt			SurfaceType2

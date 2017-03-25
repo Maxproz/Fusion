@@ -9,24 +9,7 @@
 #include "FusionPlayerController.generated.h"
 
 
-UENUM()
-enum class EHUDMessage : uint8
-{
-	/* Weapons */
-	Weapon_Picked_Up,
 
-	/* Character */
-	Character_Shields_Recharged,
-
-	/* Gamemode */
-	Game_CTF,
-	Game_Slayer,
-	Game_FFA,
-	Game_Assault,
-
-	/* No category specified */
-	None,
-};
 
 
 /**
@@ -53,17 +36,6 @@ class FUSION_API AFusionPlayerController : public APlayerController
 
 
 public:
-
-	UFUNCTION(Reliable, Client)
-	void ClientHUDStateChanged(EHUDState NewState);
-	void ClientHUDStateChanged_Implementation(EHUDState NewState);
-
-	/* Enum is remapped to localized text before sending it to the HUD */
-	UFUNCTION(Reliable, Client)
-	void ClientHUDMessage(EHUDMessage MessageID);
-	void ClientHUDMessage_Implementation(EHUDMessage MessageID);
-
-	FText GetText(EHUDMessage MsgID);
 
 	/* Kill the current pawn */
 	UFUNCTION(exec)

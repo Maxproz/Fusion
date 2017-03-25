@@ -70,8 +70,14 @@ protected:
 
 public:
 
+	/** returns percentage of health when low health effects should start */
+	float GetLowHealthPercentage() const;
 
+private:
+	/** when low health effects should start */
+	float LowHealthPercentage = 0.5f;
 
+public:
 	/** Gun muzzle's offset from the characters location */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Gameplay)
 	FVector GunOffset;

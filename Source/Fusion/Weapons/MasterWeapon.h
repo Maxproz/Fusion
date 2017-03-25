@@ -47,10 +47,14 @@ class FUSION_API AMasterWeapon : public AActor
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+public:
 
 	float GetEquipStartedTime() const;
 
 	float GetEquipDuration() const;
+
+private:
+
 
 	/** last time when this weapon was switched to */
 	float EquipStartedTime;
@@ -113,6 +117,63 @@ protected:
 
 public:
 
+	/** icon displayed on the HUD when weapon is equipped as primary */
+	UPROPERTY(EditDefaultsOnly, Category = HUD)
+	FCanvasIcon PrimaryIcon;
+
+	/** icon displayed on the HUD when weapon is secondary */
+	UPROPERTY(EditDefaultsOnly, Category = HUD)
+	FCanvasIcon SecondaryIcon;
+
+	/** bullet icon used to draw current clip (left side) */
+	UPROPERTY(EditDefaultsOnly, Category = HUD)
+	FCanvasIcon PrimaryClipIcon;
+
+	/** bullet icon used to draw secondary clip (left side) */
+	UPROPERTY(EditDefaultsOnly, Category = HUD)
+	FCanvasIcon SecondaryClipIcon;
+
+	/** how many icons to draw per clip */
+	UPROPERTY(EditDefaultsOnly, Category = HUD)
+	float AmmoIconsCount;
+
+	/** defines spacing between primary ammo icons (left side) */
+	UPROPERTY(EditDefaultsOnly, Category = HUD)
+	int32 PrimaryClipIconOffset;
+
+	/** defines spacing between secondary ammo icons (left side) */
+	UPROPERTY(EditDefaultsOnly, Category = HUD)
+	int32 SecondaryClipIconOffset;
+
+	/** crosshair parts icons (left, top, right, bottom and center) */
+	UPROPERTY(EditDefaultsOnly, Category = HUD)
+	FCanvasIcon Crosshair[5];
+
+	/** crosshair parts icons when targeting (left, top, right, bottom and center) */
+	UPROPERTY(EditDefaultsOnly, Category = HUD)
+	FCanvasIcon AimingCrosshair[5];
+
+	/** only use red colored center part of aiming crosshair */
+	UPROPERTY(EditDefaultsOnly, Category = HUD)
+	bool UseLaserDot;
+
+	/** false = default crosshair */
+	UPROPERTY(EditDefaultsOnly, Category = HUD)
+	bool UseCustomCrosshair;
+
+	/** false = use custom one if set, otherwise default crosshair */
+	UPROPERTY(EditDefaultsOnly, Category = HUD)
+	bool UseCustomAimingCrosshair;
+
+	/** true - crosshair will not be shown unless aiming with the weapon */
+	UPROPERTY(EditDefaultsOnly, Category = HUD)
+	bool bHideCrosshairWhileNotAiming;
+
+
+
+
+
+
 	/** get weapon mesh (needs pawn owner to determine variant) */
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	USkeletalMeshComponent* GetWeaponMesh() const;
@@ -127,7 +188,7 @@ public:
 	/* Get pawn owner */
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	class AFusionCharacter* GetPawnOwner() const;
-
+	
 	virtual void OnEnterInventory(AFusionCharacter* NewOwner);
 
 	virtual void OnLeaveInventory();

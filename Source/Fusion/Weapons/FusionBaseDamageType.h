@@ -26,6 +26,8 @@ class FUSION_API UFusionBaseDamageType : public UDamageType
 	UPROPERTY(EditDefaultsOnly)
 	float LimbDmgModifier = 0.5f;
 
+
+
 public:
 
 	bool GetCanDieFrom();
@@ -33,5 +35,8 @@ public:
 	float GetHeadDamageModifier();
 
 	float GetLimbDamageModifier();
-
+	
+	/** icon displayed in death messages log when killed with this damage type */
+	UPROPERTY(EditDefaultsOnly, Category = HUD)
+	FCanvasIcon KillIcon;
 };

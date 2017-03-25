@@ -42,7 +42,7 @@ void AWeaponPickupActor::OnUsed(APawn* InstigatorPawn)
 			AFusionPlayerController* PC = Cast<AFusionPlayerController>(MyPawn->GetController());
 			if (PC)
 			{
-				PC->ClientHUDMessage(EHUDMessage::Weapon_Picked_Up);
+				//PC->ClientHUDMessage(EHUDMessage::Weapon_Picked_Up);
 			}
 		}
 	}

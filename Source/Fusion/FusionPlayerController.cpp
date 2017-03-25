@@ -116,7 +116,6 @@ void AFusionPlayerController::BeginPlay()
 		//GetFusionHUD()->GetInGameHUDWidget()->PlayerControllerRef = this;
 		ClientShowInGameHUD();
 
-
 		UFusionGameInstance* FGI = GetWorld() != NULL ? Cast<UFusionGameInstance>(GetWorld()->GetGameInstance()) : NULL;
 		FGI->GotoState(FusionGameInstanceState::Playing);
 	}
@@ -623,7 +622,7 @@ void AFusionPlayerController::ClientGameEnded_Implementation(class AActor* EndGa
 	AFusionHUD* FusionHUD = GetFusionHUD();
 	if (FusionHUD)
 	{
-		//FusionHUD->SetMatchState(bIsWinner ? EFusionMatchState::Won : EFusionMatchState::Lost);
+		FusionHUD->SetMatchState(bIsWinner ? EFusionMatchState::Won : EFusionMatchState::Lost);
 	}
 
 	UpdateSaveFileOnGameEnd(bIsWinner);
@@ -1098,53 +1097,7 @@ bool AFusionPlayerController::ServerSuicide_Validate()
 }
 
 
-void AFusionPlayerController::ClientHUDStateChanged_Implementation(EHUDState NewState)
-{
-	AFusionHUD* HUD = Cast<AFusionHUD>(GetHUD());
-	if (HUD)
-	{
-		HUD->OnStateChanged(NewState);
-	}
-}
 
-
-void AFusionPlayerController::ClientHUDMessage_Implementation(EHUDMessage MessageID)
-{
-	/* Turn the ID into a message for the HUD to display */
-	FText TextMessage = GetText(MessageID);
-
-	AFusionHUD* HUD = Cast<AFusionHUD>(GetHUD());
-	if (HUD)
-	{
-		/* Implemented in SurvivalHUD Blueprint */
-		HUD->MessageReceived(TextMessage);
-	}
-}
-
-/* Temporarily set the namespace. If this was omitted, we should call NSLOCTEXT(Namespace, x, y) instead */
-#define LOCTEXT_NAMESPACE "HUDMESSAGES"
-
-FText AFusionPlayerController::GetText(EHUDMessage MsgID)
-{
-	switch (MsgID)
-	{
-	case EHUDMessage::Weapon_Picked_Up:
-		return LOCTEXT("Weapon_Picked_Up", "We already have that weapon.");
-	case EHUDMessage::Character_Shields_Recharged:
-		return LOCTEXT("Character_Shields_Recharged", "Shields Recharging");
-	case EHUDMessage::Game_CTF:
-		return LOCTEXT("Game_CTF", "Capture the Flag");
-	case EHUDMessage::Game_Slayer:
-		return LOCTEXT("Game_Slayer", "Kill the enemy team.");
-	case EHUDMessage::Game_FFA:
-		return LOCTEXT("Game_FFA", "Kill enemy players.");
-	case EHUDMessage::Game_Assault:
-		return LOCTEXT("Game_Assault", "Plant the bomb in the enemy base.");
-	default:
-		UE_LOG(LogGame, Warning, TEXT("No Message set for enum value in SPlayerContoller::GetText(). "))
-			return FText::FromString("No Message Set");
-	}
-}
 
 /* Remove the namespace definition so it doesn't exist in other files compiled after this one. */
 #undef LOCTEXT_NAMESPACE
@@ -1160,7 +1113,7 @@ void AFusionPlayerController::ClientGameStarted_Implementation()
 	AFusionHUD* FusionHUD = GetFusionHUD();
 	if (FusionHUD)
 	{
-		FusionHUD->SetMatchState(EHUDState::Playing);
+		FusionHUD->SetMatchState(EFusionMatchState::Playing);
 	//	ShooterHUD->ShowScoreboard(false);
 	}
 	bGameEndedFrame = false;
