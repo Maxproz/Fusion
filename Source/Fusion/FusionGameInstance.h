@@ -14,10 +14,9 @@
 namespace FusionGameInstanceState
 {
 	extern const FName None;
-	extern const FName PendingInvite;
-	extern const FName WelcomeScreen;
 	extern const FName MainMenu;
 	extern const FName MessageMenu;
+	extern const FName Lobby;
 	extern const FName Playing;
 }
 
@@ -48,7 +47,7 @@ public:
 
 //A custom struct to be able to access the Session results in blueprint
 USTRUCT(BlueprintType)
-struct FCustomBlueprintSessionResult
+struct FCustomFusionSessionResult
 {
 	GENERATED_USTRUCT_BODY()
 
@@ -177,21 +176,11 @@ public:
 	virtual void Shutdown() override;
 	virtual void StartGameInstance() override;
 
-	bool HostGame(ULocalPlayer* LocalPlayer, const FString& GameType, const FString& InTravelURL);
-	bool JoinSession(ULocalPlayer* LocalPlayer, int32 SessionIndexInSearchResults);
-	bool JoinSession(ULocalPlayer* LocalPlayer, const FOnlineSessionSearchResult& SearchResult);
 	void SetPendingInvite(const FFusionPendingInvite& InPendingInvite);
 
-	bool PlayDemo(ULocalPlayer* LocalPlayer, const FString& DemoName);
 
-	/** Travel directly to the named session */
-	void TravelToSession(const FName& SessionName);
 
-	/** Begin a hosted quick match */
-	void BeginHostingQuickMatch();
 
-	/** Initiates the session searching */
-	bool FindSessions(ULocalPlayer* PlayerOwner, bool bLANMatch);
 
 	/** Sends the game to the specified state. */
 	void GotoState(FName NewState);
@@ -224,9 +213,7 @@ public:
 	*/
 	void ShowMessageThenGotoState(const FText& Message, const FName& NewState, const bool OverrideExisting = true, TWeakObjectPtr< ULocalPlayer > PlayerOwner = nullptr);
 
-	void RemoveExistingLocalPlayer(ULocalPlayer* ExistingPlayer);
 
-	void RemoveSplitScreenPlayers();
 
 	TSharedPtr< const FUniqueNetId > GetUniqueNetIdFromControllerId(const int ControllerId);
 
@@ -236,8 +223,8 @@ public:
 	/** Sets the online mode of the game */
 	void SetIsOnline(bool bInIsOnline);
 
-	/** Sets the controller to ignore for pairing changes. Useful when we are showing external UI for manual profile switching. */
-	void SetIgnorePairingChangeForControllerId(const int32 ControllerId);
+	
+
 
 	/** Returns true if the passed in local player is signed in and online */
 	bool IsLocalPlayerOnline(ULocalPlayer* LocalPlayer);
@@ -298,12 +285,8 @@ public:
 	FString LanPlayerName;
 
 
-
-
-
 	UFUNCTION(BlueprintCallable, Category = "Network|Friends")
 	void SendSessionInviteToFriend(APlayerController* InvitingPlayer, const FBPUniqueNetId & Friend);
-
 
 
 	/**
@@ -312,7 +295,6 @@ public:
 	*/
 	UFUNCTION(BlueprintCallable, Category = "Network|Errors")
 	void ShowErrorMessage(const FText & ErrorMessage);
-
 
 
 	/**
@@ -360,10 +342,10 @@ protected:
 	/**
 	*	called when the session search is complete to show the results in UMG
 	*/
-	DECLARE_EVENT_OneParam(AFusionGameInstance, FOnFoundSessionsCompleteUMG, const TArray<FCustomBlueprintSessionResult>&);
+	DECLARE_EVENT_OneParam(AFusionGameInstance, FOnFoundSessionsCompleteUMG, const TArray<FCustomFusionSessionResult>&);
 	FOnFoundSessionsCompleteUMG FoundSessionsCompleteUMGEvent;
 
-	void OnFoundSessionsCompleteUMG(const TArray<FCustomBlueprintSessionResult>& CustomSessionResults);
+	void OnFoundSessionsCompleteUMG(const TArray<FCustomFusionSessionResult>& CustomSessionResults);
 
 
 	/**
@@ -459,11 +441,8 @@ private:
 	/** Message menu (Shown in the even of errors - unable to connect etc) */
 	TWeakObjectPtr<class UFusionMessageMenu_Widget> MessageMenuUI;
 
-	/** Welcome menu UI (for consoles) */
-	//TSharedPtr<FShooterWelcomeMenu> WelcomeMenuUI;
+	TWeakObjectPtr<class ULobbyMenu_Widget> LobbyWidget;
 
-	/** Dialog widget to show non-interactive waiting messages for network timeouts and such. */
-	//TSharedPtr<SShooterWaitDialog> WaitMessageWidget;
 
 	/** Controller to ignore for pairing changes. -1 to skip ignore. */
 	int32 IgnorePairingChangeForControllerId;
@@ -477,11 +456,8 @@ private:
 	/** Handle to various registered delegates */
 	FDelegateHandle TickDelegateHandle;
 	FDelegateHandle TravelLocalSessionFailureDelegateHandle;
-	FDelegateHandle OnJoinSessionCompleteDelegateHandle;
-	FDelegateHandle OnSearchSessionsCompleteDelegateHandle;
 	FDelegateHandle OnStartSessionCompleteDelegateHandle;
 	FDelegateHandle OnEndSessionCompleteDelegateHandle;
-	//FDelegateHandle OnDestroySessionCompleteDelegateHandle;
 	FDelegateHandle OnCreatePresenceSessionCompleteDelegateHandle;
 
 
@@ -489,14 +465,8 @@ private:
 
 	void HandleSessionFailure(const FUniqueNetId& NetId, ESessionFailure::Type FailureType);
 
-	void OnPreLoadMap(const FString& MapName);
 	void OnPostLoadMap();
-	void OnPostDemoPlay();
 
-	virtual void HandleDemoPlaybackFailure(EDemoPlayFailure::Type FailureType, const FString& ErrorString) override;
-
-	/** Delegate function executed after checking privileges for starting quick match */
-	void OnUserCanPlayInvite(const FUniqueNetId& UserId, EUserPrivileges::Type Privilege, uint32 PrivilegeResults);
 
 
 	/** Delegate for ending a session */
@@ -508,16 +478,15 @@ private:
 	void EndCurrentState(FName NextState);
 	void BeginNewState(FName NewState, FName PrevState);
 
-	void BeginPendingInviteState();
-	void BeginWelcomeScreenState();
+
 	void BeginMainMenuState();
 	void BeginMessageMenuState();
+	void BeginLobbyState();
 	void BeginPlayingState();
 
-	void EndPendingInviteState();
-	void EndWelcomeScreenState();
 	void EndMainMenuState();
 	void EndMessageMenuState();
+	void EndLobbyState();
 	void EndPlayingState();
 
 	void ShowLoadingScreen();
@@ -527,24 +496,6 @@ private:
 	/** Called when there is an error trying to travel to a local session */
 	void TravelLocalSessionFailure(UWorld *World, ETravelFailure::Type FailureType, const FString& ErrorString);
 
-	/** Callback which is intended to be called upon joining session */
-	void OnJoinSessionComplete(EOnJoinSessionCompleteResult::Type Result);
-
-	/** Callback which is intended to be called upon session creation */
-	void OnCreatePresenceSessionComplete(FName SessionName, bool bWasSuccessful);
-
-	/** Callback which is called after adding local users to a session */
-	void OnRegisterLocalPlayerComplete(const FUniqueNetId& PlayerId, EOnJoinSessionCompleteResult::Type Result);
-
-	/** Called after all the local players are registered */
-	void FinishSessionCreation(EOnJoinSessionCompleteResult::Type Result);
-
-	/** Callback which is called after adding local users to a session we're joining */
-	void OnRegisterJoiningLocalPlayerComplete(const FUniqueNetId& PlayerId, EOnJoinSessionCompleteResult::Type Result);
-
-	/** Called after all the local players are registered in a session we're joining */
-	void FinishJoinSession(EOnJoinSessionCompleteResult::Type Result);
-
 
 	/**
 	* Creates the message menu, clears other menus and sets the KingState to Message.
@@ -553,52 +504,18 @@ private:
 	*/
 	void ShowMessageThenGoMain(const FText& Message);
 
-	/** Callback which is intended to be called upon finding sessions */
-	void OnSearchSessionsComplete(bool bWasSuccessful);
 
 	bool LoadFrontEndMap(const FString& MapName);
 
 	/** Sets a rich presence string for all local players. */
 	void SetPresenceForLocalPlayers(const FVariantData& PresenceData);
 
-	/** Travel directly to the named session */
-	void InternalTravelToSession(const FName& SessionName);
-
-	/** Show messaging and punt to welcome screen */
-	void HandleSignInChangeMessaging();
-
-	// OSS delegates to handle
-	void HandleUserLoginChanged(int32 GameUserIndex, ELoginStatus::Type PreviousLoginStatus, ELoginStatus::Type LoginStatus, const FUniqueNetId& UserId);
-
-	// Callback to pause the game when the OS has constrained our app.
-	void HandleAppWillDeactivate();
-
-	// Callback occurs when game being suspended
-	void HandleAppSuspend();
-
-	// Callback occurs when game resuming
-	void HandleAppResume();
 
 	// Callback to process game licensing change notifications.
 	void HandleAppLicenseUpdate();
 
 	// Callback to handle safe frame size changes.
 	void HandleSafeFrameChanged();
-
-	// Callback to handle controller connection changes.
-	void HandleControllerConnectionChange(bool bIsConnection, int32 Unused, int32 GameUserIndex);
-
-	// Callback to handle controller pairing changes.
-	FReply OnPairingUsePreviousProfile();
-
-	// Callback to handle controller pairing changes.
-	FReply OnPairingUseNewProfile();
-
-	// Callback to handle controller pairing changes.
-	void HandleControllerPairingChanged(int GameUserIndex, const FUniqueNetId& PreviousUser, const FUniqueNetId& NewUser);
-
-	// Handle confirming the controller disconnected dialog.
-	FReply OnControllerReconnectConfirm();
 
 protected:
 	bool HandleOpenCommand(const TCHAR* Cmd, FOutputDevice& Ar, UWorld* InWorld);

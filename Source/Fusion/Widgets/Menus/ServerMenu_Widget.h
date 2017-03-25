@@ -46,15 +46,15 @@ public:
 
 protected:
 	// creates a chat entry and adds it to the scrollbox
-	DECLARE_EVENT_OneParam(ULobbyMenu_Widget, FOnSessionSearchCompleated, TArray<FCustomBlueprintSessionResult> /*Result*/);
+	DECLARE_EVENT_OneParam(ULobbyMenu_Widget, FOnSessionSearchCompleated, TArray<FCustomFusionSessionResult> /*Result*/);
 	FOnSessionSearchCompleated SessionSearchCompleatedEvent;
 
 	// Delegate fired whenwhen finishing a session search
-	void OnSessionSearchCompleated(TArray<FCustomBlueprintSessionResult> Results);
+	void OnSessionSearchCompleated(TArray<FCustomFusionSessionResult> Results);
 
 
 
-	TArray<FCustomBlueprintSessionResult> CustomSessionResults;
+	TArray<FCustomFusionSessionResult> CustomSessionResults;
 
 	bool bIsLan;
 

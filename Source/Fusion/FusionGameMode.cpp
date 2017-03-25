@@ -212,12 +212,6 @@ void AFusionGameMode::RequestFinishAndExitToMainMenu()
 {
 	FinishMatch();
 
-	UFusionGameInstance* const GameInstance = Cast<UFusionGameInstance>(GetGameInstance());
-	if (GameInstance)
-	{
-		GameInstance->RemoveSplitScreenPlayers();
-	}
-
 	AFusionPlayerController* LocalPrimaryController = nullptr;
 	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
 	{

@@ -29,7 +29,7 @@ public:
 	void SessionNameToText(const FString SessionString, FText& SessionText);
 
 
-	void SetCustomResult(const FCustomBlueprintSessionResult InResult) { CustomResult = InResult; }
+	void SetCustomResult(const FCustomFusionSessionResult InResult) { CustomResult = InResult; }
 
 	void SetIndex(const int32 InIndex) { Index = InIndex; }
 
@@ -58,7 +58,7 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* ServerNameTextBox;
 
-	FCustomBlueprintSessionResult CustomResult;
+	FCustomFusionSessionResult CustomResult;
 
 	int32 Index;
 

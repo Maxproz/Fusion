@@ -33,7 +33,7 @@ void UServerMenu_Widget::NativeConstruct()
 
 }
 
-void UServerMenu_Widget::OnSessionSearchCompleated(TArray<FCustomBlueprintSessionResult> Results)
+void UServerMenu_Widget::OnSessionSearchCompleated(TArray<FCustomFusionSessionResult> Results)
 {
 	ServerListScrollBox->ClearChildren();
 	CustomSessionResults.Empty();

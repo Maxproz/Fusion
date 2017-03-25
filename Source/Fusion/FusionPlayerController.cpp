@@ -115,6 +115,10 @@ void AFusionPlayerController::BeginPlay()
 
 		//GetFusionHUD()->GetInGameHUDWidget()->PlayerControllerRef = this;
 		ClientShowInGameHUD();
+
+
+		UFusionGameInstance* FGI = GetWorld() != NULL ? Cast<UFusionGameInstance>(GetWorld()->GetGameInstance()) : NULL;
+		FGI->GotoState(FusionGameInstanceState::Playing);
 	}
 }
 
@@ -1188,6 +1192,7 @@ void AFusionPlayerController::ClientGameStarted_Implementation()
 
 			// Online matches require the MultiplayerRoundStart event as well
 			UFusionGameInstance* FGI = GetWorld() != NULL ? Cast<UFusionGameInstance>(GetWorld()->GetGameInstance()) : NULL;
+
 
 			if (FGI->GetIsOnline())
 			{

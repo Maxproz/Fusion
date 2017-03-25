@@ -25,20 +25,19 @@ void AFusionPlayerController_Lobby::BeginPlay()
 
 	bShowMouseCursor = true;
 
+
+
 	if (IsLocalPlayerController())
 	{
 		GetFusionHUD()->CreateGameWidgets();
-		GetFusionHUD()->ShowLobbyMenu(); // This might be nullptr? since the widgets load async.. we will see
+
+		UFusionGameInstance* FGI = GetWorld() != NULL ? Cast<UFusionGameInstance>(GetWorld()->GetGameInstance()) : NULL;
+		FGI->GotoState(FusionGameInstanceState::Lobby);
 	}
 
 
 	// show the lobby and view it as soon as the player gets in
-	
-	// Should never be nullptr here as far as I know.
-	// NOTE: pretty sure this is being done inside of native construct on the widget
-	//UFusionGameInstance* GameInst = Cast<UFusionGameInstance>(GetGameInstance());
-	//GetFusionHUD()->GetLobbyMenuWidget()->SetGameInstanceRef(GameInst);
-	//GetFusionHUD()->GetLobbyMenuWidget()->SetLobbyPlayerControllerRef(this);
+	// doing this inside the game instance
 
 
 	// Timer handle to call the RequestServerPlayerListUpdate() later

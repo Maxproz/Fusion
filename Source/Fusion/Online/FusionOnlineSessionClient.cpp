@@ -42,6 +42,7 @@ void UFusionOnlineSessionClient::OnSessionUserInviteAccepted(
 
 	if (FusionGameInstance)
 	{
+		/*
 		FFusionPendingInvite PendingInvite;
 
 		// Set the pending invite, and then go to the initial screen, which is where we will process it
@@ -50,8 +51,9 @@ void UFusionOnlineSessionClient::OnSessionUserInviteAccepted(
 		PendingInvite.InviteResult = InviteResult;
 		PendingInvite.bPrivilegesCheckedAndAllowed = false;
 
-		FusionGameInstance->SetPendingInvite(PendingInvite);
-		FusionGameInstance->GotoState(FusionGameInstanceState::PendingInvite);
+		//FusionGameInstance->SetPendingInvite(PendingInvite);
+		//FusionGameInstance->GotoState(FusionGameInstanceState::PendingInvite);
+		*/
 	}
 }
 

@@ -380,7 +380,7 @@ void AFusionGameSession::OnFindSessionsComplete(bool bWasSuccessful)
 			// Just debugging the Number of Search results. Can be displayed in UMG or something later on
 			//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Red, FString::Printf(TEXT("Num Search Results: %d"), SessionSearch->SearchResults.Num()));
 
-			TArray<FCustomBlueprintSessionResult> CustomSessionResults;
+			TArray<FCustomFusionSessionResult> CustomSessionResults;
 
 			// If we have found at least 1 session, we just going to debug them. You could add them to a list of UMG Widgets, like it is done in the BP version!
 			if (SessionSearch->SearchResults.Num() > 0)
@@ -395,7 +395,7 @@ void AFusionGameSession::OnFindSessionsComplete(bool bWasSuccessful)
 				{
 
 					//temporary Session result to hold our data for this loop
-					FCustomBlueprintSessionResult TempCustomSeesionResult;
+					FCustomFusionSessionResult TempCustomSeesionResult;
 
 					//uncomment if you want the session name to always be the name of the owning player (Computer name on lan and Steam name online)
 					TempCustomSeesionResult.SessionName = SessionSearch->SearchResults[SearchIdx].Session.OwningUserName;

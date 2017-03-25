@@ -85,12 +85,6 @@ void AFusionGameState::RequestFinishAndExitToMainMenu()
 	else
 	{
 		// we are client, handle our own business
-		UFusionGameInstance* GameInstance = Cast<UFusionGameInstance>(GetGameInstance());
-		if (GameInstance)
-		{
-			GameInstance->RemoveSplitScreenPlayers();
-		}
-
 		AFusionPlayerController* const PrimaryPC = Cast<AFusionPlayerController>(GetGameInstance()->GetFirstLocalPlayerController());
 		if (PrimaryPC)
 		{
