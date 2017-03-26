@@ -30,7 +30,7 @@ void UInviteSteamFriend_Widget::NativeConstruct()
 	}
 
 	AFusionHUD* FusionHUD = LPC->GetFusionHUD();
-	ULobbyMenu_Widget* LobbyMenu_WidgetRef = FusionHUD->GetLobbyMenuWidget();
+	LobbyMenu_WidgetRef = FusionHUD->GetLobbyMenuWidget();
 
 }
 

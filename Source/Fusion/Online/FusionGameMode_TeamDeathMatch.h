@@ -24,7 +24,7 @@ class FUSION_API AFusionGameMode_TeamDeathMatch : public AFusionGameMode
 	/** can players damage each other? */
 	virtual bool CanDealDamage(class AFusionPlayerState* DamageInstigator, AFusionPlayerState* DamagedPlayer) const override;
 
-
+	virtual void Tick(float DeltaSeconds) override;
 
 protected:
 

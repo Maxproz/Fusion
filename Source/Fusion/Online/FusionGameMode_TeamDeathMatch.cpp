@@ -17,6 +17,13 @@ AFusionGameMode_TeamDeathMatch::AFusionGameMode_TeamDeathMatch(const FObjectInit
 	bDelayedStart = true;
 }
 
+void AFusionGameMode_TeamDeathMatch::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Emerald, *FString::Printf(TEXT("Current GameMode MatchState: %s"), *GetMatchState().ToString()));
+}
+
 void AFusionGameMode_TeamDeathMatch::PostLogin(APlayerController* NewPlayer)
 {
 	// Place player on a team before Super (VoIP team based init, findplayerstart, etc)

@@ -236,6 +236,9 @@ public:
 	bool IsMatchOver() const;
 
 protected:
+
+	FString GetMatchStateToString();
+
 	/** Floor for automatic hud scaling. */
 	static const float MinHudScale;
 
@@ -384,7 +387,7 @@ protected:
 	uint32 bIsScoreBoardVisible : 1;
 
 	/** Scoreboard widget. */
-	//TSharedPtr<class SShooterScoreboardWidget>	ScoreboardWidget;
+	TSharedPtr<class SScoreboard_Widget>	ScoreboardWidget;
 
 	/** Scoreboard widget overlay. */
 	TSharedPtr<class SOverlay>	ScoreboardWidgetOverlay;

@@ -128,6 +128,7 @@ void ULobbyMenu_Widget::OnUpdatePlayerList(TArray<FLobbyPlayerInfo> PlayerInfoAr
 void ULobbyMenu_Widget::OnClickedLeaveButton()
 {
 	GameInstanceRef->DestroySessionAndLeaveGame();
+	GameInstanceRef->GotoState(FusionGameInstanceState::MainMenu);
 }
 
 // Inviting steam friends if the player is on steam and the game is not full

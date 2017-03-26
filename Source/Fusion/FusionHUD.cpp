@@ -30,6 +30,8 @@
 #include "FusionGameState.h"
 #include "Online/FusionGameMode_TeamDeathMatch.h"
 #include "FusionCharacter.h"
+#include "Widgets/Gameplay/Scoreboard_Widget.h"
+
 //#include "SShooterScoreboardWidget.h" // TODO: implement
 //#include "SChatWidget.h"				// TODO: implement
 
@@ -103,6 +105,7 @@ void AFusionHUD::CreateLobbyMenuWidget()
 	ActiveLobbyMenuWidget = CreateWidget<ULobbyMenu_Widget>(GetOwningPlayerController(), LobbyMenuWidget.LoadSynchronous());
 	ActiveLobbyMenuWidget->AddToViewport(0);
 	ActiveLobbyMenuWidget->SetVisibility(ESlateVisibility::Hidden);
+
 }
 
 void AFusionHUD::CreateMessageMenuWidget()
@@ -145,39 +148,6 @@ void AFusionHUD::HideLobbyMenu() { GetLobbyMenuWidget()->HideWidget(); }
 
 void AFusionHUD::ShowMessageMenu() { GetMessageMenuWidget()->ShowWidget(); }
 void AFusionHUD::HideMessageMenu() { GetMessageMenuWidget()->HideWidget(); }
-
-/*
-void AFusionHUD::DrawHUD()
-{
-	Super::DrawHUD();
-
-	AFusionPlayerController_Menu* MPC = Cast<AFusionPlayerController_Menu>(GetOwningPlayerController());
-	if (MPC) return; // Don't draw crosshair inside of Main Menu
-
-	AFusionPlayerController_Lobby* LPC = Cast<AFusionPlayerController_Lobby>(GetOwningPlayerController());
-	if (LPC) return; // Don't draw crosshair inside of Lobby
-
-
-
-	// Draw very simple crosshair
-
-	// find center of the Canvas
-	const FVector2D Center(Canvas->ClipX * 0.5f, Canvas->ClipY * 0.5f);
-
-	// offset by half the texture's dimensions so that the center of the texture aligns with the center of the Canvas
-	const FVector2D CrosshairDrawPosition( (Center.X),
-										   (Center.Y + 20.0f));
-
-	// draw the crosshair
-	FCanvasTileItem TileItem( CrosshairDrawPosition, CrosshairTex->Resource, FLinearColor::White);
-	TileItem.BlendMode = SE_BLEND_Translucent;
-	Canvas->DrawItem( TileItem );
-}
-*/
-
-
-
-
 
 
 
@@ -286,6 +256,27 @@ void AFusionHUD::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 
 	Super::EndPlay(EndPlayReason);
+}
+
+FString AFusionHUD::GetMatchStateToString()
+{
+	EFusionMatchState::Type State = GetMatchState();
+
+	if (State == EFusionMatchState::Warmup)
+	{
+		return FString("Warmup");
+	}
+	else if (State == EFusionMatchState::Playing)
+	{
+		return FString("Playing");
+	}
+	else if (State == EFusionMatchState::Lost)
+	{
+		return FString("Lost");
+	}
+	else
+		return FString("Won");
+
 }
 
 void AFusionHUD::SetMatchState(EFusionMatchState::Type NewState)
@@ -674,6 +665,32 @@ void AFusionHUD::DrawHUD()
 	AFusionPlayerController_Lobby* LPC = Cast<AFusionPlayerController_Lobby>(GetOwningPlayerController());
 	if (LPC) return; // Don't draw crosshair inside of Lobby
 
+
+	// Debug Code to print all relative states
+
+	// HUD MATCH STATE
+	// TODO: remove this debug code
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Emerald, *FString::Printf(TEXT("Current HUD MatchState: %s"), *GetMatchStateToString()));
+	
+	// GAME MODE STATE
+	// Logging inside of TICK in the team deathmatch game mode now.
+
+
+	// SESSION STATE
+	// TODO: remove this debug code
+	IOnlineSubsystem * OnlineSub = IOnlineSubsystem::Get();
+	IOnlineSessionPtr Sessions = (OnlineSub != NULL) ? OnlineSub->GetSessionInterface() : NULL;
+	if (Sessions.IsValid())
+	{
+		EOnlineSessionState::Type SessionState = Sessions->GetSessionState(GameSessionName);
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Emerald, *FString::Printf(TEXT("Session %s Current State is: '%s'"), *GameSessionName.ToString(), EOnlineSessionState::ToString(SessionState)));
+	}
+
+	// GAME INSTANCE STATE
+	// TODO: remove this debug code
+	//UFusionGameInstance* FGI = GetWorld() != NULL ? Cast<UFusionGameInstance>(GetWorld()->GetGameInstance()) : NULL;
+	//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, FString::Printf(TEXT("CurrentState: %s"), *FGI->CurrentState.ToString()));
+	//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, FString::Printf(TEXT("PendingState: %s"), *FGI->PendingState.ToString()));
 
 
 	if (Canvas == nullptr)
@@ -1114,7 +1131,7 @@ void AFusionHUD::OnPlayerTalkingStateChanged(TSharedRef<const FUniqueNetId> Talk
 {
 	if (bIsScoreBoardVisible)
 	{
-		//ScoreboardWidget->StoreTalkingPlayerData(TalkingPlayerId.Get(), bIsTalking);
+		ScoreboardWidget->StoreTalkingPlayerData(TalkingPlayerId.Get(), bIsTalking);
 	}
 }
 
@@ -1173,7 +1190,7 @@ bool AFusionHUD::ShowScoreboard(bool bEnable, bool bFocus)
 	}
 
 
-	/*
+	
 	bIsScoreBoardVisible = bEnable;
 	if (bIsScoreBoardVisible)
 	{
@@ -1183,7 +1200,7 @@ bool AFusionHUD::ShowScoreboard(bool bEnable, bool bFocus)
 			.VAlign(EVerticalAlignment::VAlign_Center)
 			.Padding(FMargin(50))
 			[
-				SAssignNew(ScoreboardWidget, SShooterScoreboardWidget)
+				SAssignNew(ScoreboardWidget, SScoreboard_Widget)
 				.PCOwner(TWeakObjectPtr<APlayerController>(PlayerOwner))
 			.MatchState(GetMatchState())
 			];
@@ -1214,7 +1231,7 @@ bool AFusionHUD::ShowScoreboard(bool bEnable, bool bFocus)
 			FSlateApplication::Get().SetAllUserFocusToGameViewport();
 		}
 	}
-	*/
+	
 	return true;
 }
 

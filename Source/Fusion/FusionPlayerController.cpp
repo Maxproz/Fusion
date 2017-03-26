@@ -81,13 +81,20 @@ AFusionPlayerController::AFusionPlayerController(const class FObjectInitializer&
 void AFusionPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
+	
+	// These are bound to Tab
+	InputComponent->BindAction("Scoreboard", IE_Pressed, this, &AFusionPlayerController::OnShowScoreboard);
+	InputComponent->BindAction("Scoreboard", IE_Released, this, &AFusionPlayerController::OnHideScoreboard);
+
+	// Unbound at the moment
+	InputComponent->BindAction("ConditionalCloseScoreboard", IE_Pressed, this, &AFusionPlayerController::OnConditionalCloseScoreboard); 
+	// Unbound at the moment
+	InputComponent->BindAction("ToggleScoreboard", IE_Pressed, this, &AFusionPlayerController::OnToggleScoreboard); 
+	
 	/*
 	// UI input
 	InputComponent->BindAction("InGameMenu", IE_Pressed, this, &AFusionPlayerController::OnToggleInGameMenu);
-	InputComponent->BindAction("Scoreboard", IE_Pressed, this, &AFusionPlayerController::OnShowScoreboard);
-	InputComponent->BindAction("Scoreboard", IE_Released, this, &AFusionPlayerController::OnHideScoreboard);
-	InputComponent->BindAction("ConditionalCloseScoreboard", IE_Pressed, this, &AFusionPlayerController::OnConditionalCloseScoreboard);
-	InputComponent->BindAction("ToggleScoreboard", IE_Pressed, this, &AFusionPlayerController::OnToggleScoreboard);
+
 
 	// voice chat
 	InputComponent->BindAction("PushToTalk", IE_Pressed, this, &AFusionPlayerController::StartTalking);
@@ -112,8 +119,6 @@ void AFusionPlayerController::BeginPlay()
 	if (IsLocalPlayerController())
 	{
 		GetFusionHUD()->CreateGameWidgets();
-
-		//GetFusionHUD()->GetInGameHUDWidget()->PlayerControllerRef = this;
 		ClientShowInGameHUD();
 
 		UFusionGameInstance* FGI = GetWorld() != NULL ? Cast<UFusionGameInstance>(GetWorld()->GetGameInstance()) : NULL;
@@ -161,7 +166,7 @@ void AFusionPlayerController::TickActor(float DeltaTime, enum ELevelTick TickTyp
 			AFusionHUD* FusionHUD = GetFusionHUD();
 			if (FusionHUD)
 			{
-				//ShooterHUD->ShowScoreboard(true, true);
+				FusionHUD->ShowScoreboard(true, true);
 			}
 		}
 	}
@@ -393,7 +398,7 @@ void AFusionPlayerController::OnDeathMessage(class AFusionPlayerState* KillerPla
 	AFusionHUD* FusionHUD = GetFusionHUD();
 	if (FusionHUD)
 	{
-		//FusionHUD->ShowDeathMessage(KillerPlayerState, KilledPlayerState, KillerDamageType);
+		FusionHUD->ShowDeathMessage(KillerPlayerState, KilledPlayerState, KillerDamageType);
 	}
 
 	ULocalPlayer* LocalPlayer = Cast<ULocalPlayer>(Player);
@@ -518,18 +523,18 @@ void AFusionPlayerController::OnToggleInGameMenu()
 void AFusionPlayerController::OnConditionalCloseScoreboard()
 {
 	AFusionHUD* FusionHUD = GetFusionHUD();
-	//if (FusionHUD && (FusionHUD->IsMatchOver() == false))
+	if (FusionHUD && (FusionHUD->IsMatchOver() == false))
 	{
-		//FusionHUD->ConditionalCloseScoreboard();
+		FusionHUD->ConditionalCloseScoreboard();
 	}
 }
 
 void AFusionPlayerController::OnToggleScoreboard()
 {
 	AFusionHUD* FusionHUD = GetFusionHUD();
-	//if (FusionHUD && (FusionHUD->IsMatchOver() == false))
+	if (FusionHUD && (FusionHUD->IsMatchOver() == false))
 	{
-		//FusionHUD->ToggleScoreboard();
+		FusionHUD->ToggleScoreboard();
 	}
 }
 
@@ -538,7 +543,7 @@ void AFusionPlayerController::OnShowScoreboard()
 	AFusionHUD* FusionHUD = GetFusionHUD();
 	if (FusionHUD)
 	{
-		//FusionHUD->ShowScoreboard(true);
+		FusionHUD->ShowScoreboard(true);
 	}
 }
 
@@ -546,9 +551,9 @@ void AFusionPlayerController::OnHideScoreboard()
 {
 	AFusionHUD* FusionHUD = GetFusionHUD();
 	// If have a valid match and the match is over - hide the scoreboard
-	//if ((FusionHUD != NULL) && (FusionHUD->IsMatchOver() == false))
+	if ((FusionHUD != NULL) && (FusionHUD->IsMatchOver() == false))
 	{
-		//FusionHUD->ShowScoreboard(false);
+		FusionHUD->ShowScoreboard(false);
 	}
 }
 
@@ -1114,7 +1119,7 @@ void AFusionPlayerController::ClientGameStarted_Implementation()
 	if (FusionHUD)
 	{
 		FusionHUD->SetMatchState(EFusionMatchState::Playing);
-	//	ShooterHUD->ShowScoreboard(false);
+		FusionHUD->ShowScoreboard(false);
 	}
 	bGameEndedFrame = false;
 
@@ -1279,7 +1284,7 @@ AFusionHUD* AFusionPlayerController::GetFusionHUD() const
 
 void AFusionPlayerController::HandleReturnToMainMenu()
 {
-	//OnHideScoreboard();
+	OnHideScoreboard();
 	CleanupSessionOnReturnToMenu();
 }
 
@@ -1315,8 +1320,7 @@ void AFusionPlayerController::PreClientTravel(const FString& PendingURL, ETravel
 		if (FusionHUD != nullptr)
 		{
 			// Passing true to bFocus here ensures that focus is returned to the game viewport.
-			//FusionHUD->ShowScoreboard(false, true);
-			//FusionHUD->GetInGameHUDWidget()->ShowInGameHUD();
+			FusionHUD->ShowScoreboard(false, true);
 		}
 	}
 }

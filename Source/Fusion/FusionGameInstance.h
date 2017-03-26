@@ -435,12 +435,14 @@ private:
 	bool bIsLicensed;
 
 	/** Main menu UI */
-	//TSharedPtr<FShooterMainMenu> MainMenuUI;
+	
 	TWeakObjectPtr<class UMainMenuUI> MainMenuUI;
 
 	/** Message menu (Shown in the even of errors - unable to connect etc) */
 	TWeakObjectPtr<class UFusionMessageMenu_Widget> MessageMenuUI;
 
+
+	//TSharedPtr<class SWidget> LobbyWidget;
 	TWeakObjectPtr<class ULobbyMenu_Widget> LobbyWidget;
 
 

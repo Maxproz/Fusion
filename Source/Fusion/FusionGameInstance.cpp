@@ -520,6 +520,7 @@ void UFusionGameInstance::BeginLobbyState()
 		AFusionHUD* FHUD = Cast<AFusionHUD>(LPC->GetFusionHUD());
 		if (FHUD)
 		{
+			
 			LobbyWidget = FHUD->GetLobbyMenuWidget();
 			{
 				if (LobbyWidget.IsValid())
@@ -528,6 +529,19 @@ void UFusionGameInstance::BeginLobbyState()
 					LobbyWidget.Get()->ShowWidget();
 				}
 			}
+			
+
+			/*
+			LobbyWidget = FHUD->GetLobbyMenuWidget()->TakeWidget();
+			{
+				if (LobbyWidget.IsValid())
+				{
+					GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Emerald, FString::Printf(TEXT("Showing The Valid Lobby Widget")));
+					LobbyWidget.Get()->SetVisibility(EVisibility::Visible);
+				}
+			}
+			*/
+
 		}
 	}
 }
@@ -537,8 +551,11 @@ void UFusionGameInstance::EndLobbyState()
 	if (LobbyWidget.IsValid())
 	{
 		LobbyWidget.Get()->HideWidget();
+		//LobbyWidget.Get()->SetVisibility(EVisibility::Hidden);
 		LobbyWidget = nullptr;
 	}
+
+	
 }
 
 void UFusionGameInstance::BeginPlayingState()
