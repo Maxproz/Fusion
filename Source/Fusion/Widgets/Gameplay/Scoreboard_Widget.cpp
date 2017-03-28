@@ -5,11 +5,6 @@
 #include "FusionPlayerState.h"
 #include "FusionGameState.h"
 
-
-//#include "FusionStyle.h"
-//#include "FusionScoreboardWidgetStyle.h"
-//#include "FusionUIHelpers.h"
-
 #include "Scoreboard_Widget.h"
 
 
@@ -18,7 +13,6 @@
 #define LOCTEXT_NAMESPACE "FusionScoreboard"
 
 // @todo: prevent interaction on PC for now (see OnFocusReceived for reasons)
-
 
 #define	NORM_PADDING	(FMargin(5))
 #define TTF_FONT( RelativePath, ... ) FSlateFontInfo( FPaths::GameContentDir() / "UI"/ RelativePath + TEXT(".ttf"), __VA_ARGS__ )
@@ -199,7 +193,7 @@ void SScoreboard_Widget::Construct(const FArguments& InArgs)
 	);
 }
 
-#undef TTF_FONT
+
 
 void SScoreboard_Widget::StoreTalkingPlayerData(const FUniqueNetId& PlayerId, bool bIsTalking)
 {
@@ -929,5 +923,7 @@ int32 SScoreboard_Widget::GetAttributeValue_Score(AFusionPlayerState* PlayerStat
 	return FMath::TruncToInt(PlayerState->Score);
 }
 
+
+#undef TTF_FONT
 #undef LOCTEXT_NAMESPACE
 

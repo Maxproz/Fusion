@@ -502,7 +502,16 @@ void AMasterWeapon::SimulateWeaponFire()
 
 	if (!bLoopedFireAnim || !bPlayingFireAnim)
 	{
-		PlayWeaponAnimation(FireAnim);
+		
+		if (MyPawn->IsZooming())
+		{
+			PlayWeaponAnimation(FireAnimZoom);
+		}
+		else
+		{
+			PlayWeaponAnimation(FireAnimHip);
+		}
+		
 		//MyPawn->PlayAnimMontage(TheGunsFireMontage);
 		if (TheGunsFireMontage)
 		{
@@ -545,7 +554,16 @@ void AMasterWeapon::StopSimulatingWeaponFire()
 
 	if (bLoopedFireAnim && bPlayingFireAnim)
 	{
-		StopWeaponAnimation(FireAnim);
+		if (MyPawn->IsZooming())
+		{
+			StopWeaponAnimation(FireAnimZoom);
+		}
+		else
+		{
+			StopWeaponAnimation(FireAnimHip);
+		}
+		
+
 		bPlayingFireAnim = false;
 	}
 

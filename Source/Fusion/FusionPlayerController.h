@@ -9,9 +9,6 @@
 #include "FusionPlayerController.generated.h"
 
 
-
-
-
 /**
  * 
  */
@@ -34,8 +31,16 @@ class FUSION_API AFusionPlayerController : public APlayerController
 	/* Respawn or start spectating after dying */
 	virtual void UnFreeze() override;
 
+protected:
+
+	/** shooter in-game menu */
+	TSharedPtr<class FFusionInGameMenu> FusionInGameMenu;
 
 public:
+
+	// TODO: Find a better place to read this from the InGameMenu class
+	UPROPERTY(EditAnywhere, Category = Sound)
+	FSlateSound ExitGameSound;
 
 	/* Kill the current pawn */
 	UFUNCTION(exec)

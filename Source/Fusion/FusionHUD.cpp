@@ -110,8 +110,9 @@ void AFusionHUD::CreateLobbyMenuWidget()
 
 void AFusionHUD::CreateMessageMenuWidget()
 {
-	AFusionPlayerController_Menu* MPC = Cast<AFusionPlayerController_Menu>(GetOwningPlayerController());
-	if (!MPC) return;
+	//AFusionPlayerController_Menu* MPC = Cast<AFusionPlayerController_Menu>(GetOwningPlayerController());
+	//AFusionPlayerController* GamePC = Cast<AFusionPlayerController>(GetOwningPlayerController());
+	//if (!MPC) return;
 
 	if (ActiveFusionMessageMenu_Widget != nullptr) return;
 

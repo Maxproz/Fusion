@@ -216,7 +216,11 @@ protected:
 
 	/** fire animations */
 	UPROPERTY(EditDefaultsOnly, Category = Animation)
-	FWeaponAnim FireAnim;
+	FWeaponAnim FireAnimHip;
+
+	/** fire animations */
+	UPROPERTY(EditDefaultsOnly, Category = Animation)
+	FWeaponAnim FireAnimZoom;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Animation")
 	UAnimMontage* TheGunsReloadMontage;

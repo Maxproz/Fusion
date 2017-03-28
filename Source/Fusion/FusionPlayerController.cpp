@@ -27,6 +27,7 @@
 #include "Player/FusionPersistentUser.h"
 
 #include "Widgets/Gameplay/InGameHUD.h"
+#include "Widgets/Gameplay/FusionInGameMenu.h"
 
 //#include "Sound/SoundNodeLocalPlayer.h"
 #include "AudioThread.h"
@@ -91,10 +92,10 @@ void AFusionPlayerController::SetupInputComponent()
 	// Unbound at the moment
 	InputComponent->BindAction("ToggleScoreboard", IE_Pressed, this, &AFusionPlayerController::OnToggleScoreboard); 
 	
-	/*
-	// UI input
 	InputComponent->BindAction("InGameMenu", IE_Pressed, this, &AFusionPlayerController::OnToggleInGameMenu);
 
+	/*
+	// UI input
 
 	// voice chat
 	InputComponent->BindAction("PushToTalk", IE_Pressed, this, &AFusionPlayerController::StartTalking);
@@ -198,8 +199,8 @@ void AFusionPlayerController::SetPlayer(UPlayer* InPlayer)
 	Super::SetPlayer(InPlayer);
 
 	//Build menu only after game is initialized
-	//ShooterIngameMenu = MakeShareable(new FShooterIngameMenu());
-	//ShooterIngameMenu->Construct(Cast<ULocalPlayer>(Player));
+	FusionInGameMenu = MakeShareable(new FFusionInGameMenu());
+	FusionInGameMenu->Construct(Cast<ULocalPlayer>(Player));
 
 	FInputModeGameOnly InputMode;
 	SetInputMode(InputMode);
@@ -514,10 +515,10 @@ void AFusionPlayerController::OnToggleInGameMenu()
 	}
 
 	// if no one's paused, pause
-	//if (ShooterIngameMenu.IsValid())
-	//{
-		//ShooterIngameMenu->ToggleGameMenu();
-	//}
+	if (FusionInGameMenu.IsValid())
+	{
+		FusionInGameMenu->ToggleGameMenu();
+	}
 }
 
 void AFusionPlayerController::OnConditionalCloseScoreboard()
@@ -560,9 +561,9 @@ void AFusionPlayerController::OnHideScoreboard()
 bool AFusionPlayerController::IsGameMenuVisible() const
 {
 	bool Result = false;
-	//if (ShooterIngameMenu.IsValid())
+	if (FusionInGameMenu.IsValid())
 	{
-		//Result = ShooterIngameMenu->GetIsGameMenuUp();
+		Result = FusionInGameMenu->GetIsGameMenuUp();
 	}
 
 	return Result;
@@ -600,7 +601,7 @@ void AFusionPlayerController::ClientReturnToMainMenu_Implementation(const FStrin
 	if (GetNetMode() == NM_Client)
 	{
 		const FText ReturnReason = NSLOCTEXT("NetworkErrors", "HostQuit", "The host has quit the match.");
-
+	
 		FGI->ShowMessageThenGotoState(ReturnReason, FusionGameInstanceState::MainMenu);
 	}
 	else
@@ -836,9 +837,9 @@ bool AFusionPlayerController::SetPause(bool bPause, FCanUnpause CanUnpauseDelega
 void AFusionPlayerController::ShowInGameMenu()
 {
 	AFusionHUD* FusionHUD = GetFusionHUD();
-	//if (ShooterIngameMenu.IsValid() && !ShooterIngameMenu->GetIsGameMenuUp() && ShooterHUD && (ShooterHUD->IsMatchOver() == false))
+	if (FusionInGameMenu.IsValid() && !FusionInGameMenu->GetIsGameMenuUp() && FusionHUD && (FusionHUD->IsMatchOver() == false))
 	{
-		//ShooterIngameMenu->ToggleGameMenu();
+		FusionInGameMenu->ToggleGameMenu();
 	}
 }
 void AFusionPlayerController::UpdateAchievementsOnGameEnd()

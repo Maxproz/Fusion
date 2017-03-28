@@ -147,6 +147,8 @@ void UFusionGameInstance::HandleSessionFailure(const FUniqueNetId& NetId, ESessi
 	UE_LOG(LogOnlineGame, Warning, TEXT("UFusionGameInstance::HandleSessionFailure: %u"), (uint32)FailureType);
 
 	const FText ReturnReason = NSLOCTEXT("NetworkFailures", "ServiceUnavailable", "Connection has been lost.");
+
+
 	ShowMessageThenGotoState(ReturnReason,  FusionGameInstanceState::MainMenu);
 }
 
@@ -295,6 +297,8 @@ AFusionGameSession* UFusionGameInstance::GetGameSession() const
 void UFusionGameInstance::TravelLocalSessionFailure(UWorld *World, ETravelFailure::Type FailureType, const FString& ReasonString)
 {
 	AFusionPlayerController_Menu* const FirstPC = Cast<AFusionPlayerController_Menu>(UGameplayStatics::GetPlayerController(GetWorld(), 0));	
+
+
 	// TODO: add lobby test here also
 	if (FirstPC != nullptr)
 	{
@@ -481,15 +485,31 @@ void UFusionGameInstance::BeginMessageMenuState()
 
 	// player 0 gets to own the UI
 	ULocalPlayer* const Player = GetFirstGamePlayer();
-	MessageMenuUI = Cast<AFusionPlayerController_Menu>(Player->GetPlayerController(GetWorld()))->GetFusionHUD()->GetMessageMenuWidget();
+
+	AFusionPlayerController* GamePC = Cast<AFusionPlayerController>(Player->GetPlayerController(GetWorld()));
+	MessageMenuUI = GamePC->GetFusionHUD()->GetMessageMenuWidget();
+	
 
 	if (MessageMenuUI.IsValid())
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Emerald, FString::Printf(TEXT("Showing The Message Menu Widget")));
+		GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Emerald, FString::Printf(TEXT("Showing The Message Menu Widget From Game")));
 
 		MessageMenuUI.Get()->DisplayMessage = PendingMessage.DisplayString;
 		MessageMenuUI.Get()->OnRep_DisplayMessage();
 		MessageMenuUI.Get()->ShowWidget();
+	}
+	else
+	{
+		MessageMenuUI = Cast<AFusionPlayerController_Menu>(Player->GetPlayerController(GetWorld()))->GetFusionHUD()->GetMessageMenuWidget();
+
+		if (MessageMenuUI.IsValid())
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Emerald, FString::Printf(TEXT("Showing The Message Menu Widget from Main Menu")));
+
+			MessageMenuUI.Get()->DisplayMessage = PendingMessage.DisplayString;
+			MessageMenuUI.Get()->OnRep_DisplayMessage();
+			MessageMenuUI.Get()->ShowWidget();
+		}
 	}
 
 	PendingMessage.DisplayString = FText::GetEmpty();
@@ -687,8 +707,8 @@ bool UFusionGameInstance::Tick(float DeltaSeconds)
 
 	MaybeChangeState();
 
-	GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, FString::Printf(TEXT("CurrentState: %s"), *CurrentState.ToString()));
-	GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, FString::Printf(TEXT("PendingState: %s"), *PendingState.ToString()));
+	//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, FString::Printf(TEXT("CurrentState: %s"), *CurrentState.ToString()));
+	//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, FString::Printf(TEXT("PendingState: %s"), *PendingState.ToString()));
 
 
 	UFusionGameViewportClient* FusionViewport = Cast<UFusionGameViewportClient>(GetGameViewportClient());
@@ -1082,7 +1102,7 @@ FString UFusionGameInstance::GetPlayerName() const
 		return LanPlayerName;
 }
 
-#undef LOCTEXT_NAMESPACE
+
 
 // call the ServerMenu UMG and pass the array of Session Results when yhe session finding is over
 void UFusionGameInstance::OnFoundSessionsCompleteUMG(const TArray<FCustomFusionSessionResult>& CustomSessionResults)
@@ -1411,3 +1431,4 @@ void UFusionGameInstance::CleanupSessionOnReturnToMenu()
 	
 }
 
+#undef LOCTEXT_NAMESPACE

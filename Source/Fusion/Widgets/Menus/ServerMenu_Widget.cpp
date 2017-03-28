@@ -75,6 +75,7 @@ void UServerMenu_Widget::OnTextChangedLanPlayerNameTextbox(const FText &Text)
 	if (UKismetTextLibrary::NotEqual_TextText(Text, EmptyText))
 	{
 		GameInstanceRef->LanPlayerName = UKismetTextLibrary::Conv_TextToString(Text);
+
 	}
 }
 
@@ -86,6 +87,7 @@ void UServerMenu_Widget::OnTextCommittedLanPlayerNameTextbox(const FText &Text, 
 	if (UKismetTextLibrary::NotEqual_TextText(Text, EmptyText) && Method == ETextCommit::OnEnter)
 	{
 		GameInstanceRef->LanPlayerName = UKismetTextLibrary::Conv_TextToString(Text);
+
 	}
 }
 
