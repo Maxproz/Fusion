@@ -2,7 +2,9 @@
 
 #pragma once
 
-#include "GameFramework/PlayerController.h"
+//#include "GameFramework/PlayerController.h"
+
+#include "FusionPlayerController_Master.h"
 
 #include "FusionHUD.h"
 
@@ -13,7 +15,7 @@
  * 
  */
 UCLASS(config=Game)
-class FUSION_API AFusionPlayerController : public APlayerController
+class FUSION_API AFusionPlayerController : public AFusionPlayerController_Master
 {
 	GENERATED_BODY()
 	

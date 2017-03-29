@@ -4,6 +4,7 @@
 
 #include "FusionGameMode.h"
 #include "FusionGameInstance.h"
+
 #include "FusionPlayerController.h"
 
 #include "FusionGameState.h"
@@ -72,6 +73,7 @@ void AFusionGameState::RequestFinishAndExitToMainMenu()
 	{
 		// we are client, handle our own business
 		AFusionPlayerController* const PrimaryPC = Cast<AFusionPlayerController>(GetGameInstance()->GetFirstLocalPlayerController());
+
 		if (PrimaryPC)
 		{
 			check(PrimaryPC->GetNetMode() == ENetMode::NM_Client);

@@ -598,11 +598,20 @@ void AFusionPlayerController::ClientReturnToMainMenu_Implementation(const FStrin
 		return;
 	}
 
-	if (GetNetMode() == NM_Client)
+	if (GetNetMode() == NM_Client) 
 	{
+		ULocalPlayer* const Player = GetLocalPlayer();
+		TWeakObjectPtr<ULocalPlayer> CurrentPlayer = Player;
+
 		const FText ReturnReason = NSLOCTEXT("NetworkErrors", "HostQuit", "The host has quit the match.");
-	
-		FGI->ShowMessageThenGotoState(ReturnReason, FusionGameInstanceState::MainMenu);
+		
+		// Actually, I think that it sending me to the main menu using the game sessions deleagtes
+		// - so when the main menu loads it wasnt remembering the showmessage command sent from this Player controller
+		FGI->LastErrorMessage = FText::FromString(TEXT("The Host has quit the match."));
+		FGI->GotoState(FusionGameInstanceState::MessageMenu);
+
+		// Not sure why this doesnt show the widget
+		//FGI->ShowMessageThenGotoState(FText::FromString(TEXT("The Host has quit the match.")), FusionGameInstanceState::MainMenu, true, CurrentPlayer);
 	}
 	else
 	{

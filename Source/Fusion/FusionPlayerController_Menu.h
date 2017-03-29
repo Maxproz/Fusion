@@ -2,14 +2,16 @@
 
 #pragma once
 
-#include "GameFramework/PlayerController.h"
+//#include "GameFramework/PlayerController.h"
+#include "FusionPlayerController_Master.h"
+
 #include "FusionPlayerController_Menu.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class FUSION_API AFusionPlayerController_Menu : public APlayerController
+class FUSION_API AFusionPlayerController_Menu : public AFusionPlayerController_Master
 {
 	GENERATED_UCLASS_BODY()
 

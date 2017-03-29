@@ -3,6 +3,9 @@
 #include "Fusion.h"
 
 #include "FusionHUD.h"
+#include "Widgets/Menus/FusionMessageMenu_Widget.h"
+
+#include "FusionGameInstance.h"
 
 #include "Widgets/Menus/MainMenuUI.h"
 
@@ -21,6 +24,16 @@ void AFusionPlayerController_Menu::BeginPlay()
 	if (IsLocalPlayerController())
 	{
 		GetFusionHUD()->CreateGameWidgets();
+
+		UFusionGameInstance* FGI = GetWorld() != NULL ? Cast<UFusionGameInstance>(GetWorld()->GetGameInstance()) : NULL;
+		if (FGI->GetCurrentState() == FName(TEXT("MessageMenu")))
+		{
+			//GetFusionHUD()->GetMessageMenuWidget()->ShowWidget();
+
+			ULocalPlayer* const Player = GetLocalPlayer();
+			TWeakObjectPtr<ULocalPlayer> CurrentPlayer = Player;
+			FGI->ShowMessageThenGotoState(FGI->LastErrorMessage, FusionGameInstanceState::MainMenu, true, CurrentPlayer);
+		}
 
 		bShowMouseCursor = true;
 		ClientIgnoreLookInput(true);

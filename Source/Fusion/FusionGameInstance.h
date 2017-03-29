@@ -401,6 +401,11 @@ public:
 	//store the max number of players in a session whenever we create of join a session
 	int32 MaxPlayersinSession;
 
+public:
+	FName GetCurrentState() const { return CurrentState; }
+
+	FText LastErrorMessage;
+
 private:
 
 
@@ -416,6 +421,8 @@ private:
 
 
 	FName CurrentState;
+
+
 	FName PendingState;
 
 	FFusionPendingMessage PendingMessage;
