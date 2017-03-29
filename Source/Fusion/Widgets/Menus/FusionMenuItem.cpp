@@ -1,6 +1,9 @@
 // @Maxpro 2017
 
 #include "Fusion.h"
+
+#include "FusionPlayerController.h"
+
 #include "FusionMenuItem.h"
 
 
@@ -8,12 +11,53 @@
 
 void SFusionMenuItem::Construct(const FArguments& InArgs)
 {
+	PlayerOwner = InArgs._PlayerOwner;
+
+	UWorld* World = PlayerOwner->GetGameInstance()->GetWorld();
+	AFusionPlayerController* FPC = Cast<AFusionPlayerController>(PlayerOwner->GetPlayerController(World));
 
 	BorderBrush = new FSlateBrush();
-	BorderBrush->ImageSize = FVector2D(140.f, 25.f);
+	BorderBrush->ImageSize = FVector2D(403.f, 36.f);
 	BorderBrush->DrawAs = ESlateBrushDrawType::Image;
 	BorderBrush->TintColor = FSlateColor(FLinearColor(FColor::White));
+	if (FPC)
+	{
+		BorderBrush->SetResourceObject(FPC->MenuItemTexture);
+	}
 
+	LeftArrowBrush = new FSlateBrush();
+	LeftArrowBrush->ImageSize = FVector2D(18.f, 21.f);
+	LeftArrowBrush->DrawAs = ESlateBrushDrawType::Image;
+	LeftArrowBrush->TintColor = FSlateColor(FLinearColor(FColor::White));
+	if (FPC)
+	{
+		LeftArrowBrush->SetResourceObject(FPC->LeftArrowTexture);
+	}
+
+	RightArrowBrush = new FSlateBrush();
+	RightArrowBrush->ImageSize = FVector2D(18.f, 21.f);
+	RightArrowBrush->DrawAs = ESlateBrushDrawType::Image;
+	RightArrowBrush->TintColor = FSlateColor(FLinearColor(FColor::White));
+	if (FPC)
+	{
+		RightArrowBrush->SetResourceObject(FPC->RightArrowTexture);
+	}
+
+
+	Text = InArgs._Text;
+	OptionText = InArgs._OptionText;
+	OnClicked = InArgs._OnClicked;
+	OnArrowPressed = InArgs._OnArrowPressed;
+	bIsMultichoice = InArgs._bIsMultichoice;
+	bIsActiveMenuItem = false;
+	LeftArrowVisible = EVisibility::Collapsed;
+	RightArrowVisible = EVisibility::Collapsed;
+	//if attribute is set, use its value, otherwise uses default
+	InactiveTextAlpha = InArgs._InactiveTextAlpha.Get(1.0f);
+
+	const float ArrowMargin = 3.0f;
+	ItemMargin = 10.0f;
+	TextColor = FLinearColor(FColor(155, 164, 182));
 
 
 	// Fonts still need to be specified in code for now
@@ -78,21 +122,7 @@ void SFusionMenuItem::Construct(const FArguments& InArgs)
 	);
 
 
-	PlayerOwner = InArgs._PlayerOwner;
-	Text = InArgs._Text;
-	OptionText = InArgs._OptionText;
-	OnClicked = InArgs._OnClicked;
-	OnArrowPressed = InArgs._OnArrowPressed;
-	bIsMultichoice = InArgs._bIsMultichoice;
-	bIsActiveMenuItem = false;
-	LeftArrowVisible = EVisibility::Collapsed;
-	RightArrowVisible = EVisibility::Collapsed;
-	//if attribute is set, use its value, otherwise uses default
-	InactiveTextAlpha = InArgs._InactiveTextAlpha.Get(1.0f);
 
-	const float ArrowMargin = 3.0f;
-	ItemMargin = 10.0f;
-	TextColor = FLinearColor(FColor(155, 164, 182));
 
 	ChildSlot
 		.VAlign(VAlign_Fill)
@@ -143,7 +173,7 @@ void SFusionMenuItem::Construct(const FArguments& InArgs)
 		.VAlign(VAlign_Center)
 		[
 			SNew(SImage)
-			.Image(BorderBrush)
+			.Image(LeftArrowBrush)
 		]
 		]
 		]
@@ -173,7 +203,7 @@ void SFusionMenuItem::Construct(const FArguments& InArgs)
 		.VAlign(VAlign_Center)
 		[
 			SNew(SImage)
-			.Image(BorderBrush)
+			.Image(RightArrowBrush)
 		]
 		]
 		]

@@ -156,8 +156,15 @@ public:
 
 	virtual void DrawHUD() override;
 
-
-
+	/*
+	// Used in the InGameHUD_Widget
+	UPROPERTY()
+	UTexture2D* MenuHeaderBGTexture;
+	UPROPERTY()
+	UTexture2D* MenuLeftBGTexture;
+	UPROPERTY()
+	UTexture2D* MenuRightBGTexture;
+	*/
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 

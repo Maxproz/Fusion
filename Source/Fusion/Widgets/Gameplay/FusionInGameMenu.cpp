@@ -25,14 +25,20 @@ void FFusionInGameMenu::Construct(ULocalPlayer* _PlayerOwner)
 	if (PlayerOwner)
 	{
 		GameInstance = Cast<UFusionGameInstance>(PlayerOwner->GetGameInstance());
+
 	}
 
+	AFusionPlayerController* FPC = Cast<AFusionPlayerController>(PlayerOwner->GetPlayerController(GameInstance->GetWorld()));
+	
 	if (!InGameMenuWidget.IsValid())
 	{
 		SAssignNew(InGameMenuWidget, SFusionHUDMenu_Widget)
 			.PlayerOwner(TWeakObjectPtr<ULocalPlayer>(PlayerOwner))
 			.Cursor(EMouseCursor::Default)
-			.IsGameMenu(true);
+			.IsGameMenu(true)
+			._MenuHeaderBGTexture(FPC->MenuHeaderBGTexture)
+			._MenuLeftBGTexture(FPC->MenuLeftBGTexture)
+			._MenuRightBGTexture(FPC->MenuRightBGTexture);
 
 
 		int32 const OwnerUserIndex = GetOwnerUserIndex();

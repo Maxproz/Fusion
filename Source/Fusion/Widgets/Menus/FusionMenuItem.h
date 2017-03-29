@@ -49,6 +49,8 @@ public:
 
 	FSlateStyleSet Style = ("DefaultFusionMenuItemStyle");
 	FSlateBrush* BorderBrush;
+	FSlateBrush* LeftArrowBrush;
+	FSlateBrush* RightArrowBrush;
 
 	/** says that we can support keyboard focus */
 	virtual bool SupportsKeyboardFocus() const override { return true; }

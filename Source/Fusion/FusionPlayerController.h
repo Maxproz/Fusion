@@ -40,9 +40,27 @@ protected:
 
 public:
 
+	// Should move these to the HUD class when I got time
+
 	// TODO: Find a better place to read this from the InGameMenu class
 	UPROPERTY(EditAnywhere, Category = Sound)
 	FSlateSound ExitGameSound;
+
+	// Used in the InGameHUD_Widget
+	UPROPERTY(EditAnywhere)
+	UTexture2D* MenuHeaderBGTexture;
+	UPROPERTY(EditAnywhere)
+	UTexture2D* MenuLeftBGTexture;
+	UPROPERTY(EditAnywhere)
+	UTexture2D* MenuRightBGTexture;
+
+	// Used inside of the FusionMenuItem
+	UPROPERTY(EditAnywhere)
+	UTexture2D* MenuItemTexture;
+	UPROPERTY(EditAnywhere)
+	UTexture2D* LeftArrowTexture;
+	UPROPERTY(EditAnywhere)
+	UTexture2D* RightArrowTexture;
 
 	/* Kill the current pawn */
 	UFUNCTION(exec)

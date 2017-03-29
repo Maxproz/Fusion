@@ -13,6 +13,7 @@
 class SFusionHUDMenu_Widget : public SCompoundWidget
 {
 public:
+
 	SLATE_BEGIN_ARGS(SFusionHUDMenu_Widget)
 		: _PlayerOwner()
 		, _IsGameMenu(false)
@@ -23,6 +24,11 @@ public:
 
 		/** is this main menu or in game menu? */
 		SLATE_ARGUMENT(bool, IsGameMenu)
+
+		/** is this main menu or in game menu? */
+		SLATE_ARGUMENT(UTexture2D*, _MenuHeaderBGTexture)
+		SLATE_ARGUMENT(UTexture2D*, _MenuLeftBGTexture)
+		SLATE_ARGUMENT(UTexture2D*, _MenuRightBGTexture)
 
 		/** always goes here */
 		SLATE_END_ARGS()
@@ -39,7 +45,14 @@ public:
 
 
 	FSlateStyleSet Style = ("DefaultFusionMenuStyle");
-	FSlateBrush* BorderBrush;
+	FSlateBrush* MenuHeaderBG;
+	//UTexture2D* MenuHeaderBGTexture;
+
+	FSlateBrush* MenuHeaderLeft;
+	//UTexture2D* MenuLeftBGTexture;
+
+	FSlateBrush* MenuHeaderRight;
+	//UTexture2D* MenuRightBGTexture;
 
 	/** profile swap ui handler */ // new added 3/27/17
 	bool ProfileSwapUI(const int ControllerIndex, bool bShowOnlineOnly, const FOnLoginUIClosedDelegate* Delegate) const;

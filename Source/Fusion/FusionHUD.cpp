@@ -164,7 +164,16 @@ AFusionHUD::AFusionHUD(const FObjectInitializer& ObjectInitializer) : Super(Obje
 	//static ConstructorHelpers::FObjectFinder<UTexture2D> CrosshiarTexObj(TEXT("/Game/Tracked/Textures/FirstPersonCrosshair"));
 	//CrosshairTex = CrosshiarTexObj.Object;
 
-
+	/*
+	// Load the textures that are used for the InGameHUD
+	static ConstructorHelpers::FObjectFinder<UTexture2D> MenuHeaderob(TEXT("/Game/UI/Menu/MenuHeaderBg"));
+	MenuHeaderBGTexture = MenuHeaderob.Object;
+	static ConstructorHelpers::FObjectFinder<UTexture2D> MenuLeftob(TEXT("Texture2D'/Game/UI/Menu/MenuBgLeft.MenuBgLeft'"));
+	MenuLeftBGTexture = MenuLeftob.Object;
+	static ConstructorHelpers::FObjectFinder<UTexture2D> MenuRightob(TEXT("Texture2D'/Game/UI/Menu/MenuBgRight.MenuBgRight'"));
+	MenuRightBGTexture = MenuRightob.Object;
+	*/
+	
 
 	NoAmmoFadeOutTime = 1.0f;
 	HitNotifyDisplayTime = 0.75f;

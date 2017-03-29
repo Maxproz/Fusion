@@ -22,15 +22,29 @@
 #define PROFILE_SWAPPING	1
 #endif
 
+
 void SFusionHUDMenu_Widget::Construct(const FArguments& InArgs)
 {
+	
+	MenuHeaderBG = new FSlateBrush();
+	MenuHeaderBG->SetResourceObject(InArgs.__MenuHeaderBGTexture);
+	MenuHeaderBG->ImageSize = FVector2D(286.000000f, 64.000000f);
+	MenuHeaderBG->TintColor = FSlateColor(FLinearColor(FColor::White));
+	MenuHeaderBG->DrawAs = ESlateBrushDrawType::Image;
 
+	MenuHeaderLeft = new FSlateBrush();
+	MenuHeaderLeft->SetResourceObject(InArgs.__MenuLeftBGTexture);
+	MenuHeaderLeft->DrawAs = ESlateBrushDrawType::Box;
+	MenuHeaderLeft->ImageSize = FVector2D(447.000000f, 208.000000f);
+	MenuHeaderLeft->TintColor = FSlateColor(FLinearColor(FColor::White));
+	MenuHeaderLeft->Margin = FMargin(0.150000f, 0.150215f, 0.075000f, 0.150215f);
 
-	BorderBrush = new FSlateBrush();
-	BorderBrush->ImageSize = FVector2D(140.f, 25.f);
-	BorderBrush->DrawAs = ESlateBrushDrawType::Image;
-	BorderBrush->TintColor = FSlateColor(FLinearColor(FColor::White));
-
+	MenuHeaderRight = new FSlateBrush();
+	MenuHeaderRight->SetResourceObject(InArgs.__MenuRightBGTexture);
+	MenuHeaderRight->DrawAs = ESlateBrushDrawType::Box;
+	MenuHeaderRight->ImageSize = FVector2D(447.f, 208.f);
+	MenuHeaderRight->Margin = FMargin(0.150000f, 0.150215f, 0.075000f, 0.150215f);
+	MenuHeaderRight->TintColor = FSlateColor(FLinearColor(FColor::White));
 
 
 	// Fonts still need to be specified in code for now
@@ -134,7 +148,7 @@ void SFusionHUDMenu_Widget::Construct(const FArguments& InArgs)
 			SNew(SImage)
 			.Visibility(this, &SFusionHUDMenu_Widget::GetProfileSwapVisibility)
 		.ColorAndOpacity(this, &SFusionHUDMenu_Widget::GetHeaderColor)
-		.Image(BorderBrush)
+		.Image(MenuHeaderBG)
 		]
 		]
 	+ SOverlay::Slot()
@@ -193,7 +207,7 @@ void SFusionHUDMenu_Widget::Construct(const FArguments& InArgs)
 		[
 			SNew(SImage)
 			.ColorAndOpacity(this, &SFusionHUDMenu_Widget::GetHeaderColor)
-		.Image(BorderBrush)
+		.Image(MenuHeaderBG)
 		]
 		]
 	+ SOverlay::Slot()
@@ -232,7 +246,7 @@ void SFusionHUDMenu_Widget::Construct(const FArguments& InArgs)
 		.Padding(TAttribute<FMargin>(this, &SFusionHUDMenu_Widget::GetLeftMenuOffset))
 		[
 			SNew(SBorder)
-			.BorderImage(BorderBrush)
+			.BorderImage(MenuHeaderLeft)
 		.BorderBackgroundColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f))
 		.Padding(FMargin(OutlineWidth))
 		.DesiredSizeScale(this, &SFusionHUDMenu_Widget::GetBottomScale)
@@ -252,7 +266,7 @@ void SFusionHUDMenu_Widget::Construct(const FArguments& InArgs)
 		.AutoHeight()
 		[
 			SNew(SBorder)
-			.BorderImage(BorderBrush)
+			.BorderImage(MenuHeaderRight)
 		.BorderBackgroundColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f))
 		.Padding(FMargin(OutlineWidth))
 		.DesiredSizeScale(this, &SFusionHUDMenu_Widget::GetBottomScale)
