@@ -40,7 +40,9 @@ void UMainMenuUI::NativeConstruct()
 	BackFromHostingButton->OnClicked.AddDynamic(this, &UMainMenuUI::OnClickedBackFromHostingButton);
 	FindGameButton->OnClicked.AddDynamic(this, &UMainMenuUI::OnClickedFindGameButton);
 	HostGameButton->OnClicked.AddDynamic(this, &UMainMenuUI::OnClickedHostGameButton);
+	LeaderboardsButton->OnClicked.AddDynamic(this, &UMainMenuUI::OnClickedLeaderboardsButton);
 	StartHostingButton->OnClicked.AddDynamic(this, &UMainMenuUI::OnClickedStartHostingButton);
+	SettingButton->OnClicked.AddDynamic(this, &UMainMenuUI::OnClickedSettingsButton);
 	QuitButton->OnClicked.AddDynamic(this, &UMainMenuUI::OnClickedQuitButton);
 	MaxPlayersSlider->OnValueChanged.AddDynamic(this, &UMainMenuUI::OnValueChangedMaxPlayersSlider);
 	RoomNameTextbox->OnTextChanged.AddDynamic(this, &UMainMenuUI::OnTextChangedRoomNameTextbox);
@@ -111,9 +113,22 @@ void UMainMenuUI::OnClickedHostGameButton()
 	RoomNameTextbox->SetText(OutGeneratedGameName);
 }
 
+void UMainMenuUI::OnClickedLeaderboardsButton()
+{
+	PlayerHUDRef->HideMainMenu();
+	//PlayerHUDRef->GetLeaderboardWidget()->ReadStats();
+	//PlayerHUDRef->ShowLeaderboardsMenu();
+}
+
 void UMainMenuUI::OnClickedStartHostingButton()
 {
 	GameInstanceRef->StartOnlineGame(TheServerName, MaxNumOfPlayers, bIsItLan, true, bDoesServerHavePassword, TheSessionPassword);
+}
+
+void UMainMenuUI::OnClickedSettingsButton()
+{
+	PlayerHUDRef->HideMainMenu();
+	PlayerHUDRef->ShowMainMenuOptions();
 }
 
 void UMainMenuUI::OnClickedQuitButton()

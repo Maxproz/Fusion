@@ -50,9 +50,15 @@ public:
 
 	UFUNCTION()
 	void OnClickedFindGameButton();
+	
+	UFUNCTION()
+	void OnClickedSettingsButton();
 
 	UFUNCTION()
 	void OnClickedHostGameButton();
+
+	UFUNCTION()
+	void OnClickedLeaderboardsButton();
 
 	UFUNCTION()
 	void OnClickedStartHostingButton();
@@ -99,6 +105,9 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	UButton* HostGameButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* LeaderboardsButton;
 
 	UPROPERTY(meta = (BindWidget))
 	UCheckBox* IsLanCheckBox;

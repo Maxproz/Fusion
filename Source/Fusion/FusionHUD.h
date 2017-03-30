@@ -13,7 +13,7 @@ class UServerMenu_Widget;
 class UOkErrorMessage_Widget;
 class ULobbyMenu_Widget;
 class UFusionMessageMenu_Widget;
-
+class UMainMenuOptions_Widget;
 
 struct FHitData
 {
@@ -98,6 +98,8 @@ public:
 	FORCEINLINE UOkErrorMessage_Widget* GetErrorMessageWidget() const { return ActiveErrorMessageWidget; }
 	FORCEINLINE ULobbyMenu_Widget* GetLobbyMenuWidget() const { return ActiveLobbyMenuWidget; }
 	FORCEINLINE UFusionMessageMenu_Widget* GetMessageMenuWidget() const { return ActiveFusionMessageMenu_Widget; }
+	FORCEINLINE UMainMenuOptions_Widget* GetMainMenuOptionsWidget() const { return ActiveMainMenuOptions_Widget; }
+
 
 protected:
 	//////////////////////////////////
@@ -117,7 +119,8 @@ protected:
 	TAssetSubclassOf<ULobbyMenu_Widget> LobbyMenuWidget;
 	UPROPERTY(EditDefaultsOnly, Category = "Menu Widgets") // NOTE: Not being loaded from the HUD, its being loaded using the Confirmdialog widget
 	TAssetSubclassOf<UFusionMessageMenu_Widget> MessageMenuWidget;
-
+	UPROPERTY(EditDefaultsOnly, Category = "Menu Widgets")
+	TAssetSubclassOf<UMainMenuOptions_Widget> MainMenuOptionsWidget;
 
 	// Active Widgets
 	UInGameHUD* ActiveInGameHUDWidget;
@@ -126,6 +129,8 @@ protected:
 	UOkErrorMessage_Widget* ActiveErrorMessageWidget;
 	ULobbyMenu_Widget* ActiveLobbyMenuWidget;
 	UFusionMessageMenu_Widget* ActiveFusionMessageMenu_Widget;
+	UMainMenuOptions_Widget* ActiveMainMenuOptions_Widget;
+
 
 	void CreateInGameHUDWidget();
 	void CreateMainMenuUIWidget();
@@ -133,6 +138,7 @@ protected:
 	void CreateErrorMessageWidget();
 	void CreateLobbyMenuWidget();
 	void CreateMessageMenuWidget();
+	void CreateMainMenuOptionsWidget();
 
 public:
 
@@ -152,6 +158,8 @@ public:
 	void ShowMessageMenu();
 	void HideMessageMenu();
 
+	void ShowMainMenuOptions();
+	void HideMainMenuOptions();
 
 
 	virtual void DrawHUD() override;

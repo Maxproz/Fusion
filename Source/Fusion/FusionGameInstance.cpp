@@ -679,6 +679,7 @@ void UFusionGameInstance::HideDialogMenuTestFunc()
 	{
 		FusionViewport->HideDialog();
 	}
+
 }
 
 
@@ -693,8 +694,8 @@ bool UFusionGameInstance::Tick(float DeltaSeconds)
 
 	MaybeChangeState();
 
-	GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, FString::Printf(TEXT("CurrentState: %s"), *CurrentState.ToString()));
-	GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, FString::Printf(TEXT("PendingState: %s"), *PendingState.ToString()));
+	//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, FString::Printf(TEXT("CurrentState: %s"), *CurrentState.ToString()));
+	//GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, FString::Printf(TEXT("PendingState: %s"), *PendingState.ToString()));
 
 
 	UFusionGameViewportClient* FusionViewport = Cast<UFusionGameViewportClient>(GetGameViewportClient());

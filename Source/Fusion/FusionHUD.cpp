@@ -19,6 +19,7 @@
 #include "Widgets/Menus/Lobby/InviteSteamFriend_Widget.h"
 #include "Widgets/Menus/PasswordEnterPopup_Widget.h"
 #include "Widgets/Menus/ServerMenuStats_Widget.h"
+#include "Widgets/Menus/MainMenuOptions_Widget.h"
 
 #include "Widgets/Menus/FusionMessageMenu_Widget.h"
 #include "Widgets/Menus/ConfirmationDialog_Widget.h"
@@ -31,6 +32,8 @@
 #include "Online/FusionGameMode_TeamDeathMatch.h"
 #include "FusionCharacter.h"
 #include "Widgets/Gameplay/Scoreboard_Widget.h"
+
+
 
 //#include "SShooterScoreboardWidget.h" // TODO: implement
 //#include "SChatWidget.h"				// TODO: implement
@@ -121,6 +124,19 @@ void AFusionHUD::CreateMessageMenuWidget()
 	ActiveFusionMessageMenu_Widget->SetVisibility(ESlateVisibility::Hidden);
 }
 
+void AFusionHUD::CreateMainMenuOptionsWidget()
+{
+	AFusionPlayerController_Menu* MPC = Cast<AFusionPlayerController_Menu>(GetOwningPlayerController());
+	if (!MPC) return;
+
+	if (ActiveMainMenuOptions_Widget != nullptr) return;
+
+	ActiveMainMenuOptions_Widget = CreateWidget<UMainMenuOptions_Widget>(GetOwningPlayerController(), MainMenuOptionsWidget.LoadSynchronous());
+	ActiveMainMenuOptions_Widget->AddToViewport(2);
+	ActiveMainMenuOptions_Widget->SetVisibility(ESlateVisibility::Hidden);
+}
+
+
 void AFusionHUD::CreateGameWidgets()
 {
 	CreateInGameHUDWidget();
@@ -129,6 +145,7 @@ void AFusionHUD::CreateGameWidgets()
 	CreateErrorMessageWidget();
 	CreateLobbyMenuWidget();
 	CreateMessageMenuWidget();
+	CreateMainMenuOptionsWidget();
 }
 
 
@@ -150,7 +167,8 @@ void AFusionHUD::HideLobbyMenu() { GetLobbyMenuWidget()->HideWidget(); }
 void AFusionHUD::ShowMessageMenu() { GetMessageMenuWidget()->ShowWidget(); }
 void AFusionHUD::HideMessageMenu() { GetMessageMenuWidget()->HideWidget(); }
 
-
+void AFusionHUD::ShowMainMenuOptions() { GetMainMenuOptionsWidget()->ShowWidget(); }
+void AFusionHUD::HideMainMenuOptions() { GetMainMenuOptionsWidget()->HideWidget(); }
 
 
 #define LOCTEXT_NAMESPACE "Fusion.HUD.Menu"
