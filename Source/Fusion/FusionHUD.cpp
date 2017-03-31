@@ -21,6 +21,9 @@
 #include "Widgets/Menus/ServerMenuStats_Widget.h"
 #include "Widgets/Menus/MainMenuOptions_Widget.h"
 
+#include "Widgets/Leaderboards/FusionLeaderboard_Widget.h"
+#include "Widgets/Leaderboards/FusionLeaderboardRow_Widget.h"
+
 #include "Widgets/Menus/FusionMessageMenu_Widget.h"
 #include "Widgets/Menus/ConfirmationDialog_Widget.h"
 
@@ -32,6 +35,7 @@
 #include "Online/FusionGameMode_TeamDeathMatch.h"
 #include "FusionCharacter.h"
 #include "Widgets/Gameplay/Scoreboard_Widget.h"
+#
 
 
 
@@ -113,9 +117,9 @@ void AFusionHUD::CreateLobbyMenuWidget()
 
 void AFusionHUD::CreateMessageMenuWidget()
 {
-	//AFusionPlayerController_Menu* MPC = Cast<AFusionPlayerController_Menu>(GetOwningPlayerController());
+	AFusionPlayerController_Menu* MPC = Cast<AFusionPlayerController_Menu>(GetOwningPlayerController());
 	//AFusionPlayerController* GamePC = Cast<AFusionPlayerController>(GetOwningPlayerController());
-	//if (!MPC) return;
+	if (!MPC) return;
 
 	if (ActiveFusionMessageMenu_Widget != nullptr) return;
 
@@ -136,6 +140,18 @@ void AFusionHUD::CreateMainMenuOptionsWidget()
 	ActiveMainMenuOptions_Widget->SetVisibility(ESlateVisibility::Hidden);
 }
 
+void AFusionHUD::CreateLeaderboardsWidget()
+{
+	AFusionPlayerController_Menu* MPC = Cast<AFusionPlayerController_Menu>(GetOwningPlayerController());
+	if (!MPC) return;
+
+	if (ActiveLeaderboards_Widget != nullptr) return;
+
+	ActiveLeaderboards_Widget = CreateWidget<UFusionLeaderboard_Widget>(GetOwningPlayerController(), LeaderboardsWidget.LoadSynchronous());
+	ActiveLeaderboards_Widget->AddToViewport(2);
+	ActiveLeaderboards_Widget->SetVisibility(ESlateVisibility::Hidden);
+}
+
 
 void AFusionHUD::CreateGameWidgets()
 {
@@ -146,6 +162,7 @@ void AFusionHUD::CreateGameWidgets()
 	CreateLobbyMenuWidget();
 	CreateMessageMenuWidget();
 	CreateMainMenuOptionsWidget();
+	CreateLeaderboardsWidget();
 }
 
 
@@ -170,6 +187,8 @@ void AFusionHUD::HideMessageMenu() { GetMessageMenuWidget()->HideWidget(); }
 void AFusionHUD::ShowMainMenuOptions() { GetMainMenuOptionsWidget()->ShowWidget(); }
 void AFusionHUD::HideMainMenuOptions() { GetMainMenuOptionsWidget()->HideWidget(); }
 
+void AFusionHUD::ShowLeaderboards() { GetLeaderboardsWidget()->ShowWidget(); }
+void AFusionHUD::HideLeaderboards() { GetLeaderboardsWidget()->HideWidget(); }
 
 #define LOCTEXT_NAMESPACE "Fusion.HUD.Menu"
 

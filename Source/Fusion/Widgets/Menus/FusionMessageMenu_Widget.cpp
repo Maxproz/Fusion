@@ -15,6 +15,7 @@ void UFusionMessageMenu_Widget::NativeConstruct()
 
 	GameInstance = Cast<UFusionGameInstance>(GetOwningPlayer()->GetGameInstance());
 
+
 	MessageTextBlock->SetText(DisplayMessage);
 
 	MessageOkButton->OnClicked.AddDynamic(this, &UFusionMessageMenu_Widget::OnClickedOkButton);

@@ -488,8 +488,8 @@ void UFusionGameInstance::BeginMessageMenuState()
 	// player 0 gets to own the UI
 	ULocalPlayer* const Player = GetFirstGamePlayer();
 
-	AFusionPlayerController_Master* GlobalPC = Cast<AFusionPlayerController_Master>(Player->GetPlayerController(GetWorld()));
-	MessageMenuUI = Cast<AFusionHUD>(GlobalPC->GetHUD())->GetMessageMenuWidget();
+	AFusionPlayerController_Menu* MenuPC = Cast<AFusionPlayerController_Menu>(Player->GetPlayerController(GetWorld()));
+	MessageMenuUI = MenuPC->GetFusionHUD()->GetMessageMenuWidget();
 	
 	if (MessageMenuUI.IsValid())
 	{

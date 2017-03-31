@@ -13,6 +13,9 @@
 
 #include "Online/FusionOnlineGameSettings.h"
 
+#include "Widgets/Leaderboards/FusionLeaderboard_Widget.h"
+#include "Widgets/Leaderboards/FusionLeaderboardRow_Widget.h"
+
 #include "Runtime/Engine/Classes/Kismet/KismetStringLibrary.h"
 #include "Runtime/Engine/Classes/Kismet/KismetMathLibrary.h"
 #include "Runtime/Engine/Classes/Kismet/KismetTextLibrary.h"
@@ -116,8 +119,8 @@ void UMainMenuUI::OnClickedHostGameButton()
 void UMainMenuUI::OnClickedLeaderboardsButton()
 {
 	PlayerHUDRef->HideMainMenu();
-	//PlayerHUDRef->GetLeaderboardWidget()->ReadStats();
-	//PlayerHUDRef->ShowLeaderboardsMenu();
+	PlayerHUDRef->GetLeaderboardsWidget()->ReadStats();
+	PlayerHUDRef->ShowLeaderboards();
 }
 
 void UMainMenuUI::OnClickedStartHostingButton()

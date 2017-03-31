@@ -14,6 +14,8 @@ class UOkErrorMessage_Widget;
 class ULobbyMenu_Widget;
 class UFusionMessageMenu_Widget;
 class UMainMenuOptions_Widget;
+class UFusionLeaderboard_Widget;
+
 
 struct FHitData
 {
@@ -99,7 +101,7 @@ public:
 	FORCEINLINE ULobbyMenu_Widget* GetLobbyMenuWidget() const { return ActiveLobbyMenuWidget; }
 	FORCEINLINE UFusionMessageMenu_Widget* GetMessageMenuWidget() const { return ActiveFusionMessageMenu_Widget; }
 	FORCEINLINE UMainMenuOptions_Widget* GetMainMenuOptionsWidget() const { return ActiveMainMenuOptions_Widget; }
-
+	FORCEINLINE UFusionLeaderboard_Widget* GetLeaderboardsWidget() const { return ActiveLeaderboards_Widget; }
 
 protected:
 	//////////////////////////////////
@@ -117,10 +119,13 @@ protected:
 	TAssetSubclassOf<UOkErrorMessage_Widget> ErrorMessageWidget;
 	UPROPERTY(EditDefaultsOnly, Category = "Lobby Widgets")
 	TAssetSubclassOf<ULobbyMenu_Widget> LobbyMenuWidget;
-	UPROPERTY(EditDefaultsOnly, Category = "Menu Widgets") // NOTE: Not being loaded from the HUD, its being loaded using the Confirmdialog widget
+	UPROPERTY(EditDefaultsOnly, Category = "Menu Widgets") 
 	TAssetSubclassOf<UFusionMessageMenu_Widget> MessageMenuWidget;
 	UPROPERTY(EditDefaultsOnly, Category = "Menu Widgets")
 	TAssetSubclassOf<UMainMenuOptions_Widget> MainMenuOptionsWidget;
+	UPROPERTY(EditDefaultsOnly, Category = "Menu Widgets")
+	TAssetSubclassOf<UFusionLeaderboard_Widget> LeaderboardsWidget;
+
 
 	// Active Widgets
 	UInGameHUD* ActiveInGameHUDWidget;
@@ -130,7 +135,7 @@ protected:
 	ULobbyMenu_Widget* ActiveLobbyMenuWidget;
 	UFusionMessageMenu_Widget* ActiveFusionMessageMenu_Widget;
 	UMainMenuOptions_Widget* ActiveMainMenuOptions_Widget;
-
+	UFusionLeaderboard_Widget* ActiveLeaderboards_Widget;
 
 	void CreateInGameHUDWidget();
 	void CreateMainMenuUIWidget();
@@ -139,6 +144,7 @@ protected:
 	void CreateLobbyMenuWidget();
 	void CreateMessageMenuWidget();
 	void CreateMainMenuOptionsWidget();
+	void CreateLeaderboardsWidget();
 
 public:
 
@@ -160,6 +166,9 @@ public:
 
 	void ShowMainMenuOptions();
 	void HideMainMenuOptions();
+
+	void ShowLeaderboards();
+	void HideLeaderboards();
 
 
 	virtual void DrawHUD() override;

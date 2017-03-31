@@ -17,9 +17,6 @@ class FUSION_API UFusionLeaderboardRow_Widget : public UMasterWidget
 public:
 
 
-
-protected:
-
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* DeathsText;
 
