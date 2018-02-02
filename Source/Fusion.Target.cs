@@ -9,14 +9,14 @@ public class FusionTarget : TargetRules
 	{
         Type = TargetType.Game;
         bUsesSteam = true;
-   
+        //bUsesSteam = false;
     }
 
-	//
-	// TargetRules interface.
-	//
+    //
+    // TargetRules interface.
+    //
 
-	public override void SetupBinaries(
+    public override void SetupBinaries(
 		TargetInfo Target,
 		ref List<UEBuildBinaryConfiguration> OutBuildBinaryConfigurations,
 		ref List<string> OutExtraModuleNames

@@ -24,8 +24,11 @@ void AFusionPlayerController_Menu::BeginPlay()
 	if (IsLocalPlayerController())
 	{
 		GetFusionHUD()->CreateGameWidgets();
+		
 
 		UFusionGameInstance* FGI = GetWorld() != NULL ? Cast<UFusionGameInstance>(GetWorld()->GetGameInstance()) : NULL;
+		//FGI->GotoState(FusionGameInstanceState::MainMenu);
+
 		if (FGI->GetCurrentState() == FName(TEXT("MessageMenu")))
 		{
 			//GetFusionHUD()->GetMessageMenuWidget()->ShowWidget();
